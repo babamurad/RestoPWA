@@ -14,16 +14,19 @@ class CartDrawer extends Component
     public int $totalQuantity = 0;
     public float $totalPrice = 0.0;
     public string $currentVendorId = '';
+    public bool $isOffline = false;
 
     protected $listeners = [
         'open-cart' => 'openCart',
         'close-cart' => 'closeCart',
         'cart-updated' => 'refreshCart',
-        'browser-online' => 'syncPendingOrders',
+        'browser-online' => 'syncWithServer',
+        'browser-offline' => 'setOffline',
     ];
 
     public function mount(): void
     {
+        $this->isOffline = !app()->runningInConsole() && !request()->ajax();
         $this->dispatch('request-cart-state');
     }
 
@@ -71,10 +74,27 @@ class CartDrawer extends Component
         $this->dispatch('cart-checkout');
     }
 
-    #[On('browser-online')]
-    public function syncPendingOrders(): void
+    public function addItem(string $productId, array $modifiers = [], int $price): void
     {
+        $this->dispatch('cart-add-item', [
+            'productId' => $productId,
+            'vendorId' => $this->currentVendorId,
+            'modifiers' => $modifiers,
+            'price' => $price,
+        ]);
+    }
+
+    #[On('browser-online')]
+    public function syncWithServer(): void
+    {
+        $this->isOffline = false;
         $this->dispatch('sync-pending-orders');
+    }
+
+    #[On('browser-offline')]
+    public function setOffline(): void
+    {
+        $this->isOffline = true;
     }
 
     public function render(): \Illuminate\View\View

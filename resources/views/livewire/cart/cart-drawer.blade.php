@@ -1,8 +1,9 @@
 @php
     $formattedPrice = number_format($totalPrice, 0, '.', ' ');
+    $canCheckout = !empty($items) && !$isOffline;
 @endphp
 
-<div x-data="{ isOpen: @entangle('isOpen') }" 
+<div x-data="{ isOpen: @entangle('isOpen'), isOffline: @entangle('isOffline') }" 
      @open-cart.window="isOpen = true"
      @close-cart.window="isOpen = false"
      x-on:keydown.escape.window="isOpen = false">
@@ -36,6 +37,15 @@
             </button>
         </div>
 
+        @if($isOffline)
+            <div class="bg-amber-50 border-b border-amber-200 p-3 text-amber-800 text-sm flex items-center gap-2">
+                <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <span>Офлайн режим. Заказ будет отправлен при подключении.</span>
+            </div>
+        @endif
+
         <div class="flex-1 overflow-y-auto p-4">
             @if(empty($items))
                 <div class="flex flex-col items-center justify-center h-full text-gray-500">
@@ -51,20 +61,20 @@
                             <div class="flex-1">
                                 <p class="font-medium">{{ $item['productName'] ?? 'Товар' }}</p>
                                 <p class="text-sm text-gray-500">
-                                    {{ number_format($item['price'], 0, '.', ' ') }} ₽
+                                    {{ number_format($item['price'] / 100, 2, '.', ' ') }} ₽
                                 </p>
                             </div>
                             <div class="flex items-center gap-2">
-                                <button wire:click="updateQuantity({{ $item['id'] }}, {{ $item['quantity'] - 1 }})"
+                                <button wire:click="updateQuantity({{ $item['id'] ?? 0 }}, {{ ($item['quantity'] ?? 1) - 1 }})"
                                         class="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded">
                                     -
                                 </button>
-                                <span class="w-8 text-center">{{ $item['quantity'] }}</span>
-                                <button wire:click="updateQuantity({{ $item['id'] }}, {{ $item['quantity'] + 1 }})"
+                                <span class="w-8 text-center">{{ $item['quantity'] ?? 1 }}</span>
+                                <button wire:click="updateQuantity({{ $item['id'] ?? 0 }}, {{ ($item['quantity'] ?? 1) + 1 }})"
                                         class="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded">
                                     +
                                 </button>
-                                <button wire:click="removeItem({{ $item['id'] }})"
+                                <button wire:click="removeItem({{ $item['id'] ?? 0 }})"
                                         class="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -89,8 +99,9 @@
                         Очистить
                     </button>
                     <button wire:click="checkout"
-                            class="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                        Оформить
+                            @if(!$canCheckout) disabled @endif
+                            class="flex-1 py-3 px-4 rounded-lg {{ $canCheckout ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed' }}">
+                        {{ $isOffline ? 'Оформить (офлайн)' : 'Оформить' }}
                     </button>
                 </div>
             </div>
