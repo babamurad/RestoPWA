@@ -324,3 +324,43 @@ self.addEventListener('message', (event) => {
         registerPeriodicSync();
     }
 });
+
+self.addEventListener('push', (event) => {
+    if (!event.data) return;
+    
+    const data = event.data.json();
+    
+    const options = {
+        body: data.body || '',
+        icon: data.icon || '/icon-192x192.png',
+        badge: data.badge || '/icon-192x192.png',
+        data: data.data || {},
+        vibrate: [100, 50, 100],
+        actions: [
+            { action: 'open', title: 'Открыть' },
+            { action: 'close', title: 'Закрыть' }
+        ]
+    };
+    
+    event.waitUntil(
+        self.registration.showNotification(data.title || 'Уведомление', options)
+    );
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    
+    if (event.action === 'open' || !event.action) {
+        const orderId = event.notification.data?.order_id;
+        
+        if (orderId) {
+            event.waitUntil(
+                clients.openWindow(`/order/${orderId}/track`)
+            );
+        } else {
+            event.waitUntil(
+                clients.openWindow('/')
+            );
+        }
+    }
+});

@@ -4,6 +4,7 @@ use App\Domains\Menu\Http\Controllers\MenuController;
 use App\Domains\Menu\Models\Product;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Domains\Order\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\PushController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -30,3 +31,11 @@ Route::prefix('v1')->group(function () {
 
 Route::post('orders', [OrderController::class, 'store'])
     ->name('api.orders.store');
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('push/subscribe', [PushController::class, 'subscribe'])
+        ->name('api.push.subscribe');
+    
+    Route::post('push/unsubscribe', [PushController::class, 'unsubscribe'])
+        ->name('api.push.unsubscribe');
+});

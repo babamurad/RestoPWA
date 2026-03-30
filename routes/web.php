@@ -1,6 +1,9 @@
 <?php
 
 use App\Domains\Order\Http\Controllers\OrderTrackingController;
+use App\Http\Controllers\Vendor\ProductController;
+use App\Http\Controllers\Vendor\OrderController;
+use App\Http\Controllers\Vendor\SettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -38,3 +41,15 @@ Route::get('/order/{orderId}/track', [OrderTrackingController::class, 'track'])
 
 Route::get('/api/order/{orderId}/track', [OrderTrackingController::class, 'apiTrack'])
     ->name('api.order.track');
+
+Route::prefix('vendor')->name('vendor.')->group(function () {
+    Route::resource('products', ProductController::class)->except(['show']);
+    Route::resource('orders', OrderController::class)->except(['create', 'store']);
+    Route::post('orders/{order}/accept', [OrderController::class, 'accept'])->name('orders.accept');
+    Route::post('orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+    Route::post('orders/{order}/update-status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::get('orders/{order}/receipt', [OrderController::class, 'receipt'])->name('orders.receipt');
+    
+    Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::post('settings', [SettingsController::class, 'update'])->name('settings.update');
+});

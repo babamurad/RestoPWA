@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Domains\Order\Models\Order;
 use App\Events\OrderStatusUpdated;
 use App\Listeners\LogOrderStatusUpdate;
+use App\Observers\OrderObserver;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
@@ -16,6 +18,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(\App\Domains\Vendor\Services\TenantContext::class);
         $this->app->singleton(\App\Domains\Geo\Services\GeoService::class);
+        $this->app->singleton(\App\Services\PushNotificationService::class);
     }
 
     /**
@@ -27,5 +30,7 @@ class AppServiceProvider extends ServiceProvider
             OrderStatusUpdated::class,
             LogOrderStatusUpdate::class
         );
+
+        Order::observe(OrderObserver::class);
     }
 }

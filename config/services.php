@@ -43,6 +43,11 @@ return [
         'key' => env('YANDEX_MAPS_API_KEY'),
     ],
 
+    'push' => [
+        'public_key' => env('VAPID_PUBLIC_KEY'),
+        'private_key' => env('VAPID_PRIVATE_KEY'),
+    ],
+
     'geo_driver' => env('GEO_DRIVER', 'google'),
 
 ];
