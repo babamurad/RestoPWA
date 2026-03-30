@@ -1,4 +1,6 @@
 import './bootstrap';
+import './services/CartService';
+import './services/CartAlpine';
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {

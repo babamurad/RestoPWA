@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#FF6B35">
+    <title>Оформление заказа - RestoPWA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        orange: { 50: '#FFF0EB', 100: '#FFD9CC', 400: '#FF8A5C', 500: '#FF6B35', 600: '#E55A2B', 700: '#CC4A22' }
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .touch-feedback:active { transform: scale(0.97); }
+        .btn-press:active { transform: scale(0.96); }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-lg mx-auto bg-white min-h-screen shadow-xl relative">
+        <!-- Header -->
+        <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+            <div class="flex items-center gap-3 px-4 h-14">
+                <a href="cart.html" class="flex items-center justify-center w-10 h-10 -ml-2 rounded-full hover:bg-gray-100 transition-colors touch-feedback">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-700"><path d="m15 18-6-6 6-6"/></svg>
+                </a>
+                <h1 class="flex-1 text-lg font-semibold text-gray-900">Оформление заказа</h1>
+            </div>
+        </header>
+
+        <main class="px-4 py-4 space-y-4 pb-32">
+            <!-- Delivery Address -->
+            <section class="bg-white rounded-2xl p-4 border border-gray-100">
+                <h3 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-orange-500"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Адрес доставки
+                </h3>
+                <div class="space-y-2" id="addresses">
+                    <!-- Loaded by JS -->
+                </div>
+                <button class="mt-3 w-full py-2 text-sm text-orange-500 font-medium hover:bg-orange-50 rounded-lg transition-colors">
+                    + Добавить новый адрес
+                </button>
+            </section>
+
+            <!-- Payment Method -->
+            <section class="bg-white rounded-2xl p-4 border border-gray-100">
+                <h3 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-orange-500"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                    Способ оплаты
+                </h3>
+                <div class="space-y-2" id="payment-methods">
+                    <!-- Loaded by JS -->
+                </div>
+            </section>
+
+            <!-- Comment -->
+            <section class="bg-white rounded-2xl p-4 border border-gray-100">
+                <h3 class="font-semibold text-gray-900 mb-3">Комментарий к заказу</h3>
+                <textarea id="comment" placeholder="Например: не звоните в домофон" 
+                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                    rows="3"></textarea>
+            </section>
+
+            <!-- Order Summary -->
+            <section class="bg-white rounded-2xl p-4 border border-gray-100">
+                <h3 class="font-semibold text-gray-900 mb-3">Сводка заказа</h3>
+                <div class="space-y-2 text-sm" id="order-summary">
+                    <!-- Loaded by JS -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Submit Button -->
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4" style="padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);">
+            <div class="max-w-lg mx-auto">
+                <button onclick="submitOrder()" id="submit-btn" class="w-full flex items-center justify-center gap-2 px-6 py-4 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-colors touch-feedback btn-press">
+                    <span>Подтвердить заказ</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        let selectedAddress = currentUser.addresses[0].id;
+        let selectedPayment = currentUser.paymentMethods[0].id;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAddresses();
+            renderPaymentMethods();
+            renderOrderSummary();
+        });
+
+        function renderAddresses() {
+            const container = document.getElementById('addresses');
+            container.innerHTML = currentUser.addresses.map(addr => `
+                <button onclick="selectAddress('${addr.id}')" 
+                    class="w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 ${
+                        selectedAddress === addr.id 
+                            ? 'border-orange-500 bg-orange-50' 
+                            : 'border-gray-200 hover:border-gray-300'
+                    }"">
+                    <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        selectedAddress === addr.id ? 'border-orange-500 bg-orange-500' : 'border-gray-300'
+                    }">
+                        ${selectedAddress === addr.id ? '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+                    </div>
+                    <div class="flex-1 text-left">
+                        <span class="text-sm font-medium text-gray-700">${addr.label}</span>
+                        <p class="text-sm text-gray-500">${addr.address}</p>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function renderPaymentMethods() {
+            const container = document.getElementById('payment-methods');
+            container.innerHTML = currentUser.paymentMethods.map(pm => `
+                <button onclick="selectPayment('${pm.id}')" 
+                    class="w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 ${
+                        selectedPayment === pm.id 
+                            ? 'border-orange-500 bg-orange-50' 
+                            : 'border-gray-200 hover:border-gray-300'
+                    }"">
+                    <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        selectedPayment === pm.id ? 'border-orange-500 bg-orange-500' : 'border-gray-300'
+                    }">
+                        ${selectedPayment === pm.id ? '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+                    </div>
+                    ${getPaymentIcon(pm.type)}
+                    <div class="flex-1 text-left">
+                        <span class="text-sm font-medium text-gray-700">${pm.label}</span>
+                        ${pm.last4 ? `<span class="text-sm text-gray-500"> •••• ${pm.last4}</span>` : ''}
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function getPaymentIcon(type) {
+            const icons = {
+                card: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-600"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>',
+                cash: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-600"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01"/><path d="M18 12h.01"/></svg>',
+                wallet: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-600"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>',
+            };
+            return icons[type] || icons.card;
+        }
+
+        function renderOrderSummary() {
+            const cart = getCart();
+            const totalAmount = cart.reduce((sum, item) => sum + item.foodItem.price * item.quantity, 0);
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            
+            document.getElementById('order-summary').innerHTML = `
+                <div class="flex justify-between text-gray-600">
+                    <span>Товары (${totalItems})</span>
+                    <span>${totalAmount} ₽</span>
+                </div>
+                <div class="flex justify-between text-gray-600">
+                    <span class="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"/><path d="M14 17h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+                        Доставка
+                    </span>
+                    <span class="text-green-600">Бесплатно</span>
+                </div>
+                <div class="pt-2 border-t border-gray-100 flex justify-between">
+                    <span class="font-semibold text-gray-900">Итого</span>
+                    <span class="font-bold text-xl text-gray-900">${totalAmount} ₽</span>
+                </div>
+            `;
+        }
+
+        function selectAddress(id) {
+            selectedAddress = id;
+            renderAddresses();
+        }
+
+        function selectPayment(id) {
+            selectedPayment = id;
+            renderPaymentMethods();
+        }
+
+        function submitOrder() {
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerHTML = `
+                <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>Оформление...</span>
+            `;
+            
+            setTimeout(() => {
+                clearCart();
+                window.location.href = 'success.html';
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
