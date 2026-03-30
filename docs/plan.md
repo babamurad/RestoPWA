@@ -133,3 +133,12 @@
 - [ ] Dexie корзина и очередь заказов работают.
 - [ ] Livewire CartDrawer stateless и синхронизируется с API.
 - [ ] Покрытие тестами базовых сценариев (unit/feature/integration).
+
+## Промт 4.2: Livewire Компонент AddressSelector
+plain
+Создай Livewire компонент Geo\AddressSelector:
+1. Свойства: $address (string), $lat, $lon, $suggestions (array), $selectedVendorId
+2. Метод detectLocation(): использует браузерный navigator.geolocation, получает coords, вызывает GeoService::geocodeAddress на сервере (обратное геокодирование), устанавливает $address
+3. Метод searchAddress(): debounced (300ms) поиск подсказок через Yandex Geocoder, заполняет $suggestions
+4. Метод selectAddress($index): берет выбранный адрес, проверяет через GeoService isPointInDeliveryZone для $selectedVendorId, если не доставляет - показывает error, если доставляет - сохраняет в сессии 'current_address' и dispatch 'address-selected'
+5. Blade: поле ввода с autocomplete (datalist или div overlay), кнопка "Определить автоматически", отображение зоны доставки (входит/не входит)

@@ -34,6 +34,10 @@ document.addEventListener('alpine:init', () => {
             window.addEventListener('cart-checkout', () => {
                 this.checkout();
             });
+
+            window.addEventListener('sync-pending-orders', () => {
+                this.syncPendingOrders();
+            });
         },
 
         async addItem({ productId, vendorId, modifiers = {}, price, productName }) {
@@ -119,6 +123,33 @@ document.addEventListener('alpine:init', () => {
                 await window.CartService.clearVendorCart(this.currentVendorId);
                 await this.broadcastState();
             }
+        },
+
+        async syncPendingOrders() {
+            const pendingOrders = await window.CartService.getPendingOrders();
+            
+            for (const order of pendingOrders) {
+                try {
+                    const response = await fetch('/api/orders', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(order.payload)
+                    });
+
+                    if (response.ok) {
+                        await window.CartService.removePendingOrder(order.id);
+                    } else {
+                        await window.CartService.incrementRetry(order.id);
+                    }
+                } catch (error) {
+                    console.error('Failed to sync order:', error);
+                    await window.CartService.incrementRetry(order.id);
+                }
+            }
+
+            await this.broadcastState();
         }
     }));
 
