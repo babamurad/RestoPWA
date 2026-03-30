@@ -122,3 +122,205 @@ self.addEventListener('activate', (event) => {
     );
     self.clients.claim();
 });
+
+self.addEventListener('sync', (event) => {
+    if (event.tag === 'order-sync') {
+        event.waitUntil(syncOrders());
+    }
+    if (event.tag === 'menu-sync') {
+        event.waitUntil(syncMenu());
+    }
+});
+
+const DB_NAME = 'RestoCart';
+const DB_VERSION = 1;
+
+function openDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        
+        request.onerror = () => reject(request.error);
+        
+        request.onsuccess = () => resolve(request.result);
+        
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            
+            if (!db.objectStoreNames.contains('pendingOrders')) {
+                const store = db.createObjectStore('pendingOrders', { keyPath: 'id' });
+                store.createIndex('createdAt', 'createdAt', { unique: false });
+            }
+            
+            if (!db.objectStoreNames.contains('menuCache')) {
+                db.createObjectStore('menuCache', { keyPath: 'vendorId' });
+            }
+        };
+    });
+}
+
+async function syncOrders() {
+    try {
+        const db = await openDB();
+        const tx = db.transaction('pendingOrders', 'readonly');
+        const store = tx.objectStore('pendingOrders');
+        const request = store.getAll();
+        
+        const orders = await new Promise((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+        
+        if (orders.length === 0) {
+            return;
+        }
+        
+        for (const order of orders) {
+            try {
+                const response = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(order),
+                });
+                
+                if (response.ok) {
+                    await deletePendingOrder(order.id);
+                    await showNotification('Заказ успешно отправлен', {
+                        body: 'Ваш заказ принят и готовится',
+                        icon: '/icons/icon-192.png',
+                    });
+                } else {
+                    await incrementRetry(order.id);
+                }
+            } catch (error) {
+                await incrementRetry(order.id);
+            }
+        }
+    } catch (error) {
+        console.error('Sync orders error:', error);
+    }
+}
+
+async function deletePendingOrder(orderId) {
+    const db = await openDB();
+    const tx = db.transaction('pendingOrders', 'readwrite');
+    const store = tx.objectStore('pendingOrders');
+    store.delete(orderId);
+    
+    return new Promise((resolve, reject) => {
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+    });
+}
+
+async function incrementRetry(orderId) {
+    const db = await openDB();
+    const tx = db.transaction('pendingOrders', 'readwrite');
+    const store = tx.objectStore('pendingOrders');
+    
+    const getRequest = store.get(orderId);
+    
+    getRequest.onsuccess = () => {
+        const order = getRequest.result;
+        if (order) {
+            order.retries = (order.retries || 0) + 1;
+            
+            if (order.retries > 3) {
+                order.status = 'failed';
+                showNotification('Ошибка отправки заказа', {
+                    body: 'Не удалось отправить заказ. Попробуйте позже вручную',
+                    icon: '/icons/icon-192.png',
+                });
+            }
+            
+            store.put(order);
+        }
+    };
+}
+
+async function showNotification(title, options) {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+        self.registration.showNotification(title, options);
+    }
+}
+
+async function syncMenu() {
+    try {
+        const db = await openDB();
+        const tx = db.transaction('menuCache', 'readonly');
+        const store = tx.objectStore('menuCache');
+        const request = store.getAll();
+        
+        const cachedMenus = await new Promise((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+        
+        for (const menu of cachedMenus) {
+            try {
+                const response = await fetch(`/api/v1/menu/${menu.vendorSlug}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    const updateTx = db.transaction('menuCache', 'readwrite');
+                    const updateStore = updateTx.objectStore('menuCache');
+                    updateStore.put({
+                        vendorId: menu.vendorId,
+                        vendorSlug: menu.vendorSlug,
+                        data: data,
+                        updatedAt: new Date().toISOString(),
+                    });
+                }
+            } catch (error) {
+                console.error('Menu sync error for vendor:', menu.vendorId, error);
+            }
+        }
+    } catch (error) {
+        console.error('Menu sync error:', error);
+    }
+}
+
+async function registerPeriodicSync() {
+    if ('periodicSync' in self.registration) {
+        try {
+            const permission = await navigator.permissions.query({
+                name: 'periodic-background-sync',
+            });
+            
+            if (permission.state === 'granted') {
+                await self.registration.periodicSync.register('menu-sync', {
+                    minInterval: 60 * 60 * 1000,
+                });
+                console.log('Periodic background sync registered');
+            }
+        } catch (error) {
+            console.log('Periodic background sync not supported:', error);
+        }
+    }
+}
+
+if ('periodicSync' in self.registration) {
+    self.addEventListener('periodicsync', (event) => {
+        if (event.tag === 'menu-sync') {
+            event.waitUntil(syncMenu());
+        }
+    });
+}
+
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+    
+    if (event.data && event.data.type === 'REGISTER_PERIODIC_SYNC') {
+        registerPeriodicSync();
+    }
+});

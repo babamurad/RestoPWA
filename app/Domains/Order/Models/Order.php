@@ -8,13 +8,18 @@ use App\Casts\MoneyCast;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * @property string $id
+ * @property string $vendor_id
+ * @property string $user_id
  * @property string $status
+ * @property string $payment_status
  * @property array $address
  * @property array $items
  * @property mixed $total
+ * @property float $delivery_fee
  */
 class Order extends Model
 {
@@ -24,10 +29,14 @@ class Order extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'vendor_id',
+        'user_id',
         'status',
+        'payment_status',
         'address',
         'items',
         'total',
+        'delivery_fee',
     ];
 
     /**
@@ -38,7 +47,8 @@ class Order extends Model
         return [
             'address' => 'array',
             'items' => 'array',
-            'total' => MoneyCast::class, 
+            'total' => MoneyCast::class,
+            'delivery_fee' => 'float',
         ];
     }
 
@@ -60,7 +70,7 @@ class Order extends Model
                 $order->statusHistory()->create([
                     'from_status' => $order->getOriginal('status'),
                     'to_status' => $order->status,
-                    'metadata' => ['changed_by' => auth()->id() ?? 'system'],
+                    'metadata' => ['changed_by' => Auth::id() ?? 'system'],
                 ]);
             }
         });
