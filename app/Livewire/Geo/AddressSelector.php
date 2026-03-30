@@ -1,0 +1,201 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Livewire\Geo;
+
+use App\Domains\Geo\Services\GeoService;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Livewire\Component;
+
+class AddressSelector extends Component
+{
+    public string $address = '';
+    public float $lat = 0;
+    public float $lon = 0;
+    public array $suggestions = [];
+    public string $selectedVendorId = '';
+    public bool $isInDeliveryZone = false;
+    public bool $isDetectingLocation = false;
+    public ?string $error = null;
+
+    private GeoService $geoService;
+
+    public function boot(): void
+    {
+        $this->geoService = app(GeoService::class);
+        $this->selectedVendorId = session('current_vendor_id', '');
+        $savedAddress = session('current_address');
+        if ($savedAddress) {
+            $this->address = $savedAddress['address'] ?? '';
+            $this->lat = $savedAddress['lat'] ?? 0;
+            $this->lon = $savedAddress['lon'] ?? 0;
+            if ($this->lat && $this->lon && $this->selectedVendorId) {
+                $this->isInDeliveryZone = $this->geoService->isPointInDeliveryZone(
+                    $this->lat,
+                    $this->lon,
+                    $this->selectedVendorId
+                );
+            }
+        }
+    }
+
+    public function detectLocation(): void
+    {
+        $this->error = null;
+        $this->isDetectingLocation = true;
+
+        $this->js(<<<JS
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        \$wire.setLocation(position.coords.latitude, position.coords.longitude);
+                    },
+                    (error) => {
+                        \$wire.setError('Не удалось определить местоположение: ' + error.message);
+                        \$wire.setIsDetectingLocation(false);
+                    }
+                );
+            } else {
+                \$wire.setError('Геолокация не поддерживается браузером');
+                \$wire.setIsDetectingLocation(false);
+            }
+        JS);
+    }
+
+    public function setLocation(float $lat, float $lon): void
+    {
+        $this->lat = $lat;
+        $this->lon = $lon;
+        $this->isDetectingLocation = false;
+
+        $result = $this->geoService->geocodeAddress("{$lat},{$lon}");
+
+        if ($result) {
+            $this->address = $result['address'];
+            $this->checkDeliveryZone();
+        } else {
+            $this->error = 'Не удалось определить адрес по координатам';
+        }
+    }
+
+    public function setError(string $error): void
+    {
+        $this->error = $error;
+        $this->isDetectingLocation = false;
+    }
+
+    public function setIsDetectingLocation(bool $value): void
+    {
+        $this->isDetectingLocation = $value;
+    }
+
+    public function searchAddress(string $query): void
+    {
+        if (strlen($query) < 3) {
+            $this->suggestions = [];
+            return;
+        }
+
+        $this->error = null;
+
+        try {
+            $apiKey = config('services.yandex_maps.key', '');
+            
+            if (empty($apiKey)) {
+                return;
+            }
+
+            $response = Http::get('https://geocode-maps.yandex.ru/1.x/', [
+                'apikey' => $apiKey,
+                'geocode' => $query,
+                'format' => 'json',
+                'lang' => 'ru_RU',
+                'results' => 5,
+            ]);
+
+            if ($response->successful()) {
+                $features = $response->json('response.GeoObjectCollection.featureMember', []);
+                
+                $this->suggestions = array_map(function ($item) {
+                    $geo = $item['GeoObject'];
+                    $pos = explode(' ', $geo['Point']['pos']);
+                    
+                    return [
+                        'address' => $geo['metaDataProperty']['GeocoderMetaData']['text'],
+                        'lat' => (float) ($pos[1] ?? 0),
+                        'lon' => (float) ($pos[0] ?? 0),
+                        'kind' => $geo['metaDataProperty']['GeocoderMetaData']['kind'] ?? '',
+                    ];
+                }, $features);
+            }
+        } catch (\Exception $e) {
+            Log::error('Address search error: ' . $e->getMessage());
+            $this->suggestions = [];
+        }
+    }
+
+    public function selectAddress(int $index): void
+    {
+        if (!isset($this->suggestions[$index])) {
+            return;
+        }
+
+        $selected = $this->suggestions[$index];
+        $this->address = $selected['address'];
+        $this->lat = $selected['lat'];
+        $this->lon = $selected['lon'];
+        $this->suggestions = [];
+        $this->error = null;
+
+        if (!$this->selectedVendorId) {
+            $this->error = 'Выберите ресторан для проверки зоны доставки';
+            return;
+        }
+
+        $this->checkDeliveryZone();
+    }
+
+    private function checkDeliveryZone(): void
+    {
+        if (!$this->lat || !$this->lon) {
+            return;
+        }
+
+        $this->isInDeliveryZone = $this->geoService->isPointInDeliveryZone(
+            $this->lat,
+            $this->lon,
+            $this->selectedVendorId
+        );
+
+        if (!$this->isInDeliveryZone) {
+            $this->error = 'Этот адрес находится за пределами зоны доставки выбранного ресторана';
+            return;
+        }
+
+        session([
+            'current_address' => [
+                'address' => $this->address,
+                'lat' => $this->lat,
+                'lon' => $this->lon,
+            ]
+        ]);
+
+        $this->dispatch('address-selected', [
+            'address' => $this->address,
+            'lat' => $this->lat,
+            'lon' => $this->lon,
+        ]);
+    }
+
+    public function updatedAddress(string $value): void
+    {
+        $this->searchAddress($value);
+    }
+
+    public function render(): \Illuminate\View\View
+    {
+        return view('livewire.geo.address-selector');
+    }
+}
