@@ -13,52 +13,98 @@ use Illuminate\Support\Facades\Log;
 
 class GeoService
 {
-    private string $apiKey;
+    private string $googleKey;
+    private string $yandexKey;
+    private string $driver;
 
     public function __construct()
     {
-        $this->apiKey = config('services.google_maps.key', '');
+        $this->googleKey = (string) config('services.google_maps.key', '');
+        $this->yandexKey = (string) config('services.yandex_maps.key', '');
+        $this->driver = (string) config('services.geo_driver', 'google');
     }
 
     /**
-     * Geocode an address to lat/lon using Google Maps API.
+     * Geocode an address to lat/lon using the configured driver.
      * Caches result for 1 hour.
      * 
      * @return array{lat: float, lon: float, address: string}|null
      */
     public function geocodeAddress(string $address): ?array
     {
-        $cacheKey = 'geocoding_' . md5($address);
+        $cacheKey = 'geocoding_' . $this->driver . '_' . md5($address);
 
         return Cache::remember($cacheKey, now()->addHour(), function () use ($address) {
-            try {
-                $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
-                    'address' => $address,
-                    'key' => $this->apiKey,
-                    'language' => 'ru', // Preferred for Turkmenistan
-                ]);
+            return match ($this->driver) {
+                'yandex' => $this->geocodeViaYandex($address),
+                default => $this->geocodeViaGoogle($address),
+            };
+        });
+    }
 
-                if ($response->successful() && $response->json('status') === 'OK') {
-                    $result = $response->json('results.0');
-                    
-                    return [
-                        'lat' => (float) $result['geometry']['location']['lat'],
-                        'lon' => (float) $result['geometry']['location']['lng'],
-                        'address' => (string) $result['formatted_address'],
-                    ];
-                }
+    /**
+     * Google Maps Geocoding implementation.
+     */
+    private function geocodeViaGoogle(string $address): ?array
+    {
+        try {
+            $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
+                'address' => $address,
+                'key' => $this->googleKey,
+                'language' => 'ru',
+            ]);
 
-                Log::warning('Geocoding failed for address: ' . $address, [
-                    'status' => $response->json('status'),
-                    'error_message' => $response->json('error_message'),
-                ]);
-
-            } catch (\Exception $e) {
-                Log::error('Geocoding exception: ' . $e->getMessage());
+            if ($response->successful() && $response->json('status') === 'OK') {
+                $result = $response->json('results.0');
+                
+                return [
+                    'lat' => (float) $result['geometry']['location']['lat'],
+                    'lon' => (float) $result['geometry']['location']['lng'],
+                    'address' => (string) $result['formatted_address'],
+                ];
             }
 
-            return null;
-        });
+            Log::warning('Google Geocoding failed: ' . ($response->json('error_message') ?? $response->json('status')));
+        } catch (\Exception $e) {
+            Log::error('Google Geocoding exception: ' . $e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Yandex Maps Geocoding implementation.
+     */
+    private function geocodeViaYandex(string $address): ?array
+    {
+        try {
+            $response = Http::get('https://geocode-maps.yandex.ru/1.x/', [
+                'apikey' => $this->yandexKey,
+                'geocode' => $address,
+                'format' => 'json',
+                'lang' => 'ru_RU',
+            ]);
+
+            if ($response->successful()) {
+                $feature = $response->json('response.GeoObjectCollection.featureMember.0.GeoObject');
+                
+                if ($feature) {
+                    $pos = explode(' ', $feature['Point']['pos']); // Yandex returns "lon lat"
+                    
+                    return [
+                        'lon' => (float) ($pos[0] ?? 0),
+                        'lat' => (float) ($pos[1] ?? 0),
+                        'address' => (string) $feature['metaDataProperty']['GeocoderMetaData']['text'],
+                    ];
+                }
+            }
+
+            Log::warning('Yandex Geocoding failed for: ' . $address);
+        } catch (\Exception $e) {
+            Log::error('Yandex Geocoding exception: ' . $e->getMessage());
+        }
+
+        return null;
     }
 
     /**
@@ -82,7 +128,6 @@ class GeoService
      */
     public function getRestaurantsByPoint(float $lat, float $lon): Collection
     {
-        // ST_Distance calculation for sorting
         return Restaurant::query()
             ->select('*')
             ->selectRaw("ST_Distance(delivery_zones, ST_SetSRID(ST_MakePoint(?, ?), 4326)) as distance", [$lon, $lat])
@@ -107,8 +152,6 @@ class GeoService
             return (float) ($restaurant->settings['delivery_fee_outside'] ?? env('DELIVERY_FEE_DEFAULT', 5.0));
         }
 
-        // Potential logic for multiple zones with different fees in settings
-        // Example schema: settings['delivery_zones_fees'] = [['zone_id' => 1, 'fee' => 3.0], ...]
         return (float) ($restaurant->settings['delivery_fee'] ?? env('DELIVERY_FEE_DEFAULT', 5.0));
     }
 }

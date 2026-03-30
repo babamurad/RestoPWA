@@ -11,8 +11,14 @@
 Добавьте следующие переменные в ваш `.env` файл:
 
 ```bash
+# Выбор провайдера: 'google' или 'yandex'
+GEO_DRIVER=google
+
 # Ключ для Google Maps API
 GOOGLE_MAPS_API_KEY=your_google_api_key_here
+
+# Ключ для Яндекс.Геокодера
+YANDEX_MAPS_API_KEY=your_yandex_api_key_here
 
 # Стоимость доставки по умолчанию (в манатах)
 DELIVERY_FEE_DEFAULT=5
