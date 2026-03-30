@@ -1,243 +1,135 @@
-1) Этап 0.1 — Довести DDD-скелет до полного соответствия
-Создать недостающие домены:
-
-app/Domains/Payment
-
-app/Domains/Geo
-
-app/Domains/User
-
-В каждом домене создать подпапки:
-
-Models
-
-Actions
-
-Policies
-
-Resources (и внутри обычно views/Filament по вашему подходу)
-
-Проверить DomainServiceProvider:
-
-Оставить динамическую регистрацию policy/view.
-
-Убедиться, что namespace и пути views реально совпадают с фактической структурой.
-
-Прогнать:
-
-composer dump-autoload
-
-php artisan optimize:clear
-
-2) Этап 0.2 — Multitenancy через Global Scope
-Создать TenantContext сервис:
-
-setCurrentVendor(?string $vendorId): void
-
-getCurrentVendor(): ?string
-
-Зарегистрировать singleton в AppServiceProvider::boot() (или register(), если так удобнее архитектурно).
-
-Создать BelongsToVendorScope:
-
-В apply() фильтр where vendor_id = currentVendor.
-
-Обработка случая null (решите стратегию: не фильтровать, или блокировать выдачу).
-
-Создать trait BelongsToVendor:
-
-bootBelongsToVendor() → добавить global scope.
-
-(Опционально) auto-fill vendor_id при creating.
-
-Создать middleware SetTenantContext:
-
-Источник 1: header X-Vendor-ID.
-
-Источник 2: поддомен {vendor}.resto.local.
-
-Приоритет источников зафиксировать документально.
-
-Подключить middleware:
-
-Глобально или на нужные группы роутов (web/api).
-
-Добавить тесты:
-
-Scope действительно режет данные по vendor.
-
-Middleware корректно извлекает vendor из subdomain/header.
-
-3) Этап 1.1 — Миграции PostgreSQL/PostGIS
-Проверить строгую схему restaurants.delivery_zones:
-
-Если хотите строго по промту, убрать fallback text.
-
-Если оставляете fallback — задокументировать как intentional deviation.
-
-Проверить FK и onDelete:
-
-Уже в целом ок, но проверьте “логично” для всех связей (особенно parent_id и category_id).
-
-Проверить индексы:
-
-GiST на delivery_zones.
-
-Составные индексы по фактическим запросам (vendor_id + status, vendor_id + is_available и т.д.).
-
-Добавить миграционные smoke-тесты под PostgreSQL 16 + PostGIS.
-
-4) Этап 1.2 — Модели + типизация + касты
-Исправить несоответствие Category id:
-
-Либо в миграции categories сделать UUID.
-
-Либо убрать HasUuids из Category.
-
-Рекомендую один стандарт ID по проекту.
-
-Реализовать реальный MoneyCast:
-
-Через brick/money или свой cast-класс.
-
-Убрать placeholder class_exists(...) ? ... : 'array'.
-
-Убедиться, что BelongsToVendor реально существует и подключен в нужных моделях.
-
-Restaurant::deliveryZones():
-
-Привести к стабильному формату (GeoJSON/array координат), документировать контракт.
-
-Order::booted():
-
-Проверить, что history пишется корректно при всех способах смены статуса (mass update отдельно!).
-
-Добавить unit/feature тесты:
-
-casts (settings, address, items, metadata, money fields)
-
-scopes (active, available, tenant scope)
-
-status history logging.
-
-5) Этап 2.1 — PWA infra (Manifest + SW)
-Manifest:
-
-Добавить/проверить id, scope.
-
-При необходимости prefer_related_applications: false.
-
-Иконки реально положить в public/.
-
-Service Worker:
-
-В install-кэш добавить CSS, шрифты и critical assets.
-
-В fetch catch возвращать /offline для navigation requests.
-
-Версионирование кэша (resto-pwa-v2 и cleanup).
-
-Проверить корректность стратегии:
-
-NetworkFirst для /api/*
-
-CacheFirst для статики
-
-Отдельно navigate fallback.
-
-Протестировать Lighthouse PWA и offline mode в DevTools.
-
-6) Этап 2.2 — Offline UI
-offline-indicator:
-
-Сделать минималистичный и не перекрывающий critical UI.
-
-offline-fallback:
-
-Точно определить, когда показывать “контент недоступен офлайн”:
-
-только при отсутствии кэшированного контента.
-
-offline.blade.php:
-
-Оставить максимально легкой, без внешних CDN (чтобы в offline реально работала всегда).
-
-Проверить dispatch событий:
-
-browser-online, browser-offline совместимы с Livewire 4 в вашем стеке.
-
-7) Этап 3.1 — Dexie CartService
-Создать resources/js/services/CartService.js:
-
-DB: RestoCart, версия 1.
-
-Таблицы: cart, pendingOrders.
-
-Реализовать все методы из промта.
-
-Добавить стабильный modifiersHash:
-
-canonical stringify + hash (чтобы одинаковые модификаторы действительно совпадали).
-
-Экспорт:
-
-window.CartService = ...
-
-JSDoc:
-
-Описать типы CartItem, PendingOrderPayload, Totals.
-
-Добавить JS-тесты (минимум unit для add/update/getTotals).
-
-8) Этап 3.2 — Livewire CartDrawer (stateless)
-Создать app/Livewire/Cart/CartDrawer.php и blade-view.
-
-Весь state хранить в Dexie:
-
-сервер — только sync endpoint.
-
-Реализовать методы:
-
-mount, addItem, removeItem, syncWithServer.
-
-Обработать кейс price change после sync.
-
-События online/offline:
-
-listener на browser-offline/browser-online.
-
-UI:
-
-side-drawer + +/- + disabled checkout при недоступной доставке.
-
-Feature-тесты на sync-контракт API.
-
-9) Рекомендуемый порядок выполнения (чтобы не ломать друг друга)
-Multitenancy (0.2)
-
-Исправление ID/кастов моделей (1.2)
-
-PWA SW fallback и офлайн-страница (2.1/2.2)
-
-Dexie CartService (3.1)
-
-Livewire CartDrawer + sync API (3.2)
-
-Финально — интеграционные тесты end-to-end.
-
-10) Definition of Done (чеклист)
- Все домены и подпапки созданы по шаблону.
-
- TenantContext + Scope + Trait + Middleware работают в web/api.
-
- Миграции проходят на PostgreSQL 16 + PostGIS без ручных правок.
-
- Модели без placeholder-кастов, money cast реален.
-
- SW корректно отдает /offline при отсутствии сети.
-
- CartService на Dexie полностью реализован.
-
- CartDrawer stateless и синхронизируется с сервером.
-
- Тесты: unit + feature + smoke offline/pwa.
+# RestoPWA — План доработки по промтам
+
+## 1) Этап 0.1 — DDD-структура
+- Создать домены: `Payment`, `Geo`, `User` в `app/Domains/`.
+- В каждом домене добавить подпапки:
+  - `Models`
+  - `Actions`
+  - `Policies`
+  - `Resources` (при необходимости `Resources/views`, `Resources/Filament`)
+- Проверить соответствие `DomainServiceProvider` фактической структуре каталогов.
+- Прогнать:
+  - `composer dump-autoload`
+  - `php artisan optimize:clear`
+
+---
+
+## 2) Этап 0.2 — Multitenancy через Global Scope
+- Создать сервис `App\Domains\Vendor\Services\TenantContext`:
+  - `setCurrentVendor(?string $vendorId): void`
+  - `getCurrentVendor(): ?string`
+- Зарегистрировать singleton в `AppServiceProvider`.
+- Создать `App\Domains\Vendor\Scopes\BelongsToVendorScope`:
+  - `apply()` добавляет `where vendor_id = current_vendor_id`.
+- Создать трейт `App\Domains\Vendor\Traits\BelongsToVendor`:
+  - `bootBelongsToVendor()` подключает global scope.
+- Создать middleware `App\Http\Middleware\SetTenantContext`:
+  - Источники: `X-Vendor-ID` header или поддомен `{vendor}.resto.local`.
+- Подключить middleware к нужным маршрутам/группам.
+- Написать feature-тесты для scope/middleware.
+
+---
+
+## 3) Этап 1.1 — База данных (PostgreSQL 16 + PostGIS)
+- Проверить миграции на строгое соответствие промту:
+  - `restaurants.delivery_zones` как `geometry(Polygon,4326)`.
+  - GiST индекс на `delivery_zones`.
+- Проверить `foreign keys` и `onDelete`-правила.
+- Проверить составные индексы под запросы:
+  - `products(vendor_id, is_available)`
+  - `orders(vendor_id, status)`
+- Добавить smoke-тест миграций под PostgreSQL+PostGIS.
+
+---
+
+## 4) Этап 1.2 — Модели и касты
+- Привести `Category` к консистентной схеме ID:
+  - либо UUID в миграции,
+  - либо убрать `HasUuids`.
+- Реализовать реальный `MoneyCast` (через `brick/money` или custom cast).
+- Убрать placeholder-касты.
+- Проверить `BelongsToVendor` в моделях `Restaurant`, `Category`, `Product` (если нужно).
+- Проверить `Order::booted()`:
+  - Логирование смены статуса в `order_status_history`.
+- Добавить unit/feature тесты на casts/scopes/history.
+
+---
+
+## 5) Этап 2.1 — PWA (Manifest + Service Worker)
+- Уточнить `manifest.json`:
+  - `name`, `short_name`, `start_url`, `display`, `orientation`, цвета, иконки.
+  - (Опционально) `id`, `scope`.
+- Доработать `public/sw.js`:
+  - install: кэшировать JS/CSS/шрифты/критичную статику.
+  - fetch: `NetworkFirst` для `/api/*`, `CacheFirst` для статики.
+  - navigation fallback на `/offline` при сетевой ошибке.
+  - activate: cleanup старых кэшей.
+- Проверить регистрацию SW в `resources/js/app.js`.
+- Прогнать Lighthouse PWA проверку.
+
+---
+
+## 6) Этап 2.2 — Offline UI
+- Проверить компоненты:
+  - `offline-indicator`
+  - `offline-fallback`
+  - `offline.blade.php`
+- Убедиться, что offline-страница не зависит от внешних CDN в полном offline.
+- Проверить dispatch событий:
+  - `browser-online`
+  - `browser-offline`
+
+---
+
+## 7) Этап 3.1 — IndexedDB сервис (Dexie)
+- Создать `resources/js/services/CartService.js`.
+- Инициализировать БД `RestoCart` v1:
+  - `cart: ++id, vendorId, productId, modifiersHash, quantity, price, addedAt`
+  - `pendingOrders: ++id, payload, retries, createdAt`
+- Реализовать методы:
+  - `addItem`
+  - `removeItem`
+  - `updateQuantity`
+  - `getCartByVendor`
+  - `clearVendorCart`
+  - `getTotals`
+  - `queueOrder`
+- Экспортировать `window.CartService`.
+- Добавить JSDoc-типизацию.
+
+---
+
+## 8) Этап 3.2 — Livewire CartDrawer (stateless)
+- Создать `app/Livewire/Cart/CartDrawer.php` и blade view.
+- Реализовать свойства:
+  - `$items`, `$vendorId`, `$isOffline`, `$total`
+- Реализовать методы:
+  - `mount()`
+  - `addItem(productId, modifiers, price)`
+  - `removeItem(id)`
+  - `syncWithServer()` (`/api/cart/sync`)
+- Добавить listeners на `browser-offline` / `browser-online`.
+- UI: side-drawer + анимация + список позиций + +/- + disabled checkout если доставка невозможна.
+- Весь runtime state корзины хранить в Dexie.
+
+---
+
+## 9) Рекомендуемый порядок внедрения
+1. Multitenancy (Этап 0.2)
+2. Модели/касты и консистентность ID (Этап 1.2)
+3. SW fallback + offline UI (Этап 2)
+4. Dexie CartService (Этап 3.1)
+5. Livewire CartDrawer + sync API (Этап 3.2)
+6. Финальные интеграционные тесты
+
+---
+
+## 10) Definition of Done
+- [ ] Все домены и подпапки созданы по DDD-шаблону.
+- [ ] Multitenancy работает (scope + middleware + tenant context).
+- [ ] Миграции полностью проходят на PostgreSQL 16 + PostGIS.
+- [ ] Модели без placeholder-кастов.
+- [ ] SW корректно отдает offline fallback.
+- [ ] Dexie корзина и очередь заказов работают.
+- [ ] Livewire CartDrawer stateless и синхронизируется с API.
+- [ ] Покрытие тестами базовых сценариев (unit/feature/integration).
