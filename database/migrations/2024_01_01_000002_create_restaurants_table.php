@@ -9,7 +9,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('restaurants', function (Blueprint $table) {
+        $hasPostGis = $this->postGisAvailable();
+
+        Schema::create('restaurants', function (Blueprint $table) use ($hasPostGis) {
             $table->uuid('id')->primary();
             $table->string('slug')->unique();
             $table->string('name');
@@ -27,10 +29,26 @@ return new class extends Migration
 
             $table->index('owner_id');
             $table->index('is_active');
+
+            if (!$hasPostGis) {
+                $table->text('delivery_zones')->nullable();
+            }
         });
 
-        DB::statement("SELECT AddGeometryColumn('restaurants', 'delivery_zones', 4326, 'POLYGON', 2)");
-        DB::statement('CREATE INDEX restaurants_delivery_zones_gist ON restaurants USING GIST (delivery_zones)');
+        if ($hasPostGis) {
+            DB::statement("SELECT AddGeometryColumn('restaurants', 'delivery_zones', 4326, 'POLYGON', 2)");
+            DB::statement('CREATE INDEX restaurants_delivery_zones_gist ON restaurants USING GIST (delivery_zones)');
+        }
+    }
+
+    protected function postGisAvailable(): bool
+    {
+        try {
+            $result = DB::select("SELECT proname FROM pg_proc WHERE proname = 'addgeometrycolumn' LIMIT 1");
+            return !empty($result);
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     public function down(): void
