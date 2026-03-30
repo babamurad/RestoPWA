@@ -1,5 +1,6 @@
 <?php
 
+use App\Domains\Order\Http\Controllers\OrderTrackingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -31,3 +32,9 @@ Route::get('/manifest.json', function () {
 });
 
 Route::view('/offline', 'offline');
+
+Route::get('/order/{orderId}/track', [OrderTrackingController::class, 'track'])
+    ->name('order.track');
+
+Route::get('/api/order/{orderId}/track', [OrderTrackingController::class, 'apiTrack'])
+    ->name('api.order.track');
