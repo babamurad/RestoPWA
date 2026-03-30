@@ -5,23 +5,45 @@ declare(strict_types=1);
 namespace App\Domains\Vendor\Models;
 
 use App\Domains\Vendor\Traits\BelongsToVendor;
-use Illuminate\Database\Eloquent\Builder;
+use Database\Factories\RestaurantFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * @property string $id
  * @property string|null $vendor_id
  * @property string $name
+ * @property string|null $image
+ * @property string|null $cover_image
+ * @property float|null $rating
+ * @property int $review_count
+ * @property string|null $delivery_time
+ * @property float $delivery_fee
+ * @property int $min_order
  * @property array|null $settings
  * @property mixed $delivery_zones
+ * @property bool $is_active
  * @property \Carbon\Carbon|null $created_at
  * @property \Carbon\Carbon|null $updated_at
  */
 class Restaurant extends Model
 {
+    use HasFactory;
     use HasUuids;
     use BelongsToVendor;
+
+    protected static function newFactory(): \Illuminate\Database\Eloquent\Factories\Factory
+    {
+        return new RestaurantFactory();
+    }
+
+    protected static function booted(): void
+    {
+        parent::booted();
+        static::bootBelongsToVendor();
+    }
 
     /**
      * @var list<string>
@@ -29,6 +51,13 @@ class Restaurant extends Model
     protected $fillable = [
         'vendor_id',
         'name',
+        'image',
+        'cover_image',
+        'rating',
+        'review_count',
+        'delivery_time',
+        'delivery_fee',
+        'min_order',
         'settings',
         'delivery_zones',
         'is_active',
@@ -40,6 +69,10 @@ class Restaurant extends Model
     protected function casts(): array
     {
         return [
+            'rating' => 'float',
+            'review_count' => 'integer',
+            'delivery_fee' => 'float',
+            'min_order' => 'integer',
             'settings' => 'array',
             'is_active' => 'boolean',
         ];

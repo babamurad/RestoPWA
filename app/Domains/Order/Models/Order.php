@@ -38,8 +38,7 @@ class Order extends Model
         return [
             'address' => 'array',
             'items' => 'array',
-            // Custom money cast
-            'total' => class_exists(MoneyCast::class) ? MoneyCast::class : 'array', 
+            'total' => MoneyCast::class, 
         ];
     }
 

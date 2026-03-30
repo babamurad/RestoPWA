@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domains\Menu\Models;
 
-use App\Casts\MoneyCast; // Replace with an actual class or brick/money cast
+use App\Casts\MoneyCast;
+use App\Domains\Vendor\Traits\BelongsToVendor;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\AsCollection;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -15,23 +16,31 @@ use Illuminate\Support\Collection;
 /**
  * @property string $id
  * @property string|null $category_id
+ * @property string|null $vendor_id
  * @property string $name
  * @property mixed $price
  * @property Collection $modifiers
+ * @property string|null $image
+ * @property int|null $weight_g
  * @property bool $is_available
  * @property-read mixed $final_price
  */
 class Product extends Model
 {
     use HasUuids;
+    use BelongsToVendor;
 
     /**
      * @var list<string>
      */
     protected $fillable = [
+        'vendor_id',
         'category_id',
         'name',
+        'description',
         'price',
+        'image',
+        'weight_g',
         'modifiers',
         'is_available',
     ];
@@ -43,8 +52,7 @@ class Product extends Model
     {
         return [
             'modifiers' => AsCollection::class,
-            // Custom money cast (brick/money or app cast)
-            'price' => class_exists(MoneyCast::class) ? MoneyCast::class : 'array', // placeholder
+            'price' => MoneyCast::class,
             'is_available' => 'boolean',
         ];
     }
@@ -86,5 +94,11 @@ class Product extends Model
     public function scopeAvailable(Builder $query): Builder
     {
         return $query->where('is_available', true);
+    }
+
+    protected static function booted(): void
+    {
+        parent::booted();
+        static::bootBelongsToVendor();
     }
 }
