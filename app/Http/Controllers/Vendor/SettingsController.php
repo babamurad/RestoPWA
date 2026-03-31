@@ -12,12 +12,20 @@ class SettingsController extends Controller
     {
         $restaurant = app('tenant');
         
+        if (!($restaurant instanceof Restaurant)) {
+            abort(404, 'Restaurant model not found for this vendor.');
+        }
+        
         return view('vendor.settings.index', compact('restaurant'));
     }
     
     public function update(Request $request)
     {
         $restaurant = app('tenant');
+
+        if (!($restaurant instanceof Restaurant)) {
+            abort(404, 'Restaurant model not found for this vendor.');
+        }
         
         $data = $request->validate([
             'working_hours' => 'nullable|array',

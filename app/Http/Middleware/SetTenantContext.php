@@ -29,11 +29,14 @@ class SetTenantContext
             // Expected format: {vendor}.resto.local
             if (preg_match('/^([^.]+)\.resto\.local$/', $host, $matches)) {
                 $vendorId = $matches[1];
+            } elseif ($host === 'restopwa') {
+                // Фоллбек для локальной разработки: берем из сессии или заголовка
+                $vendorId = $request->session()->get('vendor_id');
             }
         }
 
         if ($vendorId) {
-            $this->tenantContext->setCurrentVendor($vendorId);
+            $this->tenantContext->setCurrentVendor((string) $vendorId);
         }
 
         return $next($request);

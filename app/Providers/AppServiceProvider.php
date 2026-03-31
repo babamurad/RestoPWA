@@ -22,13 +22,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Services\PushNotificationService::class);
 
         $this->app->bind('tenant', function ($app) {
-            $tenantContext = $app->make(TenantContext::class);
+            $tenantContext = $app->make(\App\Domains\Vendor\Services\TenantContext::class);
             $vendorId = $tenantContext->getCurrentVendor();
-            
+
             if ($vendorId) {
-                return (object) ['id' => $vendorId];
+                // Пытаемся найти ресторан по vendor_id
+                return \App\Domains\Vendor\Models\Restaurant::where('vendor_id', $vendorId)->first()
+                    ?? (object) ['id' => $vendorId];
             }
-            
+
             return null;
         });
     }

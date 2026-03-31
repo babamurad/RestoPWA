@@ -15,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', [
             \App\Http\Middleware\SetTenantContext::class,
         ]);
+
+        $middleware->alias([
+            'ensure.tenant' => \App\Http\Middleware\EnsureTenant::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
