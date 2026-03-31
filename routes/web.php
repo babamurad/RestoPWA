@@ -4,6 +4,7 @@ use App\Domains\Order\Http\Controllers\OrderTrackingController;
 use App\Http\Controllers\Vendor\ProductController;
 use App\Http\Controllers\Vendor\OrderController;
 use App\Http\Controllers\Vendor\SettingsController;
+use App\Http\Controllers\Vendor\KanbanController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -44,6 +45,7 @@ Route::get('/api/order/{orderId}/track', [OrderTrackingController::class, 'apiTr
 
 Route::prefix('vendor')->name('vendor.')->group(function () {
     Route::resource('products', ProductController::class)->except(['show']);
+    Route::get('orders/kanban', [KanbanController::class, 'index'])->name('orders.kanban');
     Route::resource('orders', OrderController::class)->except(['create', 'store']);
     Route::post('orders/{order}/accept', [OrderController::class, 'accept'])->name('orders.accept');
     Route::post('orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');

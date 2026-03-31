@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Domains\Order\Models\Order;
+use App\Domains\Vendor\Services\TenantContext;
 use App\Events\OrderStatusUpdated;
 use App\Listeners\LogOrderStatusUpdate;
 use App\Observers\OrderObserver;
@@ -19,6 +20,17 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Domains\Vendor\Services\TenantContext::class);
         $this->app->singleton(\App\Domains\Geo\Services\GeoService::class);
         $this->app->singleton(\App\Services\PushNotificationService::class);
+
+        $this->app->bind('tenant', function ($app) {
+            $tenantContext = $app->make(TenantContext::class);
+            $vendorId = $tenantContext->getCurrentVendor();
+            
+            if ($vendorId) {
+                return (object) ['id' => $vendorId];
+            }
+            
+            return null;
+        });
     }
 
     /**
