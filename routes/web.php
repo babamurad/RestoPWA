@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Route;
 
 use App\Domains\Menu\Models\Category;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     // Fetch unique category names from all active restaurants
@@ -68,12 +70,20 @@ Route::get('/cart', function () {
 })->name('cart');
 
 Route::get('/orders', function () {
-    return "Your orders";
+    $user = Auth::user() ?? User::where('email', 'test@example.com')->first();
+    $orders = $user ? \App\Domains\Order\Models\Order::where('user_id', $user->id)->latest()->get() : collect();
+    return view('orders.index', compact('orders'));
 })->name('orders.index');
 
 Route::get('/profile', function () {
-    return "Your profile";
+    $user = Auth::user() ?? User::where('email', 'test@example.com')->first();
+    return view('profile.edit', compact('user'));
 })->name('profile.edit');
+
+Route::post('/logout', function () {
+    Auth::logout();
+    return redirect('/');
+})->name('logout');
 
 Route::get('/manifest.json', function () {
     return response()->json([
