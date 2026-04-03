@@ -14,14 +14,13 @@ use Illuminate\Support\Facades\Cache;
 
 class MenuController
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request, Restaurant $vendor): JsonResponse
     {
         $request->validate([
-            'vendor_id' => 'required|string',
             'category_id' => 'nullable|integer',
         ]);
 
-        $vendorId = $request->vendor_id;
+        $vendorId = $vendor->vendor_id ?? $vendor->id;
         $categoryId = $request->category_id;
         $cacheTags = ['menu', "vendor:{$vendorId}"];
 
@@ -40,11 +39,9 @@ class MenuController
         return response()->json($data);
     }
 
-    public function show(string $id): JsonResponse
+    public function show(Product $product): JsonResponse
     {
-        $product = Product::where('id', $id)
-            ->with('category')
-            ->firstOrFail();
+        $product->load('category');
 
         return response()->json([
             'id' => $product->id,

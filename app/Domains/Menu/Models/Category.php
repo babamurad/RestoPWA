@@ -48,6 +48,22 @@ class Category extends Model
         return $this->hasMany(self::class, 'parent_id');
     }
 
+    /**
+     * @return HasMany<Product, static>
+     */
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class, 'category_id');
+    }
+
+    /**
+     * @return BelongsTo<\App\Domains\Vendor\Models\Restaurant, static>
+     */
+    public function restaurant(): BelongsTo
+    {
+        return $this->belongsTo(\App\Domains\Vendor\Models\Restaurant::class, 'vendor_id');
+    }
+
     protected static function booted(): void
     {
         parent::booted();

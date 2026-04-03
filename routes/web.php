@@ -7,9 +7,73 @@ use App\Http\Controllers\Vendor\SettingsController;
 use App\Http\Controllers\Vendor\KanbanController;
 use Illuminate\Support\Facades\Route;
 
+use App\Domains\Menu\Models\Category;
+use App\Domains\Vendor\Models\Restaurant;
+
 Route::get('/', function () {
-    return view('welcome');
-});
+    // Fetch unique category names from all active restaurants
+    $uniqueCategoryNames = Category::where('is_active', true)
+        ->select('name')
+        ->distinct()
+        ->orderBy('name')
+        ->get();
+
+    $icons = [
+        'Пицца' => '🍕',
+        'Суши' => '🍣',
+        'Роллы' => '🍱',
+        'Бургеры' => '🍔',
+        'Паста' => '🍝',
+        'Салаты' => '🥗',
+        'Закуски' => '🍟',
+        'Супы' => '🍜',
+        'Сеты' => '🍱',
+        'Боулы' => '🥣',
+        'Десерты' => '🍰',
+        'Кофе' => '☕',
+        'Выпечка' => '🥐',
+    ];
+
+    $categories = $uniqueCategoryNames->map(function($cat, $index) use ($icons) {
+        return (object)[
+            'id' => $index + 1,
+            'name' => $cat->name,
+            'icon' => $icons[$cat->name] ?? '🍴'
+        ];
+    });
+
+    $popularRestaurants = Restaurant::where('is_active', true)->limit(10)->get();
+    $restaurants = Restaurant::where('is_active', true)->paginate(20);
+
+    return view('home', compact('categories', 'popularRestaurants', 'restaurants'));
+})->name('home');
+
+// Placeholder routes for navigation
+Route::get('/restaurants', function () {
+    return "Restaurants list";
+})->name('restaurants.index');
+
+Route::get('/restaurants/{restaurant:slug}', function (Restaurant $restaurant) {
+    $restaurant->load(['categories' => function($q) {
+        $q->where('is_active', true)->orderBy('sort_order')->with(['products' => function($pq) {
+            $pq->where('is_available', true);
+        }]);
+    }]);
+
+    return view('restaurants.show', compact('restaurant'));
+})->name('restaurants.show');
+
+Route::get('/cart', function () {
+    return view('cart');
+})->name('cart');
+
+Route::get('/orders', function () {
+    return "Your orders";
+})->name('orders.index');
+
+Route::get('/profile', function () {
+    return "Your profile";
+})->name('profile.edit');
 
 Route::get('/manifest.json', function () {
     return response()->json([

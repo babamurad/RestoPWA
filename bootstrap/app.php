@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SetTenantContext::class,
         ]);
 
+        $middleware->appendToGroup('api', [
+            \App\Http\Middleware\SetTenantContext::class,
+        ]);
+
         $middleware->alias([
             'ensure.tenant' => \App\Http\Middleware\EnsureTenant::class,
         ]);

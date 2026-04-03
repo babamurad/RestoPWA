@@ -1,35 +1,51 @@
 export interface Category {
   id: string;
   name: string;
-  icon: string;
+  icon?: string;
 }
 
 export interface FoodItem {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   price: number;
-  image: string;
-  category: string;
+  image?: string;
+  image_url?: string;
+  category?: string;
+  category_id?: number;
   weight?: string;
+  weight_g?: number;
   calories?: number;
   isPopular?: boolean;
+  is_available?: boolean;
 }
 
 export interface Restaurant {
   id: string;
+  slug?: string;
   name: string;
-  description: string;
-  image: string;
-  coverImage: string;
-  rating: number;
-  reviewCount: number;
-  deliveryTime: string;
+  description?: string;
+  image?: string;
+  coverImage?: string;
+  rating?: number;
+  reviewCount?: number;
+  deliveryTime?: string;
+  delivery_time?: string;
   deliveryFee: number;
-  minOrder: number;
-  categories: string[];
-  menu: FoodItem[];
-  isOpen: boolean;
+  delivery_fee: number;
+  minOrder?: number;
+  min_order?: number;
+  categories?: string[];
+  menu?: FoodItem[];
+  isOpen?: boolean;
+  is_active?: boolean;
+}
+
+export interface MenuCategory {
+  id: number;
+  name: string;
+  sort_order: number;
+  children: MenuCategory[];
 }
 
 export interface CartItem {

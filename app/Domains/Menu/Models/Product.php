@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Casts\AsCollection;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
 
 /**
@@ -100,5 +101,35 @@ class Product extends Model
     {
         parent::booted();
         static::bootBelongsToVendor();
+    }
+
+    /**
+     * Get the product's image URL.
+     */
+    public function getImageUrlAttribute(): string
+    {
+        if ($this->image && str_starts_with($this->image, 'http')) {
+            return $this->image;
+        }
+
+        return $this->image
+            ? asset('storage/' . $this->image)
+            : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200';
+    }
+
+    /**
+     * Get the category that owns the product.
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * Get the restaurant that owns the product.
+     */
+    public function restaurant(): BelongsTo
+    {
+        return $this->belongsTo(\App\Domains\Vendor\Models\Restaurant::class, 'vendor_id');
     }
 }

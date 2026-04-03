@@ -5,6 +5,8 @@ import Dexie from 'dexie';
  * @property {number} [id]
  * @property {string} productId
  * @property {string} vendorId
+ * @property {string} productName
+ * @property {string} [image]
  * @property {string} modifiersHash
  * @property {number} quantity
  * @property {number} price
@@ -61,11 +63,13 @@ const CartService = {
     /**
      * @param {string} productId
      * @param {string} vendorId
+     * @param {string} productName
+     * @param {string} [image]
      * @param {Object} [modifiers={}]
      * @param {number} price - price in cents
      * @returns {Promise<number>}
      */
-    async addItem(productId, vendorId, modifiers = {}, price) {
+    async addItem(productId, vendorId, productName, image, modifiers = {}, price) {
         const modifiersHash = hashModifiers(modifiers);
         
         const existingItem = await db.cart
@@ -83,6 +87,8 @@ const CartService = {
         const id = await db.cart.add({
             productId,
             vendorId,
+            productName,
+            image,
             modifiersHash,
             quantity: 1,
             price,

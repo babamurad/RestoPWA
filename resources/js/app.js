@@ -28,7 +28,7 @@ window.addEventListener('offline', () => {
     }
 });
 
-const vapidPublicKey = '{{ config('services.push.public_key') }}';
+const vapidPublicKey = window.vapidPublicKey || null;
 
 async function askPushPermission() {
     if (!('Notification' in window) || !('serviceWorker' in navigator)) {

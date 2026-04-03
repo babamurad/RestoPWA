@@ -38,11 +38,16 @@ document.addEventListener('alpine:init', () => {
             window.addEventListener('sync-pending-orders', () => {
                 this.syncPendingOrders();
             });
+
+            window.addEventListener('set-vendor', (e) => {
+                this.currentVendorId = e.detail.vendorId;
+                this.broadcastState();
+            });
         },
 
-        async addItem({ productId, vendorId, modifiers = {}, price, productName }) {
+        async addItem({ productId, vendorId, productName, image, modifiers = {}, price }) {
             try {
-                await window.CartService.addItem(productId, vendorId, modifiers, price);
+                await window.CartService.addItem(productId, vendorId, productName, image, modifiers, price);
                 await this.broadcastState();
             } catch (error) {
                 console.error('Failed to add item:', error);

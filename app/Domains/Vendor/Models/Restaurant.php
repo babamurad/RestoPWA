@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Vendor\Models;
 
-use App\Domains\Vendor\Traits\BelongsToVendor;
+
 use Database\Factories\RestaurantFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,7 +32,6 @@ class Restaurant extends Model
 {
     use HasFactory;
     use HasUuids;
-    use BelongsToVendor;
 
     protected static function newFactory(): \Illuminate\Database\Eloquent\Factories\Factory
     {
@@ -42,7 +41,6 @@ class Restaurant extends Model
     protected static function booted(): void
     {
         parent::booted();
-        static::bootBelongsToVendor();
     }
 
     /**
@@ -103,5 +101,27 @@ class Restaurant extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Get the restaurant's image URL.
+     */
+    public function getImageUrlAttribute(): string
+    {
+        if ($this->image && str_starts_with($this->image, 'http')) {
+            return $this->image;
+        }
+        
+        return $this->image 
+            ? asset('storage/' . $this->image) 
+            : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=400';
+    }
+
+    /**
+     * Get the categories for the restaurant.
+     */
+    public function categories(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Domains\Menu\Models\Category::class, 'vendor_id');
     }
 }

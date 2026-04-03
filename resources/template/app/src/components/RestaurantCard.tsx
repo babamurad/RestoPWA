@@ -21,7 +21,7 @@ export function RestaurantCard({ restaurant, onClick, variant = 'vertical' }: Re
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
             loading="lazy"
           />
-          {restaurant.deliveryFee === 0 && (
+          {(restaurant.deliveryFee ?? 0) === 0 && (
             <div className="absolute top-3 left-3 px-2.5 py-1 bg-green-500 text-white text-xs font-semibold rounded-full">
               Бесплатная доставка
             </div>
@@ -41,7 +41,7 @@ export function RestaurantCard({ restaurant, onClick, variant = 'vertical' }: Re
             </div>
           </div>
           <div className="flex flex-wrap gap-1 mt-2">
-            {restaurant.categories.slice(0, 3).map((cat) => (
+            {(restaurant.categories || []).slice(0, 3).map((cat) => (
               <span key={cat} className="text-xs text-gray-500">
                 {cat}
               </span>
@@ -79,12 +79,12 @@ export function RestaurantCard({ restaurant, onClick, variant = 'vertical' }: Re
         </div>
         <div className="flex items-center gap-1 mt-1 text-sm text-gray-500">
           <MapPin size={14} />
-          <span className="truncate">{restaurant.categories.join(' • ')}</span>
+          <span className="truncate">{(restaurant.categories || []).join(' • ')}</span>
         </div>
-        {restaurant.deliveryFee === 0 ? (
+        {(restaurant.deliveryFee ?? 0) === 0 ? (
           <span className="mt-2 text-xs font-medium text-green-600">Бесплатная доставка</span>
         ) : (
-          <span className="mt-2 text-xs text-gray-500">Доставка {restaurant.deliveryFee} ₽</span>
+          <span className="mt-2 text-xs text-gray-500">Доставка {restaurant.deliveryFee ?? 0} ₽</span>
         )}
       </div>
     </div>

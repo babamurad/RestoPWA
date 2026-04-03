@@ -5,9 +5,10 @@ use App\Domains\Menu\Models\Product;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Domains\Order\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\PushController;
+use App\Http\Middleware\SetTenantContext;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->group(function () {
+Route::middleware([SetTenantContext::class])->prefix('v1')->group(function () {
     Route::bind('vendor', function ($value) {
         return Restaurant::where('slug', $value)->firstOrFail();
     });
@@ -23,10 +24,24 @@ Route::prefix('v1')->group(function () {
         ->name('api.menu.product.show');
     
     Route::get('restaurants', function () {
-        return \App\Domains\Vendor\Models\Restaurant::active()
-            ->select('id', 'slug', 'name', 'image', 'rating', 'delivery_time', 'delivery_fee')
+        return Restaurant::active()
+            ->select('id', 'slug', 'name', 'image', 'cover_image', 'rating', 'review_count', 'delivery_time', 'delivery_fee', 'min_order', 'is_active', 'description')
             ->get();
     })->name('api.restaurants.index');
+
+    Route::get('restaurants/{vendor}', function (Restaurant $vendor) {
+        return response()->json($vendor);
+    })->name('api.restaurants.show');
+
+    Route::get('categories', function () {
+        $categories = \App\Domains\Menu\Models\Category::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get(['id', 'name', 'sort_order', 'parent_id']);
+        
+        return response()->json([
+            'data' => $categories,
+        ]);
+    })->name('api.categories.index');
 });
 
 Route::post('orders', [OrderController::class, 'store'])
