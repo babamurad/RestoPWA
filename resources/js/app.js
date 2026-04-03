@@ -14,19 +14,64 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-window.addEventListener('online', () => {
-    document.body.classList.remove('is-offline');
-    if (window.Livewire) {
-        window.Livewire.dispatch('browser-online');
+
+async function checkConnectivity() {
+    const wasOffline = !navigator.onLine || document.body.classList.contains('is-server-offline');
+    
+    if (!navigator.onLine) {
+        setOfflineState(true, 'network');
+        return;
     }
+
+    try {
+        const response = await fetch('/api/ping', { 
+            method: 'HEAD', 
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' } 
+        });
+        
+        if (response.ok) {
+            setOfflineState(false);
+        } else {
+            setOfflineState(true, 'server');
+        }
+    } catch (e) {
+        setOfflineState(true, 'server');
+    }
+}
+
+function setOfflineState(isOffline, type = 'network') {
+    const indicator = document.getElementById('offline-indicator');
+    if (isOffline) {
+        document.body.classList.add('is-offline');
+        if (type === 'server') {
+            document.body.classList.add('is-server-offline');
+        }
+        if (window.Livewire) window.Livewire.dispatch('browser-offline');
+    } else {
+        document.body.classList.remove('is-offline', 'is-server-offline');
+        if (window.Livewire) window.Livewire.dispatch('browser-online');
+    }
+    
+    // Dispatch custom event for Alpine components
+    window.dispatchEvent(new CustomEvent('connectivity-changed', { 
+        detail: { isOffline, type } 
+    }));
+}
+
+// Check every 30 seconds
+setInterval(checkConnectivity, 30000);
+
+window.addEventListener('online', () => {
+    checkConnectivity();
 });
 
 window.addEventListener('offline', () => {
-    document.body.classList.add('is-offline');
-    if (window.Livewire) {
-        window.Livewire.dispatch('browser-offline');
-    }
+    setOfflineState(true, 'network');
 });
+
+// Initial check
+checkConnectivity();
 
 const vapidPublicKey = window.vapidPublicKey || null;
 

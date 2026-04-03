@@ -25,7 +25,51 @@
             </div>
         </header>
 
-        <main class="px-4 py-6">
+        <main class="px-4 py-6" x-data="{ 
+            pendingOrders: [],
+            async init() {
+                if (window.CartService) {
+                    this.pendingOrders = await window.CartService.getPendingOrders();
+                    // Refresh every 5 seconds or on online
+                    window.addEventListener('online', async () => {
+                        this.pendingOrders = await window.CartService.getPendingOrders();
+                    });
+                }
+            }
+        }">
+            
+            {{-- Pending Orders from IndexedDB --}}
+            <template x-for="order in pendingOrders" :key="order.id">
+                <div class="mb-4 bg-amber-50/50 rounded-3xl border-2 border-dashed border-amber-200 overflow-hidden animate-pulse">
+                    <div class="p-5">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[10px] font-black text-amber-400 uppercase tracking-widest italic">Ожидает отправки</span>
+                                    <span class="text-[10px] font-bold text-amber-200">•</span>
+                                    <span class="text-[10px] font-bold text-amber-400 uppercase tracking-tighter" x-text="new Date(order.createdAt).toLocaleString()"></span>
+                                </div>
+                                <h3 class="text-lg font-black text-gray-900 leading-tight">Ваш заказ (офлайн)</h3>
+                            </div>
+                            <div class="flex items-center px-3 py-1 rounded-full border bg-amber-100 text-amber-600 border-amber-200">
+                                <span class="text-[10px] font-black uppercase tracking-widest">Синхронизация</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-end justify-between mt-2 pt-4 border-t border-amber-100">
+                            <div class="flex flex-col">
+                                <span class="text-[9px] font-bold text-amber-400 uppercase tracking-widest leading-none mb-1">Будет отправлен при появлении сети</span>
+                                <span class="text-xl font-black text-gray-900" x-text="(order.payload.total / 100).toLocaleString() + ' ₽'"></span>
+                            </div>
+                            
+                            <div class="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 text-white text-xs font-bold rounded-2xl shadow-lg">
+                                В очереди
+                                <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
             
             @forelse($orders as $order)
                 @php $status = $statusConfig[$order->status] ?? $statusConfig['pending']; @endphp

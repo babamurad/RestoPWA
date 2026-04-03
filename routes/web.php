@@ -117,6 +117,10 @@ Route::get('/order/{orderId}/track', [OrderTrackingController::class, 'track'])
 Route::get('/api/order/{orderId}/track', [OrderTrackingController::class, 'apiTrack'])
     ->name('api.order.track');
 
+Route::get('/api/ping', function () {
+    return response()->json(['status' => 'ok']);
+})->name('api.ping');
+
 Route::prefix('vendor')->name('vendor.')->middleware(['ensure.tenant'])->group(function () {
     Route::resource('products', ProductController::class)->except(['show']);
     Route::get('orders/kanban', [KanbanController::class, 'index'])->name('orders.kanban');
