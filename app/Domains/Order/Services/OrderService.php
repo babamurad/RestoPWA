@@ -29,10 +29,14 @@ class OrderService
                 'user_id' => $data['user_id'],
                 'status' => self::STATUS_PENDING,
                 'payment_status' => 'pending',
-                'address' => $data['address'],
+                'address' => $data['address'] ?? [],
                 'items' => $data['items'],
                 'total' => $data['total'],
                 'delivery_fee' => $data['delivery_fee'] ?? 0,
+                'delivery_time' => $data['delivery_time'] ?? null,
+                'payment_method' => $data['payment_method'] ?? 'card',
+                'comment' => $data['comment'] ?? null,
+                'is_offline' => $data['is_offline'] ?? false,
             ]);
 
             $order->statusHistory()->create([

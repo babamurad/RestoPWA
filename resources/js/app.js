@@ -7,6 +7,7 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
             .then((registration) => {
                 console.log('SW registered:', registration.scope);
+                setupOrderSubmission(registration);
             })
             .catch((error) => {
                 console.error('SW registration failed:', error);
@@ -14,6 +15,57 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+function setupOrderSubmission(registration) {
+    window.addEventListener('submit-order', async (e) => {
+        const payload = e.detail;
+        
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            
+            const response = await fetch('/api/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify(payload),
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                
+                if (result.redirect_url) {
+                    window.location.href = result.redirect_url;
+                } else {
+                    window.location.href = `/order/success/${result.order_id}`;
+                }
+            } else {
+                const error = await response.json();
+                alert('Ошибка оформления заказа: ' + (error.message || 'Попробуйте позже'));
+            }
+        } catch (error) {
+            console.error('Order submission error:', error);
+            
+            if (registration.active) {
+                await registration.active.sync.register({
+                    tag: 'order-sync',
+                });
+            }
+            
+            alert('Заказ сохранён локально и будет отправлен при появлении интернета');
+        }
+    });
+    
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data?.type === 'ORDER_SYNCED') {
+                window.dispatchEvent(new CustomEvent('order-synced-from-offline', {
+                    detail: event.data,
+                }));
+            }
+        });
+    }
+}
 
 async function checkConnectivity() {
     const wasOffline = !navigator.onLine || document.body.classList.contains('is-server-offline');

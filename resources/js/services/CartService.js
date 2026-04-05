@@ -8,6 +8,7 @@ import Dexie from 'dexie';
  * @property {string} productName
  * @property {string} [image]
  * @property {string} modifiersHash
+ * @property {Object} modifiers
  * @property {number} quantity
  * @property {number} price
  * @property {Date} addedAt
@@ -90,6 +91,7 @@ const CartService = {
             productName,
             image,
             modifiersHash,
+            modifiers,
             quantity: 1,
             price,
             addedAt: new Date()
@@ -193,7 +195,7 @@ const CartService = {
      */
     async getAllItems() {
         return db.cart.toArray();
-    }
+    },
 };
 
 window.CartService = CartService;

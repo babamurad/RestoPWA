@@ -20,6 +20,10 @@ use Illuminate\Support\Facades\Auth;
  * @property array $items
  * @property mixed $total
  * @property float $delivery_fee
+ * @property string|null $delivery_time
+ * @property string|null $payment_method
+ * @property string|null $comment
+ * @property bool $is_offline
  */
 class Order extends Model
 {
@@ -37,6 +41,10 @@ class Order extends Model
         'items',
         'total',
         'delivery_fee',
+        'delivery_time',
+        'payment_method',
+        'comment',
+        'is_offline',
     ];
 
     /**
@@ -49,6 +57,7 @@ class Order extends Model
             'items' => 'array',
             'total' => MoneyCast::class,
             'delivery_fee' => 'float',
+            'is_offline' => 'boolean',
         ];
     }
 

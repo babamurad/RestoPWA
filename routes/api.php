@@ -3,7 +3,8 @@
 use App\Domains\Menu\Http\Controllers\MenuController;
 use App\Domains\Menu\Models\Product;
 use App\Domains\Vendor\Models\Restaurant;
-use App\Domains\Order\Http\Controllers\Api\OrderController;
+use App\Domains\Order\Http\Controllers\Api\OrderController as DomainOrderController;
+use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\PushController;
 use App\Http\Middleware\SetTenantContext;
 use Illuminate\Support\Facades\Route;
@@ -42,10 +43,18 @@ Route::middleware([SetTenantContext::class])->prefix('v1')->group(function () {
             'data' => $categories,
         ]);
     })->name('api.categories.index');
+
+    Route::post('orders', [DomainOrderController::class, 'store'])
+        ->name('api.orders.store');
 });
 
-Route::post('orders', [OrderController::class, 'store'])
-    ->name('api.orders.store');
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('v1/orders', [OrderController::class, 'index'])
+        ->name('api.v1.orders.index');
+    
+    Route::get('v1/orders/{id}', [OrderController::class, 'show'])
+        ->name('api.v1.orders.show');
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('push/subscribe', [PushController::class, 'subscribe'])

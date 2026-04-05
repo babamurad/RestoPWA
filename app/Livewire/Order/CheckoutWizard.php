@@ -181,7 +181,7 @@ class CheckoutWizard extends Component
         $this->error = null;
 
         try {
-            $userId = auth()->id() ?? 'guest';
+            $userId = \Illuminate\Support\Facades\Auth::check() ? \Illuminate\Support\Facades\Auth::id() : null;
 
             $orderData = [
                 'vendor_id' => $this->vendorId,

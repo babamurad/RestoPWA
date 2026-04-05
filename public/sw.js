@@ -174,31 +174,93 @@ async function syncOrders() {
             return;
         }
         
+        const synced = [];
+        const failed = [];
+        
         for (const order of orders) {
+            if (order.retries >= 5) {
+                failed.push(order);
+                continue;
+            }
+            
             try {
+                const csrfToken = await getCsrfToken();
+                
                 const response = await fetch('/api/orders', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
                     },
-                    body: JSON.stringify(order),
+                    body: JSON.stringify({
+                        vendor_id: order.payload.vendorId,
+                        items: order.payload.items,
+                        address: order.payload.address || {},
+                        total: order.payload.total / 100,
+                        delivery_fee: (order.payload.delivery_fee || 0) / 100,
+                        is_offline: true,
+                        user_id: order.payload.userId || null,
+                    }),
                 });
                 
                 if (response.ok) {
+                    const result = await response.json();
                     await deletePendingOrder(order.id);
+                    synced.push({ orderId: order.id, serverOrderId: result.order_id });
+                    
+                    if (self.clients) {
+                        self.clients.matchAll().then(clients => {
+                            clients.forEach(client => {
+                                client.postMessage({
+                                    type: 'ORDER_SYNCED',
+                                    orderId: result.order_id,
+                                    localId: order.id,
+                                });
+                            });
+                        });
+                    }
+                    
                     await showNotification('Заказ успешно отправлен', {
-                        body: 'Ваш заказ принят и готовится',
-                        icon: '/icons/icon-192.png',
+                        body: `Заказ №${result.order_id?.slice(0, 8)} принят`,
+                        icon: '/icon-192x192.png',
+                        tag: `order-${result.order_id}`,
+                        data: { order_id: result.order_id },
                     });
                 } else {
                     await incrementRetry(order.id);
+                    failed.push(order);
                 }
             } catch (error) {
+                console.error('Order sync error:', error);
                 await incrementRetry(order.id);
+                failed.push(order);
             }
         }
+        
+        if (failed.length > 0 && failed.every(o => o.retries >= 3)) {
+            await showNotification('Не удалось отправить заказ', {
+                body: 'Попробуйте повторить заказ вручную при подключении к сети',
+                icon: '/icon-192x192.png',
+                tag: 'order-sync-failed',
+            });
+        }
+        
+        return { synced, failed };
     } catch (error) {
         console.error('Sync orders error:', error);
+        return { synced: [], failed: [] };
+    }
+}
+
+async function getCsrfToken() {
+    try {
+        const response = await fetch('/api/ping', {
+            method: 'HEAD',
+            credentials: 'include',
+        });
+        return document.querySelector('meta[name="csrf-token"]')?.content || '';
+    } catch {
+        return '';
     }
 }
 
@@ -206,9 +268,11 @@ async function deletePendingOrder(orderId) {
     const db = await openDB();
     const tx = db.transaction('pendingOrders', 'readwrite');
     const store = tx.objectStore('pendingOrders');
-    store.delete(orderId);
     
     return new Promise((resolve, reject) => {
+        const request = store.delete(orderId);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
     });
