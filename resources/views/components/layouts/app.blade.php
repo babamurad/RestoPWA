@@ -3,9 +3,14 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#FF6B35">
 
     <title>{{ $title ?? config('app.name') }}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <x-pwa.meta />
 
@@ -14,14 +19,18 @@
     @livewireStyles
 </head>
 
-<body x-data="cartManager">
+<body class="bg-gray-50 overflow-x-hidden" x-data="cartManager">
     <script>
         window.vapidPublicKey = '{{ config('services.push.public_key') }}';
     </script>
 
-    <x-offline-indicator />
+    <div class="max-w-lg mx-auto bg-white min-h-screen shadow-xl relative lg:max-w-none lg:bg-transparent lg:shadow-none">
+        <x-offline-indicator />
 
-    {{ $slot }}
+        {{ $slot }}
+
+        <livewire:cart.cart-drawer />
+    </div>
 
     @livewireScripts
 </body>

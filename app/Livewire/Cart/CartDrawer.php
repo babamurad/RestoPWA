@@ -31,7 +31,7 @@ class CartDrawer extends Component
     }
 
     #[On('cart-state')]
-    public function setCartState(array $state): void
+    public function setCartState(array $state = []): void
     {
         $this->items = $state['items'] ?? [];
         $this->totalQuantity = $state['totalQuantity'] ?? 0;

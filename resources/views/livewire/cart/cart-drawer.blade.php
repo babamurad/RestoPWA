@@ -1,13 +1,15 @@
 @php
     $formattedPrice = number_format($totalPrice, 0, '.', ' ');
-    $canCheckout = !empty($items) && !$isOffline;
+    $canCheckout = !empty($items); // Remove !$isOffline to allow offline checkout queueing as per plan
 @endphp
 
-<div x-data="{ isOpen: @entangle('isOpen'), isOffline: @entangle('isOffline') }" 
+<div x-data="{ isOpen: @entangle('isOpen') }" 
      @open-cart.window="isOpen = true"
      @close-cart.window="isOpen = false"
-     x-on:keydown.escape.window="isOpen = false">
+     x-on:keydown.escape.window="isOpen = false"
+     class="relative z-50">
     
+    <!-- Backdrop -->
     <div x-show="isOpen" 
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0"
@@ -15,10 +17,11 @@
          x-transition:leave="transition ease-in duration-200"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 bg-black/50 z-40"
+         class="fixed inset-0 bg-black/40 backdrop-blur-sm"
          @click="isOpen = false">
     </div>
 
+    <!-- Drawer -->
     <div x-show="isOpen"
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="translate-x-full"
@@ -26,84 +29,89 @@
          x-transition:leave="transition ease-in duration-200"
          x-transition:leave-start="translate-x-0"
          x-transition:leave-end="translate-x-full"
-         class="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-xl z-50 flex flex-col">
+         class="fixed right-0 top-0 h-full w-full max-w-sm bg-gray-50 shadow-2xl flex flex-col">
         
-        <div class="flex items-center justify-between p-4 border-b">
-            <h2 class="text-lg font-semibold">Корзина</h2>
-            <button @click="isOpen = false" class="p-2 hover:bg-gray-100 rounded-full">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 h-14 bg-white border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-900">Корзина</h2>
+            <button @click="isOpen = false" class="p-2 hover:bg-gray-100 rounded-full transition-colors touch-feedback">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
         </div>
 
+        <!-- Offline Indicator -->
         @if($isOffline)
-            <div class="bg-amber-50 border-b border-amber-200 p-3 text-amber-800 text-sm flex items-center gap-2">
-                <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                </svg>
-                <span>Офлайн режим. Заказ будет отправлен при подключении.</span>
+            <div class="bg-orange-50 border-b border-orange-100 px-4 py-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-orange-500"><path d="m17 2 3 3-3 3"/><path d="m7 22-3-3 3-3"/><path d="M20 5H9a4 4 0 0 0-4 4v7"/><path d="M4 19h11a4 4 0 0 0 4-4V9"/></svg>
+                <span class="text-xs text-orange-700 font-medium font-inter">Офлайн режим. Заказ будет отправлен при подключении.</span>
             </div>
         @endif
 
-        <div class="flex-1 overflow-y-auto p-4">
+        <!-- Content -->
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
             @if(empty($items))
-                <div class="flex flex-col items-center justify-center h-full text-gray-500">
-                    <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                    </svg>
-                    <p>Корзина пуста</p>
+                <div class="flex flex-col items-center justify-center h-full text-center px-6">
+                    <div class="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-orange-500"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Корзина пуста</h3>
+                    <p class="text-sm text-gray-500 mt-2">Добавьте блюда, чтобы оформить заказ</p>
                 </div>
             @else
-                <div class="space-y-4">
-                    @foreach($items as $item)
-                        <div class="flex gap-3 p-3 bg-gray-50 rounded-lg">
-                            <div class="flex-1">
-                                <p class="font-medium">{{ $item['productName'] ?? 'Товар' }}</p>
-                                <p class="text-sm text-gray-500">
-                                    {{ number_format($item['price'] / 100, 2, '.', ' ') }} ₽
-                                </p>
+                @foreach($items as $item)
+                    <div class="flex gap-3 p-3 bg-white rounded-2xl border border-gray-100">
+                        @if(!empty($item['image']))
+                            <div class="flex-shrink-0 w-16 h-16 overflow-hidden rounded-xl border border-gray-50">
+                                <img src="{{ $item['image'] }}" alt="{{ $item['productName'] }}" class="w-full h-full object-cover">
                             </div>
-                            <div class="flex items-center gap-2">
-                                <button wire:click="updateQuantity({{ $item['id'] ?? 0 }}, {{ ($item['quantity'] ?? 1) - 1 }})"
-                                        class="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded">
-                                    -
+                        @endif
+                        <div class="flex flex-col flex-1 min-w-0">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900 line-clamp-1 text-sm">{{ $item['productName'] ?? 'Товар' }}</h4>
+                                    @if(!empty($item['vendorName']))
+                                        <span class="text-[10px] text-gray-400 uppercase tracking-tight">{{ $item['vendorName'] }}</span>
+                                    @endif
+                                </div>
+                                <button wire:click="removeItem({{ $item['id'] ?? 0 }})" class="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                                 </button>
-                                <span class="w-8 text-center">{{ $item['quantity'] ?? 1 }}</span>
-                                <button wire:click="updateQuantity({{ $item['id'] ?? 0 }}, {{ ($item['quantity'] ?? 1) + 1 }})"
-                                        class="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded">
-                                    +
-                                </button>
-                                <button wire:click="removeItem({{ $item['id'] ?? 0 }})"
-                                        class="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                    </svg>
-                                </button>
+                            </div>
+                            <div class="flex items-center justify-between mt-2">
+                                <span class="font-bold text-gray-900">{{ number_format($item['price'] * ($item['quantity'] ?? 1), 0, '.', ' ') }} ₽</span>
+                                <div class="flex items-center gap-2 bg-gray-50 p-1 rounded-full border border-gray-100">
+                                    <button wire:click="updateQuantity({{ $item['id'] ?? 0 }}, {{ ($item['quantity'] ?? 1) - 1 }})" 
+                                            class="flex items-center justify-center w-6 h-6 rounded-full bg-white text-gray-700 shadow-sm hover:bg-gray-100 transition-colors touch-feedback">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
+                                    </button>
+                                    <span class="w-5 text-center font-bold text-xs">{{ $item['quantity'] ?? 1 }}</span>
+                                    <button wire:click="updateQuantity({{ $item['id'] ?? 0 }}, {{ ($item['quantity'] ?? 1) + 1 }})" 
+                                            class="flex items-center justify-center w-6 h-6 rounded-full bg-orange-500 text-white shadow-sm hover:bg-orange-600 transition-colors touch-feedback">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    @endforeach
-                </div>
+                    </div>
+                @endforeach
             @endif
         </div>
 
+        <!-- Footer -->
         @if(!empty($items))
-            <div class="border-t p-4 space-y-4">
-                <div class="flex justify-between text-lg font-semibold">
-                    <span>Итого:</span>
-                    <span>{{ $formattedPrice }} ₽</span>
+            <div class="bg-white border-t border-gray-100 p-4 space-y-3 pb-8">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">Сумма заказа</span>
+                    <span class="text-lg font-bold text-gray-900">{{ $formattedPrice }} ₽</span>
                 </div>
-                <div class="flex gap-2">
-                    <button wire:click="clearCart"
-                            class="flex-1 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50">
-                        Очистить
-                    </button>
-                    <button wire:click="checkout"
-                            @if(!$canCheckout) disabled @endif
-                            class="flex-1 py-3 px-4 rounded-lg {{ $canCheckout ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed' }}">
-                        {{ $isOffline ? 'Оформить (офлайн)' : 'Оформить' }}
-                    </button>
-                </div>
+                <button wire:click="checkout"
+                        class="w-full flex items-center justify-center gap-2 px-6 py-4 bg-orange-500 text-white font-semibold rounded-2xl hover:bg-orange-600 transition-all touch-feedback btn-press shadow-lg shadow-orange-200">
+                    <span>Оформить заказ</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </button>
+                <button wire:click="clearCart" class="w-full py-2 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                    Очистить корзину
+                </button>
             </div>
         @endif
     </div>

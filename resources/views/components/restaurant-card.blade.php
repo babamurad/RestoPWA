@@ -1,10 +1,10 @@
 @props(['restaurant'])
 
-<a href="{{ route('restaurants.show', $restaurant->slug) }}" class="flex gap-4 p-3 bg-white rounded-2xl shadow-sm border border-gray-100 cursor-pointer card-hover touch-feedback">
-    <div class="relative flex-shrink-0 w-24 h-24 overflow-hidden rounded-xl">
+<a href="{{ route('restaurants.show', $restaurant->slug) }}" class="flex lg:block gap-4 p-3 bg-white rounded-2xl shadow-sm border border-gray-100 cursor-pointer card-hover touch-feedback">
+    <div class="relative flex-shrink-0 w-24 h-24 lg:w-full lg:h-40 overflow-hidden rounded-xl">
         <img src="{{ $restaurant->image_url }}" alt="{{ $restaurant->name }}" class="w-full h-full object-cover" loading="lazy">
     </div>
-    <div class="flex flex-col justify-center flex-1 min-w-0">
+    <div class="flex flex-col justify-center flex-1 min-w-0 lg:justify-start">
         <h3 class="font-semibold text-gray-900 truncate">{{ $restaurant->name }}</h3>
         <div class="flex items-center gap-3 mt-1 text-sm text-gray-500">
             <div class="flex items-center gap-1">

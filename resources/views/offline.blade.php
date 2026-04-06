@@ -2,103 +2,70 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Офлайн режим - RestoPWA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#FF6B35">
+    <title>Офлайн - RestoPWA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        orange: { 50: '#FFF0EB', 100: '#FFD9CC', 400: '#FF8A5C', 500: '#FF6B35', 600: '#E55A2B', 700: '#CC4A22' }
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
     <style>
-        *, *::before, *::after { box-sizing: border-box; }
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #f8f9fa;
-            color: #212529;
-        }
-        .offline-container {
-            max-width: 500px;
-            text-align: center;
-            padding: 30px;
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            margin: 20px;
-        }
-        .icon {
-            font-size: 80px;
-            color: #FF6B35;
-            margin-bottom: 20px;
-        }
-        .icon svg {
-            width: 80px;
-            height: 80px;
-            fill: currentColor;
-        }
-        h1 {
-            font-size: 1.5rem;
-            margin: 0 0 16px;
-            font-weight: 600;
-        }
-        p {
-            color: #6c757d;
-            margin: 0 0 20px;
-            line-height: 1.5;
-        }
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            border-radius: 6px;
-            text-decoration: none;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 500;
-            border: none;
-            transition: background-color 0.2s;
-        }
-        .btn-primary {
-            background-color: #FF6B35;
-            color: #fff;
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        .btn-primary:hover {
-            background-color: #e55a29;
-        }
-        .btn-outline-secondary {
-            background-color: transparent;
-            color: #6c757d;
-            border: 1px solid #6c757d;
-            width: 100%;
-        }
-        .btn-outline-secondary:hover {
-            background-color: #f8f9fa;
-        }
+        body { font-family: 'Inter', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+        .touch-feedback:active { transform: scale(0.95); transition: transform 0.1s; }
     </style>
 </head>
-<body>
-    <div class="offline-container">
-        <div class="icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M23.64 7c-.45-.34-4.93-4-11.64-4-1.5 0-2.89.19-4.15.48L18.18 13.8 23.64 7zm-3.22 6.84l-2.76 2.74-3.77-3.77-3.77 3.77-2.74-2.76 3.77-3.77-3.77-3.76 2.74-2.74 3.77 3.77 3.77-3.77 2.74 2.74-3.77 3.77 3.77 3.76-2.74 2.76zM3.36 7l-.48.48C5.44 10.9 8.53 13.5 12 13.5c3.04 0 5.69-1.98 7.16-4.8l.4-.34.46.46 2.78 2.78C21.3 13.2 18.52 15.5 15 15.5c-3.47 0-6.55-2.6-8.64-6.5-.2-.38-.38-.78-.38-1.15 0-.55.45-1 1-1 .2 0 .39.06.55.16L12.48 12.2c.5.5 1.21.67 1.82.38l3.2-1.5-4.8-4.8-3.2 1.5c-.4-.1-.82-.02-1.14.3L2.27 13.27c-.28.46-.22 1.08.14 1.46l2.69 2.7c.46.46 1.08.59 1.71.3l3.2-1.5L4.1 20.9l-2.69-2.69c-.28-.46-.22-1.08.14-1.46l2.65-2.65L.77 17.36c-.31.15-.5.47-.5.81 0 .55.45 1 1 1 .34 0 .66-.19.81-.5l2.28-2.28z"/>
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
-            </svg>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen p-6">
+    <div class="max-w-xs w-full text-center">
+        <!-- Illustration Area -->
+        <div class="relative mb-10">
+            <div class="w-32 h-32 mx-auto bg-orange-100 rounded-full flex items-center justify-center animate-pulse">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-orange-500">
+                    <path d="M12 20h.01"/><path d="M2 10a10 10 0 0 1 1.74-5.5"/><path d="M4.6 7.6a6 6 0 0 1 2.2-2.2"/><path d="M12 10a4 4 0 0 1 0 8"/><path d="M16 10a10 10 0 0 1 1.74 14.5"/><path d="M22 10a10 10 0 0 0-1.74-5.5"/><path d="M19.4 7.6a6 6 0 0 0-2.2-2.2"/><path d="m2 2 20 20"/>
+                </svg>
+            </div>
+            <div class="absolute -top-2 -right-2 bg-white p-2 rounded-full shadow-lg border border-gray-100">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
         </div>
-        <h1>Соединение потеряно</h1>
-        <p>Похоже, вы находитесь в офлайн-режиме. К сожалению, запрашиваемая страница еще не была закэширована.</p>
-        <div>
-            <button onclick="window.location.reload()" class="btn btn-primary">
-                Попробовать обновить
+
+        <h1 class="text-2xl font-extrabold text-gray-900 mb-3 tracking-tight">Нет сети</h1>
+        <p class="text-gray-500 text-sm mb-10 leading-relaxed">
+            Похоже, соединение с интернетом потеряно. <br>
+            Эта страница еще не была сохранена для работы без сети.
+        </p>
+
+        <div class="space-y-3">
+            <button onclick="window.location.reload()" class="w-full py-4 bg-orange-500 text-white font-bold rounded-2xl shadow-xl shadow-orange-500/30 hover:bg-orange-600 transition-all touch-feedback active:scale-95">
+                Попробовать снова
             </button>
-            <a href="/" class="btn btn-outline-secondary">
-                На главную (если закэширована)
+            <a href="/" class="block w-full py-4 bg-white text-gray-700 font-bold rounded-2xl border border-gray-200 hover:bg-gray-50 transition-all touch-feedback active:scale-95">
+                На главную
             </a>
         </div>
+
+        <!-- Connection Badge -->
+        <div class="mt-12 flex items-center justify-center gap-2">
+            <div class="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse"></div>
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Офлайн режим</span>
+        </div>
     </div>
+
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(() => {});
-        }
+        window.addEventListener('online', () => {
+            window.location.reload();
+        });
     </script>
 </body>
 </html>

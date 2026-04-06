@@ -1,7 +1,7 @@
 @props(['product'])
 
-<div class="flex gap-3 p-3 bg-white rounded-2xl border border-gray-100 shadow-sm transition-all hover:border-orange-100 group animate-slide-up">
-    <div class="relative flex-shrink-0 w-24 h-24 overflow-hidden rounded-xl bg-gray-100">
+<div class="flex lg:block gap-3 p-3 bg-white rounded-2xl border border-gray-100 shadow-sm transition-all hover:border-orange-100 group animate-slide-up">
+    <div class="relative flex-shrink-0 w-24 h-24 lg:w-full lg:h-40 overflow-hidden rounded-xl bg-gray-100">
         <img src="{{ $product->image_url }}" 
              alt="{{ $product->name }}" 
              class="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-300" 
@@ -16,7 +16,7 @@
         @endif
     </div>
 
-    <div class="flex flex-col flex-1 min-w-0">
+    <div class="flex flex-col flex-1 min-w-0 lg:mt-3">
         <div class="flex items-start justify-between gap-2">
             <div class="min-w-0">
                 <h4 class="font-semibold text-gray-900 truncate leading-tight group-hover:text-orange-600 transition-colors">{{ $product->name }}</h4>

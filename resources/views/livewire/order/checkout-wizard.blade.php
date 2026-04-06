@@ -13,254 +13,313 @@
     cartTotal: @entangle('cartTotal'),
     deliveryFee: @entangle('deliveryFee'),
     finalTotal: @entangle('finalTotal'),
-}" class="max-w-2xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    
+    async init() {
+        // Fetch cart data from Dexie if not already loaded
+        if (this.cartItems.length === 0) {
+            const vendorId = '{{ $vendorId }}';
+            const items = await window.CartService.getCartByVendor(vendorId);
+            this.cartItems = items;
+            this.$wire.set('cartItems', items);
+            this.$wire.calculateTotals();
+        }
 
+        window.addEventListener('connectivity-changed', (e) => {
+            this.isOffline = e.detail.isOffline;
+        });
+    }
+}" class="max-w-lg mx-auto bg-white min-h-screen relative font-inter">
+
+    {{-- Success State --}}
     @if($createdOrder)
-        <div class="p-8 text-center">
-            @if($isOffline)
-                <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-                <h2 class="text-xl font-semibold text-gray-900 mb-2">Заказ сохранен</h2>
-                <p class="text-gray-600 mb-4">Заказ будет отправлен при подключении к интернету</p>
-            @else
-                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                </div>
-                <h2 class="text-xl font-semibold text-gray-900 mb-2">Заказ оформлен!</h2>
-                <p class="text-gray-600 mb-2">Номер заказа: {{ $createdOrder->id ?? 'N/A' }}</p>
-            @endif
-            <button wire:click="$set('createdOrder', null)" class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                Вернуться в меню
-            </button>
-        </div>
-    @else
-        <div class="border-b">
-            <div class="flex">
-                @foreach(['Адрес', 'Время', 'Оплата', 'Подтверждение'] as $index => $stepName)
-                    <div class="flex-1 py-3 px-4 text-center relative">
-                        <div class="flex items-center justify-center">
-                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors
-                                {{ $currentStep > $index + 1 ? 'bg-green-500 text-white' : '' }}
-                                {{ $currentStep === $index + 1 ? 'bg-blue-600 text-white' : '' }}
-                                {{ $currentStep < $index + 1 ? 'bg-gray-200 text-gray-500' : '' }}">
-                                @if($currentStep > $index + 1)
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                    </svg>
-                                @else
-                                    {{ $index + 1 }}
-                                @endif
-                            </div>
-                        </div>
-                        <p class="text-xs mt-1 {{ $currentStep === $index + 1 ? 'text-blue-600 font-medium' : 'text-gray-500' }}">{{ $stepName }}</p>
-                        @if($index < 3)
-                            <div class="absolute right-0 top-1/2 -translate-y-1/2 w-full h-0.5 bg-gray-200 -z-10"></div>
-                        @endif
-                    </div>
-                @endforeach
+        <div class="px-6 py-12 text-center animate-slide-up">
+            <div class="w-20 h-20 bg-green-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-green-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                {{ $isOffline ? 'Заказ сохранен!' : 'Заказ оформлен!' }}
+            </h2>
+            
+            <p class="text-gray-500 mb-8 leading-relaxed px-4">
+                @if($isOffline)
+                    Мы сохранили ваш заказ локально. Он будет отправлен в ресторан автоматически, как только восстановится соединение.
+                @else
+                    Ваш заказ #{{ $createdOrder->id }} успешно принят и уже передается в ресторан.
+                @endif
+            </p>
+
+            <div class="space-y-3">
+                <a href="{{ route('order.track', $createdOrder->id ?? 0) }}" 
+                    class="block w-full py-4 bg-orange-500 text-white font-bold rounded-2xl shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all btn-press">
+                    Отследить заказ
+                </a>
+                <a href="{{ route('home') }}" 
+                    class="block w-full py-4 bg-gray-50 text-gray-600 font-bold rounded-2xl hover:bg-gray-100 transition-all btn-press">
+                    На главную
+                </a>
             </div>
         </div>
+    @else
+        {{-- Header --}}
+        <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+            <div class="flex items-center gap-3 px-4 h-14">
+                <button onclick="history.back()" class="flex items-center justify-center w-10 h-10 -ml-2 rounded-full hover:bg-gray-100 transition-all touch-feedback active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-700"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <h1 class="flex-1 text-lg font-bold text-gray-900 mt-0.5">Оформление</h1>
+                
+                {{-- Steps Progress --}}
+                <div class="flex gap-1.5 pr-2">
+                    @for($i = 1; $i <= 4; $i++)
+                        <div class="w-2 h-2 rounded-full transition-all duration-300 {{ $currentStep >= $i ? 'bg-orange-500' : 'bg-gray-200' }}"></div>
+                    @endfor
+                </div>
+            </div>
+        </header>
 
-        <div class="p-6">
+        <main class="px-4 py-6 space-y-6 pb-32">
             @if($error)
-                <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center gap-2">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                    </svg>
+                <div class="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm font-medium flex items-center gap-3 animate-shake">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     <span>{{ $error }}</span>
                 </div>
             @endif
 
             @switch($currentStep)
                 @case(1)
-                    <div class="space-y-4">
-                        <h3 class="text-lg font-semibold">Адрес доставки</h3>
+                    {{-- Delivery Address --}}
+                    <section class="space-y-4 animate-slide-up">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-bold text-gray-900">Адрес доставки</h3>
+                            <button wire:click="$dispatch('open-address-selector')" class="text-sm font-bold text-orange-500 hover:text-orange-600">Изменить</button>
+                        </div>
                         
                         @if(!empty($address['address']))
-                            <div class="p-4 bg-gray-50 rounded-lg border">
-                                <p class="font-medium">{{ $address['address'] }}</p>
-                                <p class="text-sm text-gray-500 mt-1">Координаты: {{ $address['lat'] ?? 'N/A' }}, {{ $address['lon'] ?? 'N/A' }}</p>
+                            <div class="p-4 bg-orange-50 rounded-2xl border border-orange-100 flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-orange-500 shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-bold text-gray-900 truncate">{{ $address['address'] }}</p>
+                                    <p class="text-xs text-orange-400 font-medium mt-0.5">Ваш основной адрес</p>
+                                </div>
                             </div>
                         @else
-                            <p class="text-gray-500">Адрес не выбран</p>
+                            <button wire:click="$dispatch('open-address-selector')" 
+                                class="w-full p-8 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-3 text-gray-400 hover:border-orange-200 hover:text-orange-500 transition-all group">
+                                <div class="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-orange-50 flex items-center justify-center transition-all">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                                </div>
+                                <span class="font-bold text-sm">Выбрать адрес на карте</span>
+                            </button>
                         @endif
-
-                        <button wire:click="$dispatch('open-address-selector')" class="text-blue-600 hover:underline text-sm">
-                            Изменить адрес
-                        </button>
-                    </div>
+                    </section>
                     @break
 
                 @case(2)
-                    <div class="space-y-4">
-                        <h3 class="text-lg font-semibold">Время доставки</h3>
+                    {{-- Time Selection --}}
+                    <section class="space-y-4 animate-slide-up">
+                        <h3 class="text-lg font-bold text-gray-900">Время доставки</h3>
                         
-                        <label class="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                            <input type="radio" wire:model="isAsap" :value="true" class="w-4 h-4 text-blue-600">
-                            <div>
-                                <p class="font-medium">Как можно скорее</p>
-                                <p class="text-sm text-gray-500">Ориентировочно 30-45 минут</p>
-                            </div>
-                        </label>
+                        <div class="grid grid-cols-1 gap-3">
+                            <button wire:click="$set('isAsap', true)" 
+                                class="flex items-center gap-4 p-4 rounded-2xl border-2 transition-all {{ $isAsap ? 'border-orange-500 bg-orange-50' : 'border-gray-50 hover:bg-gray-50' }}">
+                                <div class="w-10 h-10 rounded-xl flex items-center justify-center {{ $isAsap ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-400' }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                </div>
+                                <div class="text-left">
+                                    <p class="font-bold text-gray-900">Как можно скорее</p>
+                                    <p class="text-xs text-gray-400 font-medium">Примерно 35–50 мин</p>
+                                </div>
+                                @if($isAsap)
+                                    <div class="ml-auto text-orange-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    </div>
+                                @endif
+                            </button>
 
-                        <label class="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                            <input type="radio" wire:model="isAsap" :value="false" class="w-4 h-4 text-blue-600">
-                            <div class="flex-1">
-                                <p class="font-medium">Ко времени</p>
-                                <input 
-                                    type="datetime-local" 
-                                    wire:model="deliveryTime"
-                                    class="mt-1 w-full px-3 py-2 border rounded-lg text-sm"
-                                    :disabled="isAsap"
-                                >
-                            </div>
-                        </label>
-                    </div>
+                            <button wire:click="$set('isAsap', false)" 
+                                class="flex items-center gap-4 p-4 rounded-2xl border-2 transition-all {{ !$isAsap ? 'border-orange-500 bg-orange-50' : 'border-gray-50 hover:bg-gray-50' }}">
+                                <div class="w-10 h-10 rounded-xl flex items-center justify-center {{ !$isAsap ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-400' }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                </div>
+                                <div class="text-left flex-1">
+                                    <p class="font-bold text-gray-900">Выбрать время</p>
+                                    @if(!$isAsap)
+                                        <input type="time" wire:model="deliveryTime" class="mt-2 block w-full bg-white border-gray-200 rounded-xl text-sm font-bold focus:ring-orange-500 focus:border-orange-500">
+                                    @endif
+                                </div>
+                            </button>
+                        </div>
+                    </section>
                     @break
 
                 @case(3)
-                    <div class="space-y-4">
-                        <h3 class="text-lg font-semibold">Способ оплаты</h3>
+                    {{-- Payment Method --}}
+                    <section class="space-y-4 animate-slide-up">
+                        <h3 class="text-lg font-bold text-gray-900">Метод оплаты</h3>
                         
-                        <label class="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50" :class="paymentMethod === 'card' ? 'border-blue-500 bg-blue-50' : ''">
-                            <input type="radio" wire:model="paymentMethod" value="card" class="w-4 h-4 text-blue-600">
-                            <div class="flex items-center gap-3">
-                                <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                                </svg>
-                                <div>
-                                    <p class="font-medium">Картой онлайн</p>
-                                    <p class="text-sm text-gray-500">Visa, MasterCard, МИР</p>
-                                </div>
-                            </div>
-                        </label>
-
-                        <label class="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50" :class="paymentMethod === 'cash' ? 'border-blue-500 bg-blue-50' : ''">
-                            <input type="radio" wire:model="paymentMethod" value="cash" class="w-4 h-4 text-blue-600">
-                            <div class="flex items-center gap-3">
-                                <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                </svg>
-                                <div>
-                                    <p class="font-medium">Наличными</p>
-                                    <p class="text-sm text-gray-500">При получении</p>
-                                </div>
-                            </div>
-                        </label>
-
-                        <label class="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50" :class="paymentMethod === 'sbp' ? 'border-blue-500 bg-blue-50' : ''">
-                            <input type="radio" wire:model="paymentMethod" value="sbp" class="w-4 h-4 text-blue-600">
-                            <div class="flex items-center gap-3">
-                                <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                                </svg>
-                                <div>
-                                    <p class="font-medium">СБП</p>
-                                    <p class="text-sm text-gray-500">Система быстрых платежей</p>
-                                </div>
-                            </div>
-                        </label>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Комментарий к заказу</label>
-                            <textarea 
-                                wire:model="comment" 
-                                rows="3" 
-                                class="w-full px-3 py-2 border rounded-lg resize-none"
-                                placeholder="Не забудьте сдачу, домофон не работает..."
-                            ></textarea>
+                        <div class="space-y-3">
+                            @foreach([
+                                ['id' => 'card', 'name' => 'Картой в приложении', 'icon' => 'credit-card', 'desc' => 'Visa, MasterCard, МИР'],
+                                ['id' => 'cash', 'name' => 'Наличными курьеру', 'icon' => 'banknote', 'desc' => 'Подготовьте сдачу'],
+                                ['id' => 'sbp', 'name' => 'Через СБП', 'icon' => 'qr-code', 'desc' => 'Быстрая оплата по QR']
+                            ] as $pm)
+                                <button wire:click="$set('paymentMethod', '{{ $pm['id'] }}')" 
+                                    class="w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all {{ $paymentMethod === $pm['id'] ? 'border-orange-500 bg-orange-50' : 'border-gray-50 hover:bg-gray-50' }}">
+                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center {{ $paymentMethod === $pm['id'] ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-400' }}">
+                                        @if($pm['icon'] === 'credit-card')
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                                        @elseif($pm['icon'] === 'banknote')
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+                                        @else
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><rect x="7" y="7" width="3" height="3"/><rect x="14" y="7" width="3" height="3"/><rect x="7" y="14" width="3" height="3"/><rect x="14" y="14" width="3" height="3"/></svg>
+                                        @endif
+                                    </div>
+                                    <div class="text-left">
+                                        <p class="font-bold text-gray-900">{{ $pm['name'] }}</p>
+                                        <p class="text-xs text-gray-400 font-medium">{{ $pm['desc'] }}</p>
+                                    </div>
+                                    @if($paymentMethod === $pm['id'])
+                                        <div class="ml-auto text-orange-500">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                        </div>
+                                    @endif
+                                </button>
+                            @endforeach
                         </div>
-                    </div>
+
+                        <div class="pt-4">
+                            <label class="block text-sm font-bold text-gray-900 mb-2">Комментарий к заказу</label>
+                            <textarea wire:model="comment" 
+                                placeholder="Напр: не звоните, ребенок спит" 
+                                class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-medium focus:ring-2 focus:ring-orange-500/20 focus:bg-white transition-all"
+                                rows="3"></textarea>
+                        </div>
+                    </section>
                     @break
 
                 @case(4)
-                    <div class="space-y-4">
-                        <h3 class="text-lg font-semibold">Подтверждение заказа</h3>
+                    {{-- Confirmation / Summary --}}
+                    <section class="space-y-6 animate-slide-up">
+                        <h3 class="text-lg font-bold text-gray-900">Подтверждение заказа</h3>
                         
-                        <div class="bg-gray-50 rounded-lg p-4 space-y-3">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Адрес:</span>
-                                <span class="font-medium text-right max-w-[60%]">{{ $address['address'] ?? 'Не выбран' }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Время:</span>
-                                <span class="font-medium">{{ $isAsap ? 'Как можно скорее' : $deliveryTime }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Оплата:</span>
-                                <span class="font-medium">
-                                    @switch($paymentMethod)
-                                        @case('card') Картой онлайн @break
-                                        @case('cash') Наличными @break
-                                        @case('sbp') СБП @break
-                                    @endswitch
-                                </span>
-                            </div>
-                            @if($comment)
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Комментарий:</span>
-                                    <span class="font-medium text-right max-w-[60%]">{{ $comment }}</span>
+                        {{-- Address Summary Card --}}
+                        <div class="bg-white rounded-2xl p-4 border border-gray-100 space-y-4">
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-orange-50 text-orange-500 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                                 </div>
-                            @endif
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Доставка по адресу</p>
+                                    <p class="font-bold text-gray-900 text-sm truncate">{{ $address['address'] ?? 'Не выбран' }}</p>
+                                </div>
+                                <button wire:click="goToStep(1)" class="text-xs font-bold text-orange-500">Изм.</button>
+                            </div>
+                            
+                            <div class="h-px bg-gray-50"></div>
+
+                            <div class="flex items-start gap-12">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Время</p>
+                                        <p class="font-bold text-gray-900 text-sm">{{ $isAsap ? 'Как можно скорее' : $deliveryTime }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-green-50 text-green-500 flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Оплата</p>
+                                        <p class="font-bold text-gray-900 text-sm uppercase">{{ $paymentMethod }}</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="border-t pt-4 space-y-2">
-                            <div class="flex justify-between text-gray-600">
-                                <span>Товары ({{ count($cartItems) }})</span>
+                        {{-- Order Items --}}
+                        <div class="space-y-3">
+                            <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest">Ваш заказ</h4>
+                            <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden divide-y divide-gray-50">
+                                @foreach($cartItems as $item)
+                                    <div class="p-3 flex items-center gap-3">
+                                        @if($item['image'] ?? false)
+                                            <img src="{{ $item['image'] }}" class="w-12 h-12 rounded-lg object-cover">
+                                        @else
+                                            <div class="w-12 h-12 rounded-lg bg-gray-50 flex items-center justify-center text-gray-300">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/></svg>
+                                            </div>
+                                        @endif
+                                        <div class="flex-1 min-w-0">
+                                            <p class="font-bold text-gray-900 text-sm truncate">{{ $item['productName'] }}</p>
+                                            <p class="text-xs text-gray-400 font-medium">x{{ $item['quantity'] }}</p>
+                                        </div>
+                                        <p class="font-bold text-gray-900 text-sm">{{ number_format($item['price'] * $item['quantity'], 0, '.', ' ') }} ₽</p>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        {{-- Totals --}}
+                        <div class="bg-gray-50 rounded-2xl p-4 space-y-2">
+                            <div class="flex justify-between text-sm text-gray-500 font-medium">
+                                <span>Сумма заказа</span>
                                 <span>{{ number_format($cartTotal, 0, '.', ' ') }} ₽</span>
                             </div>
-                            <div class="flex justify-between text-gray-600">
+                            <div class="flex justify-between text-sm text-gray-500 font-medium">
                                 <span>Доставка</span>
-                                <span>{{ number_format($deliveryFee, 0, '.', ' ') }} ₽</span>
+                                <span class="{{ $deliveryFee == 0 ? 'text-green-500' : '' }} font-bold">
+                                    {{ $deliveryFee == 0 ? 'Бесплатно' : number_format($deliveryFee, 0, '.', ' ') . ' ₽' }}
+                                </span>
                             </div>
-                            <div class="flex justify-between text-lg font-semibold pt-2 border-t">
-                                <span>Итого</span>
-                                <span>{{ number_format($finalTotal, 0, '.', ' ') }} ₽</span>
+                            <div class="h-px bg-gray-200 my-2"></div>
+                            <div class="flex justify-between text-gray-900">
+                                <span class="text-lg font-bold">Итого</span>
+                                <span class="text-2xl font-black">{{ number_format($finalTotal, 0, '.', ' ') }} ₽</span>
                             </div>
                         </div>
 
                         @if($isOffline)
-                            <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
-                                Офлайн режим. Заказ будет отправлен при подключении к сети.
+                            <div class="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </div>
+                                <p class="text-xs font-bold text-amber-700">Офлайн режим: заказ будет отправлен автоматически при входе в сеть.</p>
                             </div>
                         @endif
-                    </div>
+                    </section>
                     @break
             @endswitch
-        </div>
+        </main>
 
-        <div class="border-t p-4 flex gap-3">
-            @if($currentStep > 1)
-                <button 
-                    wire:click="prevStep"
-                    class="flex-1 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                    Назад
-                </button>
-            @endif
-
-            @if($currentStep < 4)
-                <button 
-                    wire:click="nextStep"
-                    class="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                    Далее
-                </button>
-            @else
-                <button 
-                    wire:click="submitOrder"
-                    wire:loading.attr="disabled"
-                    class="flex-1 py-3 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                >
-                    <span wire:loading.remove>Оформить заказ</span>
-                    <span wire:loading>Обработка...</span>
-                </button>
-            @endif
+        {{-- Footer Actions --}}
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 pb-screen-safe">
+            <div class="max-w-lg mx-auto flex gap-3">
+                @if($currentStep > 1)
+                    <button wire:click="prevStep" 
+                        class="px-6 py-4 bg-gray-50 text-gray-400 font-bold rounded-2xl hover:bg-gray-100 transition-all btn-press">
+                        Назад
+                    </button>
+                @endif
+                
+                @if($currentStep < 4)
+                    <button wire:click="nextStep" 
+                        class="flex-1 px-6 py-4 bg-orange-500 text-white font-bold rounded-2xl shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all btn-press">
+                        Продолжить
+                    </button>
+                @else
+                    <button wire:click="submitOrder" wire:loading.attr="disabled"
+                        class="flex-1 px-6 py-4 bg-orange-500 text-white font-bold rounded-2xl shadow-xl shadow-orange-200 hover:bg-orange-600 transition-all btn-press flex items-center justify-center gap-3 disabled:opacity-50">
+                        <span wire:loading.remove>Подтвердить заказ</span>
+                        <div wire:loading class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                    </button>
+                @endif
+            </div>
         </div>
     @endif
 </div>

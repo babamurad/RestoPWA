@@ -1,6 +1,6 @@
 @props(['active' => 'home'])
 
-<nav class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
+<nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
     <div class="flex items-center justify-around h-16 max-w-lg mx-auto">
         <a href="{{ route('home') }}" class="relative flex flex-col items-center justify-center w-full h-full {{ $active === 'home' ? 'text-orange-500' : 'text-gray-400 hover:text-gray-600' }} transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
