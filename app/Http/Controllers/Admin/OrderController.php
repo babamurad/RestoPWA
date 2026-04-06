@@ -9,33 +9,32 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-    public const STATUSES = [
-        'pending' => ['label' => 'Новый', 'color' => 'yellow'],
-        'confirmed' => ['label' => 'Подтверждён', 'color' => 'blue'],
-        'preparing' => ['label' => 'Готовится', 'color' => 'orange'],
-        'delivering' => ['label' => 'Доставляется', 'color' => 'purple'],
-        'delivered' => ['label' => 'Доставлен', 'color' => 'green'],
-        'cancelled' => ['label' => 'Отменён', 'color' => 'red'],
-    ];
-
     public function index(Request $request)
     {
-        $query = Order::with('restaurant');
+        $query = Order::with(['restaurant', 'user']);
         
         if ($request->filled('search')) {
             $query->where(function($q) use ($request) {
-                $q->where('order_number', 'like', '%' . $request->search . '%')
-                  ->orWhere('customer_name', 'like', '%' . $request->search . '%')
-                  ->orWhere('customer_phone', 'like', '%' . $request->search . '%');
+                $q->where('id', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('user', function($uq) use ($request) {
+                      $uq->where('name', 'like', '%' . $request->search . '%')
+                         ->orWhere('email', 'like', '%' . $request->search . '%');
+                  })
+                  ->orWhere('status', 'like', '%' . $request->search . '%');
             });
         }
         
-        if ($request->filled('status')) {
+        if ($request->filled('filter')) {
+            $filter = $request->filter;
+            if (isset(Order::FILTERS[$filter])) {
+                $query->whereIn('status', Order::FILTERS[$filter]['statuses']);
+            }
+        } elseif ($request->filled('status')) {
             $query->where('status', $request->status);
         }
         
         if ($request->filled('restaurant_id')) {
-            $query->where('restaurant_id', $request->restaurant_id);
+            $query->where('vendor_id', $request->restaurant_id);
         }
         
         if ($request->filled('date_from')) {
@@ -54,7 +53,9 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->load(['restaurant', 'statusHistory']);
+        $order->load(['restaurant', 'user', 'statusHistory' => function($q) {
+            $q->orderBy('created_at', 'desc');
+        }]);
         
         return view('admin.orders.show', compact('order'));
     }
@@ -73,18 +74,21 @@ class OrderController extends Controller
 
             $order->update(['status' => $validated['status']]);
 
-            if (method_exists($order, 'statusHistory')) {
-                $order->statusHistory()->create([
-                    'status' => $validated['status'],
-                    'changed_by' => auth()->id(),
-                    'notes' => $request->get('notes'),
-                ]);
-            }
-
-            return redirect()->back()->with('success', 'Статус заказа обновлён');
+            return redirect()->back()->with('success', 'Статус заказа обновлён на: ' . Order::STATUSES[$validated['status']]['label']);
         }
 
         return redirect()->back();
+    }
+
+    public function transition(Request $request, Order $order, string $newStatus)
+    {
+        if (!in_array($newStatus, $order->getNextStatuses())) {
+            return redirect()->back()->with('error', 'Невозможно изменить статус на: ' . $newStatus);
+        }
+
+        $order->update(['status' => $newStatus]);
+
+        return redirect()->back()->with('success', 'Статус изменён на: ' . Order::STATUSES[$newStatus]['label']);
     }
 
     public function destroy(Order $order)

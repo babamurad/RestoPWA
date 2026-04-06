@@ -113,4 +113,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::resource('products', AdminProductController::class)->except(['show']);
     Route::resource('orders', AdminOrderController::class)->except(['create', 'store']);
+    Route::post('orders/{order}/transition/{status}', [AdminOrderController::class, 'transition'])
+        ->name('orders.transition');
 });
