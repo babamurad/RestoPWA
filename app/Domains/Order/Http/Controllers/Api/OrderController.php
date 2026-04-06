@@ -40,14 +40,16 @@ class OrderController
             'is_offline' => 'nullable|boolean',
         ]);
 
-        $userId = $this->resolveUserId($request);
+        $user = $request->user();
         
-        if (!$userId) {
+        if (!$user) {
             return response()->json([
                 'success' => false,
                 'error' => 'User authentication required',
             ], 401);
         }
+
+        $userId = $user->id;
 
         $items = array_map(function ($item) {
             return [
@@ -81,19 +83,5 @@ class OrderController
             'status' => $order->status,
             'redirect_url' => route('order.success', $order->id),
         ], 201);
-    }
-
-    private function resolveUserId(Request $request): ?string
-    {
-        if ($request->user()) {
-            return $request->user()->id;
-        }
-
-        if ($request->filled('user_id')) {
-            $user = User::find($request->input('user_id'));
-            return $user?->id;
-        }
-
-        return null;
     }
 }

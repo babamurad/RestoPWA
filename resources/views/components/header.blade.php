@@ -15,9 +15,17 @@
             </button>
         @endif
         @if($showProfile)
-            <button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-700"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            </button>
+            @auth
+                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-gray-100 transition-colors">
+                    <div class="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold text-xs uppercase">
+                        {{ substr(auth()->user()->name, 0, 1) }}
+                    </div>
+                </a>
+            @else
+                <a href="{{ route('login') }}" class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </a>
+            @endauth
         @endif
     </div>
 </header>

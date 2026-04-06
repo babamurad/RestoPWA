@@ -111,14 +111,70 @@ document.addEventListener('alpine:init', () => {
             }));
         },
 
+        async syncCartWithServer() {
+            if (!this.currentVendorId || !navigator.onLine) return null;
+
+            const items = await window.CartService.getCartByVendor(this.currentVendorId);
+            if (items.length === 0) return null;
+
+            try {
+                const response = await fetch('/api/v1/cart/sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'X-Vendor-ID': this.currentVendorId,
+                    },
+                    body: JSON.stringify({
+                        vendor_id: this.currentVendorId,
+                        items: items.map(item => ({
+                            product_id: item.productId,
+                            quantity: item.quantity,
+                            modifiers: Object.keys(item.modifiers || {}),
+                        }))
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        await window.CartService.bulkUpdateItems(this.currentVendorId, result.data.items);
+                        
+                        if (result.errors && result.errors.length > 0) {
+                            alert(result.errors.join('\n'));
+                            // Optional: Refresh if items were removed due to availability
+                        }
+                        
+                        await this.broadcastState();
+                        return result.data;
+                    }
+                }
+            } catch (error) {
+                console.error('Cart sync failed:', error);
+            }
+            return null;
+        },
+
         async checkout() {
             if (!this.currentVendorId) return;
 
+            let syncData = null;
+            if (navigator.onLine) {
+                syncData = await this.syncCartWithServer();
+                
+                if (syncData && !syncData.is_min_order_met) {
+                    alert(`Минимальная сумма заказа: ${syncData.min_order} ₽`);
+                    return;
+                }
+            }
+
             const items = await window.CartService.getCartByVendor(this.currentVendorId);
-            
             if (items.length === 0) return;
 
-            const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const total = syncData ? syncData.total : items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const subtotal = syncData ? syncData.subtotal : items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const deliveryFee = syncData ? syncData.delivery_fee : 0;
 
             const orderPayload = {
                 vendor_id: this.currentVendorId,
@@ -131,8 +187,9 @@ document.addEventListener('alpine:init', () => {
                     total_price: item.price * item.quantity,
                     modifiers: item.modifiers || {},
                 })),
+                subtotal: subtotal,
                 total: total,
-                delivery_fee: 0,
+                delivery_fee: deliveryFee,
                 is_offline: !navigator.onLine,
                 created_at: new Date().toISOString()
             };
@@ -167,6 +224,7 @@ document.addEventListener('alpine:init', () => {
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                            'X-Vendor-ID': order.payload.vendor_id,
                         },
                         body: JSON.stringify({
                             ...order.payload,

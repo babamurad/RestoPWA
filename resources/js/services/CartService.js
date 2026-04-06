@@ -196,6 +196,29 @@ const CartService = {
     async getAllItems() {
         return db.cart.toArray();
     },
+
+    /**
+     * Bulk update items from server sync.
+     * @param {string} vendorId
+     * @param {Array} syncedItems
+     * @returns {Promise<void>}
+     */
+    async bulkUpdateItems(vendorId, syncedItems) {
+        for (const item of syncedItems) {
+            const existing = await db.cart
+                .where('[vendorId+productId+modifiersHash]')
+                .equals([vendorId, item.product_id, hashModifiers(item.modifiers)])
+                .first();
+
+            if (existing) {
+                await db.cart.update(existing.id, {
+                    price: item.price,
+                    productName: item.name,
+                    image: item.image,
+                });
+            }
+        }
+    },
 };
 
 window.CartService = CartService;

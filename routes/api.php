@@ -4,6 +4,7 @@ use App\Domains\Menu\Http\Controllers\MenuController;
 use App\Domains\Menu\Models\Product;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Domains\Order\Http\Controllers\Api\OrderController as DomainOrderController;
+use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\PushController;
 use App\Http\Middleware\SetTenantContext;
@@ -46,6 +47,9 @@ Route::middleware([SetTenantContext::class])->prefix('v1')->group(function () {
 
     Route::post('orders', [DomainOrderController::class, 'store'])
         ->name('api.orders.store');
+
+    Route::post('cart/sync', [CartController::class, 'sync'])
+        ->name('api.cart.sync');
 });
 
 Route::middleware('auth:sanctum')->group(function () {

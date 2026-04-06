@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\RestaurantController;
 use App\Domains\Order\Http\Controllers\OrderTrackingController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\OrderSuccessController;
@@ -9,7 +10,6 @@ use App\Http\Controllers\Vendor\SettingsController;
 use App\Http\Controllers\Vendor\KanbanController;
 use Illuminate\Support\Facades\Route;
 
-use App\Domains\Menu\Models\Category;
 use App\Domains\Vendor\Models\Restaurant;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,59 +19,11 @@ Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('regi
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::get('/', function () {
-    // Fetch unique category names from all active restaurants
-    $uniqueCategoryNames = Category::where('is_active', true)
-        ->select('name')
-        ->distinct()
-        ->orderBy('name')
-        ->get();
+Route::get('/', [RestaurantController::class, 'home'])->name('home');
 
-    $icons = [
-        'Пицца' => '🍕',
-        'Суши' => '🍣',
-        'Роллы' => '🍱',
-        'Бургеры' => '🍔',
-        'Паста' => '🍝',
-        'Салаты' => '🥗',
-        'Закуски' => '🍟',
-        'Супы' => '🍜',
-        'Сеты' => '🍱',
-        'Боулы' => '🥣',
-        'Десерты' => '🍰',
-        'Кофе' => '☕',
-        'Выпечка' => '🥐',
-    ];
+Route::get('/restaurants', [RestaurantController::class, 'index'])->name('restaurants.index');
 
-    $categories = $uniqueCategoryNames->map(function($cat, $index) use ($icons) {
-        return (object)[
-            'id' => $index + 1,
-            'name' => $cat->name,
-            'icon' => $icons[$cat->name] ?? '🍴'
-        ];
-    });
-
-    $popularRestaurants = Restaurant::where('is_active', true)->limit(10)->get();
-    $restaurants = Restaurant::where('is_active', true)->paginate(20);
-
-    return view('home', compact('categories', 'popularRestaurants', 'restaurants'));
-})->name('home');
-
-// Placeholder routes for navigation
-Route::get('/restaurants', function () {
-    $restaurants = Restaurant::where('is_active', true)->paginate(20);
-    return view('restaurants.index', compact('restaurants'));
-})->name('restaurants.index');
-
-Route::get('/restaurants/{restaurant:slug}', function (Restaurant $restaurant) {
-    $restaurant->load(['categories' => function($q) {
-        $q->where('is_active', true)->orderBy('sort_order')->with(['products' => function($pq) {
-            $pq->where('is_available', true);
-        }]);
-    }]);
-
-    return view('restaurants.show', compact('restaurant'));
-})->name('restaurants.show');
+Route::get('/restaurants/{restaurant:slug}', [RestaurantController::class, 'show'])->name('restaurants.show');
 
 Route::get('/cart', function () {
     return view('cart');
@@ -79,7 +31,7 @@ Route::get('/cart', function () {
 
 Route::get('/checkout', function () {
     return view('livewire.order.checkout-wizard');
-})->name('checkout');
+})->name('checkout')->middleware('auth');
 
 Route::get('/orders', function () {
     $user = Auth::user();

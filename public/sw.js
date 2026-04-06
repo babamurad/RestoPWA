@@ -1,6 +1,6 @@
-const CACHE_NAME = 'resto-pwa-v1';
-const STATIC_CACHE = 'resto-static-v1';
-const API_CACHE = 'resto-api-v1';
+const CACHE_NAME = 'resto-pwa-v2';
+const STATIC_CACHE = 'resto-static-v2';
+const API_CACHE = 'resto-api-v2';
 
 const STATIC_ASSETS = [
     '/',
@@ -186,20 +186,16 @@ async function syncOrders() {
             try {
                 const csrfToken = await getCsrfToken();
                 
-                const response = await fetch('/api/orders', {
+                const response = await fetch('/api/v1/orders', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken,
+                        'X-Vendor-ID': order.payload.vendor_id,
                     },
                     body: JSON.stringify({
-                        vendor_id: order.payload.vendorId,
-                        items: order.payload.items,
-                        address: order.payload.address || {},
-                        total: order.payload.total / 100,
-                        delivery_fee: (order.payload.delivery_fee || 0) / 100,
+                        ...order.payload,
                         is_offline: true,
-                        user_id: order.payload.userId || null,
                     }),
                 });
                 

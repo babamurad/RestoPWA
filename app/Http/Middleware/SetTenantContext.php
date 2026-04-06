@@ -37,6 +37,11 @@ class SetTenantContext
 
         if ($vendorId) {
             $this->tenantContext->setCurrentVendor((string) $vendorId);
+        } elseif ($request->is('api/*')) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Tenant identification required (X-Vendor-ID header or subdomain)',
+            ], 400);
         }
 
         return $next($request);

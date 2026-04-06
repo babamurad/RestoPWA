@@ -22,11 +22,12 @@ function setupOrderSubmission(registration) {
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
             
-            const response = await fetch('/api/orders', {
+            const response = await fetch('/api/v1/orders', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
+                    'X-Vendor-ID': payload.vendor_id,
                 },
                 body: JSON.stringify(payload),
             });
