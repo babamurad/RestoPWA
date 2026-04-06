@@ -59,20 +59,37 @@ class OrderController extends Controller
         return view('admin.orders.show', compact('order'));
     }
 
-    public function updateStatus(Request $request, Order $order)
+    public function edit(Order $order)
     {
-        $validated = $request->validate([
-            'status' => 'required|in:pending,confirmed,preparing,delivering,delivered,cancelled',
-        ]);
+        return redirect()->route('admin.orders.show', $order);
+    }
 
-        $order->update(['status' => $validated['status']]);
-        
-        $order->statusHistory()->create([
-            'status' => $validated['status'],
-            'changed_by' => auth()->id(),
-            'notes' => $request->get('notes'),
-        ]);
+    public function update(Request $request, Order $order)
+    {
+        if ($request->has('status')) {
+            $validated = $request->validate([
+                'status' => 'required|in:pending,confirmed,preparing,delivering,delivered,cancelled',
+            ]);
 
-        return redirect()->back()->with('success', 'Статус заказа обновлён');
+            $order->update(['status' => $validated['status']]);
+
+            if (method_exists($order, 'statusHistory')) {
+                $order->statusHistory()->create([
+                    'status' => $validated['status'],
+                    'changed_by' => auth()->id(),
+                    'notes' => $request->get('notes'),
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Статус заказа обновлён');
+        }
+
+        return redirect()->back();
+    }
+
+    public function destroy(Order $order)
+    {
+        $order->delete();
+        return redirect()->route('admin.orders.index')->with('success', 'Заказ удалён');
     }
 }

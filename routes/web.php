@@ -8,6 +8,11 @@ use App\Http\Controllers\Vendor\ProductController;
 use App\Http\Controllers\Vendor\OrderController;
 use App\Http\Controllers\Vendor\SettingsController;
 use App\Http\Controllers\Vendor\KanbanController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\RestaurantController as AdminRestaurantController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use Illuminate\Support\Facades\Route;
 
 use App\Domains\Vendor\Models\Restaurant;
@@ -100,4 +105,12 @@ Route::prefix('vendor')->name('vendor.')->middleware(['ensure.tenant', 'auth'])-
     
     Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('settings', [SettingsController::class, 'update'])->name('settings.update');
+});
+
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::resource('restaurants', AdminRestaurantController::class)->except(['show']);
+    Route::resource('categories', CategoryController::class)->except(['show']);
+    Route::resource('products', AdminProductController::class)->except(['show']);
+    Route::resource('orders', AdminOrderController::class)->except(['create', 'store']);
 });
