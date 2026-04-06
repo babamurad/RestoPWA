@@ -10,6 +10,10 @@ All notable changes to the RestoPWA project will be documented in this file.
 - **Improved Order Security**: Restricted `OrderController` to only allow orders from currently authenticated users.
 - **Order Success Page**: New controller-based success page with security checks and vendor data.
 - **PWA Meta**: Optimized `manifest.json` and meta tags for better standalone performance.
+- **Quality Gate Infrastructure**: Reproducible test execution with `composer install`, `php artisan test`, `./vendor/bin/pint --test`, and `npm run build`.
+- **Tenant Audit Matrix**: Formal documentation of API tenant isolation in `docs/tenant-audit.md`.
+- **Lighthouse Baseline**: PWA compliance baseline report in `docs/lighthouse-baseline.md`.
+- **Vitest Setup**: Frontend testing infrastructure for `CartService` with unit and integration tests.
 
 ### Fixed
 - **Order Submission**: Corrected API endpoint prefix from `/api/` to `/api/v1/` in `app.js` and `sw.js`.
@@ -18,6 +22,7 @@ All notable changes to the RestoPWA project will be documented in this file.
 
 ### Optimized
 - **Service Worker**: Implemented cache versioning (`v2`) and improved background synchronization logic.
+- **Offline Cart Sync**: Enhanced `CartService` queue processing, retry logic, and total calculation.
 
 ## [1.0.0] - 2026-03-30
 

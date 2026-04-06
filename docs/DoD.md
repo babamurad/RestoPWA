@@ -21,6 +21,8 @@ To ensure consistent quality, each module and feature in RestoPWA must meet the 
 - [ ] Auth guard enforced on user-specific pages (/profile, /orders, /checkout).
 
 ## 4. Verification & Testing
-- [ ] Feature tests for core happy-path and error-path scenarios.
-- [ ] Manual verification of the entire flow (Catalogue → Cart → Order).
-- [ ] Changelog updated with details of the enhancement/fix.
+- [ ] **PHP Code Quality**: Laravel Pint passes with no violations (`./vendor/bin/pint --test`).
+- [ ] **Backend Tests**: PHPUnit feature tests cover core happy-path and error-path scenarios (`php artisan test`).
+- [ ] **Frontend Tests**: Vitest unit tests cover service layer (CartService, offline sync) (`npm run test`).
+- [ ] **Manual Verification**: Full end-to-end flow tested (Catalogue → Cart → Checkout → Order Success).
+- [ ] **Changelog**: Updated with details of the enhancement/fix (`docs/CHANGELOG.md`).

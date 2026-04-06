@@ -1,5 +1,11 @@
 # Post-MVP Roadmap: RestoPWA
 
+_Updated: 2026-04-06 — Stages A, B, C, D completed successfully_
+
+**Latest Roadmap**: See [ROADMAP_2026_Q2.md](ROADMAP_2026_Q2.md) for Q2 2026 priorities.
+
+---
+
 After completing the initial stabilization (Stage A & B) and quality audit (Stage C), the following features are prioritized for future development.
 
 ## 1. Real-time Order Tracking (Stage D)
