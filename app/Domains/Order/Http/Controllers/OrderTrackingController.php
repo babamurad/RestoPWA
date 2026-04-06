@@ -6,13 +6,16 @@ namespace App\Domains\Order\Http\Controllers;
 
 use App\Domains\Order\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class OrderTrackingController
 {
     public function track(string $orderId): View
     {
-        $order = Order::with('statusHistory')->findOrFail($orderId);
+        $order = Order::with('statusHistory')
+            ->where('user_id', Auth::id())
+            ->findOrFail($orderId);
 
         return view('order.tracking', [
             'order' => $order,
@@ -22,7 +25,9 @@ class OrderTrackingController
 
     public function apiTrack(string $orderId): \Illuminate\Http\JsonResponse
     {
-        $order = Order::with('statusHistory')->findOrFail($orderId);
+        $order = Order::with('statusHistory')
+            ->where('user_id', Auth::id())
+            ->findOrFail($orderId);
 
         return response()->json([
             'order_id' => $order->id,

@@ -14,7 +14,7 @@ All routes under `/api/v1/` are protected by the `SetTenantContext` middleware.
 | `api/v1/orders` | POST | `X-Vendor-ID` | **Hardened**: Order created for vendor and auth user. | ✅ OK |
 
 ## 2. Vendor Admin Panel
-All routes under `/vendor/` are protected by the `ensure.tenant` middleware.
+All routes under `/vendor/` are protected by the `ensure.tenant` and `auth` middleware.
 
 | Endpoint | Method | Middleware | Isolation Pattern | Status |
 | :--- | :--- | :--- | :--- | :--- |
@@ -29,7 +29,7 @@ These routes do not use the `ensure.tenant` middleware as they rely on slug or I
 | :--- | :--- | :--- | :--- | :--- |
 | `/restaurants/{vendor}` | GET | slug-based | Fetches specific restaurant by slug. | ✅ OK |
 | `/order/success/{id}` | GET | session/owner | Prevents cross-order viewing by guessing IDs. | ✅ OK |
-| `/order/{id}/track` | GET | none | (Potential leak): Should be restricted to owner/session. | ⚠️ Audit |
+| `/order/{id}/track` | GET | `auth` + ownership check | Restricted to order owner via `user_id` match in controller. | ✅ OK |
 
 ---
 

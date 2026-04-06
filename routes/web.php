@@ -77,7 +77,7 @@ Route::get('/manifest.json', function () {
 Route::view('/offline', 'offline');
 
 Route::get('/order/{orderId}/track', [OrderTrackingController::class, 'track'])
-    ->name('order.track');
+    ->name('order.track')->middleware('auth');
 
 Route::get('/order/success/{id}', [OrderSuccessController::class, 'show'])
     ->name('order.success');
@@ -89,7 +89,7 @@ Route::get('/api/ping', function () {
     return response()->json(['status' => 'ok']);
 })->name('api.ping');
 
-Route::prefix('vendor')->name('vendor.')->middleware(['ensure.tenant'])->group(function () {
+Route::prefix('vendor')->name('vendor.')->middleware(['ensure.tenant', 'auth'])->group(function () {
     Route::resource('products', ProductController::class)->except(['show']);
     Route::get('orders/kanban', [KanbanController::class, 'index'])->name('orders.kanban');
     Route::resource('orders', OrderController::class)->except(['create', 'store']);
