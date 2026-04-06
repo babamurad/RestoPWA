@@ -24,10 +24,14 @@
         window.vapidPublicKey = '{{ config('services.push.public_key') }}';
     </script>
 
-    <div class="max-w-lg mx-auto bg-white min-h-screen shadow-xl relative lg:max-w-none lg:bg-transparent lg:shadow-none">
+    <div class="max-w-lg mx-auto bg-white min-h-screen shadow-xl relative md:max-w-4xl lg:max-w-6xl xl:max-w-7xl lg:bg-transparent lg:shadow-none transition-all duration-300">
         <x-offline-indicator />
 
-        {{ $slot }}
+        <div class="flex flex-col min-h-screen">
+            <div class="flex-1">
+                {{ $slot }}
+            </div>
+        </div>
 
         <livewire:cart.cart-drawer />
     </div>

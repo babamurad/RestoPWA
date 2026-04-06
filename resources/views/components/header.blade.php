@@ -1,32 +1,49 @@
 @props(['showSearch' => true, 'showProfile' => true])
 
-<header class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100">
-    <div class="flex items-center gap-3 px-4 h-14">
+<header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
+    <div class="max-w-lg mx-auto md:max-w-4xl lg:max-w-6xl xl:max-w-7xl flex items-center gap-3 px-4 h-14 md:h-16">
         <div class="flex items-center gap-2">
-            <div class="flex items-center justify-center w-8 h-8 bg-orange-500 rounded-lg">
-                <span class="text-white font-bold text-sm">R</span>
+            <div class="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 bg-orange-500 rounded-lg shadow-md shadow-orange-200">
+                <span class="text-white font-bold text-sm md:text-base tracking-tighter">R</span>
             </div>
-            <span class="font-bold text-xl gradient-text">RestoPWA</span>
+            <span class="font-bold text-xl md:text-2xl gradient-text tracking-tight">RestoPWA</span>
         </div>
+        
         @if($showSearch)
-            <button onclick="showSearch()" class="flex-1 flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors">
+            <div class="flex-1 max-w-xl mx-auto hidden md:block">
+                <form action="#" method="GET" class="relative">
+                    <input type="text" 
+                           placeholder="Найти блюдо, ресторан или категорию..."
+                           class="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-2xl text-sm focus:ring-2 focus:ring-orange-500 transition-all">
+                    <svg class="absolute left-3 top-2.5 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </form>
+            </div>
+            
+            <button onclick="showSearch()" class="flex-1 md:hidden flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <span class="text-sm">Найти ресторан...</span>
+                <span class="text-sm">Поиск</span>
             </button>
         @endif
-        @if($showProfile)
-            @auth
-                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-gray-100 transition-colors">
-                    <div class="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold text-xs uppercase">
-                        {{ substr(auth()->user()->name, 0, 1) }}
-                    </div>
-                </a>
-            @else
-                <a href="{{ route('login') }}" class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors text-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                </a>
-            @endauth
-        @endif
+
+        <div class="flex items-center gap-2">
+            @if($showProfile)
+                @auth
+                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-3 py-1.5 rounded-full hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all">
+                        <div class="hidden md:block text-right">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Профиль</p>
+                            <p class="text-sm font-bold text-gray-900 leading-none">{{ auth()->user()->name }}</p>
+                        </div>
+                        <div class="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold text-xs uppercase shadow-inner">
+                            {{ substr(auth()->user()->name, 0, 1) }}
+                        </div>
+                    </a>
+                @else
+                    <a href="{{ route('login') }}" class="px-6 py-2 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-black transition-all">
+                        Войти
+                    </a>
+                @endauth
+            @endif
+        </div>
     </div>
 </header>
 
