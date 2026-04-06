@@ -43,6 +43,10 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    if (url.pathname === '/api/ping') {
+        return; // Bypass SW, let browser handle the request directly
+    }
+
     if (url.pathname.startsWith('/api/')) {
         event.respondWith(networkFirst(request, API_CACHE));
         return;

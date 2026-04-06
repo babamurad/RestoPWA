@@ -37,6 +37,9 @@ class SetTenantContext
 
         if ($vendorId) {
             $this->tenantContext->setCurrentVendor((string) $vendorId);
+        } elseif ($request->is('api/ping')) {
+            // Allow health check without tenant
+            return $next($request);
         } elseif ($request->is('api/*')) {
             return response()->json([
                 'success' => false,
