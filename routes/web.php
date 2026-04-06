@@ -83,7 +83,7 @@ Route::get('/order/success/{id}', [OrderSuccessController::class, 'show'])
     ->name('order.success');
 
 Route::get('/api/order/{orderId}/track', [OrderTrackingController::class, 'apiTrack'])
-    ->name('api.order.track');
+    ->name('api.order.track')->middleware('auth');
 
 Route::get('/api/ping', function () {
     return response()->json(['status' => 'ok']);
