@@ -19,14 +19,22 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(\App\Domains\Vendor\Services\TenantContext::class);
         $this->app->singleton(\App\Domains\Geo\Services\GeoService::class);
-        $this->app->singleton(\App\Services\PushNotificationService::class);
+
+        $this->app->singleton(\App\Services\PushNotificationService::class, function ($app) {
+            if (!class_exists(\Minishlink\WebPush\WebPush::class)) {
+                return new class {
+                    public function sendToUser($userId, $title, $body, $data = []): int { return 0; }
+                    public function sendToSubscription($subscription, $title, $body, $data = []): int { return 0; }
+                };
+            }
+            return new \App\Services\PushNotificationService();
+        });
 
         $this->app->bind('tenant', function ($app) {
             $tenantContext = $app->make(\App\Domains\Vendor\Services\TenantContext::class);
             $vendorId = $tenantContext->getCurrentVendor();
 
             if ($vendorId) {
-                // Пытаемся найти ресторан по vendor_id
                 return \App\Domains\Vendor\Models\Restaurant::where('vendor_id', $vendorId)->first()
                     ?? (object) ['id' => $vendorId];
             }

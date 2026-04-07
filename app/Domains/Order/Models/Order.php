@@ -176,6 +176,21 @@ class Order extends Model
         return '#' . strtoupper(substr($this->id, 0, 8));
     }
 
+    public function getClientNameAttribute(): ?string
+    {
+        return $this->customer_name;
+    }
+
+    public function getClientPhoneAttribute(): ?string
+    {
+        return $this->customer_phone;
+    }
+
+    public function getFullAddressAttribute(): ?string
+    {
+        return $this->customer_address;
+    }
+
     /**
      * Boot the model. Автоматическое логирование изменений статуса.
      */
