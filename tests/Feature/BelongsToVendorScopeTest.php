@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Domains\Vendor\Models\Restaurant;
 use App\Domains\Vendor\Services\TenantContext;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -124,7 +124,7 @@ class BelongsToVendorScopeTest extends TestCase
 
         $this->tenantContext->setCurrentVendor($vendor1);
 
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
 
         Restaurant::findOrFail($r2->id);
     }

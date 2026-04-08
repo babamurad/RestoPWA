@@ -7,24 +7,26 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\View\View;
 
 class AuthController extends Controller
 {
-    public function showLoginForm(): \Illuminate\View\View
+    public function showLoginForm(): View
     {
         return view('auth.login');
     }
 
-    public function showRegisterForm(): \Illuminate\View\View
+    public function showRegisterForm(): View
     {
         return view('auth.register');
     }
 
-    public function login(Request $request): JsonResponse|\Illuminate\Http\RedirectResponse
+    public function login(Request $request): JsonResponse|RedirectResponse
     {
         $credentials = $request->validate([
             'email' => 'required|email',
@@ -57,7 +59,7 @@ class AuthController extends Controller
         ])->onlyInput('email');
     }
 
-    public function register(Request $request): JsonResponse|\Illuminate\Http\RedirectResponse
+    public function register(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -86,7 +88,7 @@ class AuthController extends Controller
         return redirect(route('home'));
     }
 
-    public function logout(Request $request): JsonResponse|\Illuminate\Http\RedirectResponse
+    public function logout(Request $request): JsonResponse|RedirectResponse
     {
         Auth::logout();
 
@@ -106,7 +108,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'authenticated' => false,

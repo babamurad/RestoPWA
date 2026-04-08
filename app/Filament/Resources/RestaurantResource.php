@@ -2,13 +2,14 @@
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Filament\Resources\RestaurantResource\Pages;
-use App\Filament\Resources\RestaurantResource\RelationManagers;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -16,7 +17,7 @@ class RestaurantResource extends Resource
 {
     protected static ?string $model = Restaurant::class;
 
-    protected static string | BackedEnum | null $navigationIcon = null;
+    protected static string|BackedEnum|null $navigationIcon = null;
 
     protected static ?string $navigationLabel = 'Рестораны';
 
@@ -28,7 +29,7 @@ class RestaurantResource extends Resource
     {
         return $schema
             ->components([
-                Forms\Components\Section::make('Основная информация')
+                Section::make('Основная информация')
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->label('Название')
@@ -44,7 +45,7 @@ class RestaurantResource extends Resource
                             ->maxLength(65535)
                             ->columnSpanFull(),
                     ])->columns(2),
-                Forms\Components\Section::make('Настройки')
+                Section::make('Настройки')
                     ->schema([
                         Forms\Components\Toggle::make('is_active')
                             ->label('Активен')
@@ -99,12 +100,12 @@ class RestaurantResource extends Resource
                     ]),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

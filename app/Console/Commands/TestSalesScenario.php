@@ -2,17 +2,16 @@
 
 namespace App\Console\Commands;
 
-use App\Domains\Menu\Models\Category;
 use App\Domains\Menu\Models\Product;
 use App\Domains\Order\Models\Order;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Models\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Str;
 
 class TestSalesScenario extends Command
 {
     protected $signature = 'test:sales {--clean : Clean test data before running}';
+
     protected $description = 'Run sales test scenario: add product -> create order -> change status -> verify';
 
     public function handle(): int
@@ -26,8 +25,9 @@ class TestSalesScenario extends Command
         }
 
         $restaurant = Restaurant::first();
-        if (!$restaurant) {
+        if (! $restaurant) {
             $this->error('Ресторан не найден. Запустите сидер.');
+
             return Command::FAILURE;
         }
         $this->info("✓ Ресторан: {$restaurant->name}");
@@ -90,7 +90,7 @@ class TestSalesScenario extends Command
 
         $this->info("\n--- Проверка логирования ---");
         $history = $order->statusHistory()->get();
-        $this->info("Записей в истории: " . $history->count());
+        $this->info('Записей в истории: '.$history->count());
 
         foreach ($history as $h) {
             $from = $h->from_status ? Order::STATUSES[$h->from_status]['label'] : 'начало';

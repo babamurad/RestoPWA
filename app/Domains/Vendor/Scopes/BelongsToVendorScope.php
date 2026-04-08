@@ -15,7 +15,7 @@ class BelongsToVendorScope implements Scope
     /**
      * Apply the scope to a given Eloquent query builder.
      *
-     * @param Builder<Model> $builder
+     * @param  Builder<Model>  $builder
      */
     public function apply(Builder $builder, Model $model): void
     {
@@ -26,7 +26,7 @@ class BelongsToVendorScope implements Scope
         if ($vendorId) {
             $builder->where('vendor_id', $vendorId);
         } else {
-            $builder->whereNull($model->getTable() . '.id');
+            $builder->whereNull($model->getTable().'.id');
         }
     }
 }

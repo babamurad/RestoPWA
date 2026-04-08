@@ -1,14 +1,120 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import 'fake-indexeddb/auto';
-import CartService from './CartService';
-import Dexie from 'dexie';
+
+const mockCartData = new Map();
+const mockPendingData = [];
+let cartIdCounter = 0;
+let pendingIdCounter = 0;
+
+function matchesCompositeKey(item, key) {
+    if (Array.isArray(key)) {
+        const [vendorId, productId, modifiersHash] = key;
+        return item.vendorId === vendorId && 
+               item.productId === productId && 
+               item.modifiersHash === modifiersHash;
+    }
+    return item.vendorId === key;
+}
+
+function createMockDB() {
+    return {
+        cart: {
+            add: vi.fn(async (item) => {
+                cartIdCounter++;
+                const newItem = { ...item, id: cartIdCounter };
+                mockCartData.set(cartIdCounter, newItem);
+                return cartIdCounter;
+            }),
+            where: vi.fn((field) => ({
+                equals: vi.fn((val) => ({
+                    toArray: vi.fn(async () => {
+                        if (field.startsWith('[')) {
+                            return Array.from(mockCartData.values()).filter(item => 
+                                matchesCompositeKey(item, val)
+                            );
+                        }
+                        return Array.from(mockCartData.values()).filter(item => item[field] === val);
+                    }),
+                    delete: vi.fn(async () => {
+                        for (const [id, item] of mockCartData.entries()) {
+                            if (field.startsWith('[')) {
+                                if (matchesCompositeKey(item, val)) {
+                                    mockCartData.delete(id);
+                                }
+                            } else if (item[field] === val) {
+                                mockCartData.delete(id);
+                            }
+                        }
+                    }),
+                    first: vi.fn(async () => {
+                        if (field.startsWith('[')) {
+                            return Array.from(mockCartData.values()).find(item => 
+                                matchesCompositeKey(item, val)
+                            );
+                        }
+                        return Array.from(mockCartData.values()).find(item => item[field] === val);
+                    }),
+                })),
+            })),
+            toArray: vi.fn(async () => Array.from(mockCartData.values())),
+            delete: vi.fn(async (id) => mockCartData.delete(id)),
+            update: vi.fn(async (id, changes) => {
+                const item = mockCartData.get(id);
+                if (item) {
+                    mockCartData.set(id, { ...item, ...changes });
+                }
+            }),
+        },
+        pendingOrders: {
+            add: vi.fn(async (item) => {
+                pendingIdCounter++;
+                mockPendingData.push({ ...item, id: pendingIdCounter });
+                return pendingIdCounter;
+            }),
+            get: vi.fn(async (id) => {
+                return mockPendingData.find(o => o.id === id);
+            }),
+            toArray: vi.fn(async () => [...mockPendingData]),
+            delete: vi.fn(async (id) => {
+                const idx = mockPendingData.findIndex(o => o.id === id);
+                if (idx !== -1) mockPendingData.splice(idx, 1);
+            }),
+            update: vi.fn(async (id, changes) => {
+                const order = mockPendingData.find(o => o.id === id);
+                if (order) {
+                    Object.assign(order, changes);
+                }
+            }),
+        },
+        open: vi.fn(),
+        delete: vi.fn(async () => {
+            mockCartData.clear();
+            mockPendingData.length = 0;
+            cartIdCounter = 0;
+            pendingIdCounter = 0;
+        }),
+        version: vi.fn(() => ({
+            stores: vi.fn(),
+        })),
+    };
+}
+
+let mockDb;
+
+vi.mock('dexie', () => ({
+    default: vi.fn(() => {
+        mockDb = createMockDB();
+        return mockDb;
+    }),
+}));
 
 describe('CartService', () => {
     beforeEach(async () => {
-        // Clear IndexedDB before each test
-        const db = new Dexie('RestoCart');
-        await db.delete();
-        await db.open();
+        mockCartData.clear();
+        mockPendingData.length = 0;
+        cartIdCounter = 0;
+        pendingIdCounter = 0;
+        vi.clearAllMocks();
+        await import('./CartService');
     });
 
     it('should add an item to the cart', async () => {

@@ -15,9 +15,13 @@ class CourierLocationUpdated implements ShouldBroadcastNow
     use SerializesModels;
 
     public string $orderId;
+
     public float $lat;
+
     public float $lon;
+
     public ?float $heading;
+
     public string $timestamp;
 
     public function __construct(string $orderId, float $lat, float $lon, ?float $heading = null)
@@ -32,7 +36,7 @@ class CourierLocationUpdated implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new Channel('tracking.' . $this->orderId),
+            new Channel('tracking.'.$this->orderId),
         ];
     }
 

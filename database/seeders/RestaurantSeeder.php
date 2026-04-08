@@ -6,7 +6,9 @@ use App\Domains\Menu\Models\Category;
 use App\Domains\Menu\Models\Product;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Domains\Vendor\Services\TenantContext;
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class RestaurantSeeder extends Seeder
 {
@@ -14,7 +16,7 @@ class RestaurantSeeder extends Seeder
     {
         $tenantContext = app(TenantContext::class);
 
-        $owner = \App\Models\User::firstOrCreate(
+        $owner = User::firstOrCreate(
             ['email' => 'owner@restopwa.local'],
             [
                 'name' => 'Restaurant Owner',
@@ -28,7 +30,7 @@ class RestaurantSeeder extends Seeder
             $menuItems = $restaurantData['menu'];
             unset($restaurantData['menu']);
 
-            $restaurantData['slug'] = \Illuminate\Support\Str::slug($restaurantData['name']);
+            $restaurantData['slug'] = Str::slug($restaurantData['name']);
             $restaurantData['owner_id'] = $owner->id;
 
             $existing = Restaurant::withoutGlobalScopes()->where('slug', $restaurantData['slug'])->first();

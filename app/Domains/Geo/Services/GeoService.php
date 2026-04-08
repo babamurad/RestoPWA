@@ -14,7 +14,9 @@ use Illuminate\Support\Facades\Log;
 class GeoService
 {
     private string $googleKey;
+
     private string $yandexKey;
+
     private string $driver;
 
     public function __construct()
@@ -27,12 +29,12 @@ class GeoService
     /**
      * Geocode an address to lat/lon using the configured driver.
      * Caches result for 1 hour.
-     * 
+     *
      * @return array{lat: float, lon: float, address: string}|null
      */
     public function geocodeAddress(string $address): ?array
     {
-        $cacheKey = 'geocoding_' . $this->driver . '_' . md5($address);
+        $cacheKey = 'geocoding_'.$this->driver.'_'.md5($address);
 
         return Cache::remember($cacheKey, now()->addHour(), function () use ($address) {
             return match ($this->driver) {
@@ -56,7 +58,7 @@ class GeoService
 
             if ($response->successful() && $response->json('status') === 'OK') {
                 $result = $response->json('results.0');
-                
+
                 return [
                     'lat' => (float) $result['geometry']['location']['lat'],
                     'lon' => (float) $result['geometry']['location']['lng'],
@@ -64,9 +66,9 @@ class GeoService
                 ];
             }
 
-            Log::warning('Google Geocoding failed: ' . ($response->json('error_message') ?? $response->json('status')));
+            Log::warning('Google Geocoding failed: '.($response->json('error_message') ?? $response->json('status')));
         } catch (\Exception $e) {
-            Log::error('Google Geocoding exception: ' . $e->getMessage());
+            Log::error('Google Geocoding exception: '.$e->getMessage());
         }
 
         return null;
@@ -87,10 +89,10 @@ class GeoService
 
             if ($response->successful()) {
                 $feature = $response->json('response.GeoObjectCollection.featureMember.0.GeoObject');
-                
+
                 if ($feature) {
                     $pos = explode(' ', $feature['Point']['pos']); // Yandex returns "lon lat"
-                    
+
                     return [
                         'lon' => (float) ($pos[0] ?? 0),
                         'lat' => (float) ($pos[1] ?? 0),
@@ -99,9 +101,9 @@ class GeoService
                 }
             }
 
-            Log::warning('Yandex Geocoding failed for: ' . $address);
+            Log::warning('Yandex Geocoding failed for: '.$address);
         } catch (\Exception $e) {
-            Log::error('Yandex Geocoding exception: ' . $e->getMessage());
+            Log::error('Yandex Geocoding exception: '.$e->getMessage());
         }
 
         return null;
@@ -112,26 +114,26 @@ class GeoService
      */
     public function isPointInDeliveryZone(float $lat, float $lon, string $vendorId): bool
     {
-        $result = DB::selectOne("
+        $result = DB::selectOne('
             SELECT ST_Contains(delivery_zones, ST_SetSRID(ST_MakePoint(?, ?), 4326)) as is_inside
             FROM restaurants 
             WHERE id = ?
-        ", [$lon, $lat, $vendorId]);
+        ', [$lon, $lat, $vendorId]);
 
         return (bool) ($result?->is_inside ?? false);
     }
 
     /**
      * Get active restaurants that cover the given point, sorted by distance.
-     * 
+     *
      * @return Collection<int, Restaurant>
      */
     public function getRestaurantsByPoint(float $lat, float $lon): Collection
     {
         return Restaurant::query()
             ->select('*')
-            ->selectRaw("ST_Distance(delivery_zones, ST_SetSRID(ST_MakePoint(?, ?), 4326)) as distance", [$lon, $lat])
-            ->whereRaw("ST_Intersects(delivery_zones, ST_SetSRID(ST_MakePoint(?, ?), 4326))", [$lon, $lat])
+            ->selectRaw('ST_Distance(delivery_zones, ST_SetSRID(ST_MakePoint(?, ?), 4326)) as distance', [$lon, $lat])
+            ->whereRaw('ST_Intersects(delivery_zones, ST_SetSRID(ST_MakePoint(?, ?), 4326))', [$lon, $lat])
             ->where('is_active', true)
             ->orderBy('distance')
             ->get();
@@ -144,11 +146,11 @@ class GeoService
     {
         $restaurant = Restaurant::find($vendorId);
 
-        if (!$restaurant) {
+        if (! $restaurant) {
             return (float) env('DELIVERY_FEE_DEFAULT', 5.0);
         }
 
-        if (!$this->isPointInDeliveryZone($lat, $lon, $vendorId)) {
+        if (! $this->isPointInDeliveryZone($lat, $lon, $vendorId)) {
             return (float) ($restaurant->settings['delivery_fee_outside'] ?? env('DELIVERY_FEE_DEFAULT', 5.0));
         }
 

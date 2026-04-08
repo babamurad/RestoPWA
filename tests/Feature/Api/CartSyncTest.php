@@ -14,21 +14,22 @@ class CartSyncTest extends TestCase
     use RefreshDatabase;
 
     private Restaurant $restaurant;
+
     private Product $product;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->restaurant = Restaurant::factory()->create([
-            'id' => 'test-vendor',
-            'settings' => ['min_order' => 500],
+            'min_order' => 500,
         ]);
-        
+        $this->restaurant->update(['vendor_id' => $this->restaurant->id]);
+
         $this->product = Product::factory()->create([
             'vendor_id' => $this->restaurant->id,
             'price' => 20000, // 200.00 in MoneyCast units (store as integer 20000)
-            'is_active' => true,
+            'is_available' => true,
         ]);
     }
 
@@ -42,8 +43,8 @@ class CartSyncTest extends TestCase
                         'product_id' => $this->product->id,
                         'quantity' => 2,
                         'modifiers' => [],
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
         $response->assertStatus(200)
@@ -53,7 +54,7 @@ class CartSyncTest extends TestCase
                     'subtotal' => 400,
                     'total' => 400,
                     'is_min_order_met' => false,
-                ]
+                ],
             ]);
     }
 
@@ -67,15 +68,15 @@ class CartSyncTest extends TestCase
                         'product_id' => $this->product->id,
                         'quantity' => 3, // 3 * 200 = 600
                         'modifiers' => [],
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
         $response->assertStatus(200)
             ->assertJson([
                 'data' => [
                     'is_min_order_met' => true,
-                ]
+                ],
             ]);
     }
 

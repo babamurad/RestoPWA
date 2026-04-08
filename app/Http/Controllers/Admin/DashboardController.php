@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Domains\Vendor\Models\Restaurant;
 use App\Domains\Menu\Models\Category;
 use App\Domains\Menu\Models\Product;
 use App\Domains\Order\Models\Order;
-use Illuminate\Support\Facades\Auth;
+use App\Domains\Vendor\Models\Restaurant;
+use App\Http\Controllers\Controller;
 
 class DashboardController extends Controller
 {

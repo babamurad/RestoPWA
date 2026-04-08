@@ -1,17 +1,16 @@
 <?php
 
-use App\Http\Controllers\RestaurantController;
 use App\Domains\Order\Http\Controllers\OrderTrackingController;
+use App\Domains\Order\Models\Order;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\OrderSuccessController;
-use App\Http\Controllers\Vendor\ProductController;
-use App\Http\Controllers\Vendor\OrderController;
-use App\Http\Controllers\Vendor\SettingsController;
+use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\Vendor\KanbanController;
-use Illuminate\Support\Facades\Route;
-
-use App\Domains\Vendor\Models\Restaurant;
+use App\Http\Controllers\Vendor\OrderController;
+use App\Http\Controllers\Vendor\ProductController;
+use App\Http\Controllers\Vendor\SettingsController;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -35,18 +34,20 @@ Route::get('/checkout', function () {
 
 Route::get('/orders', function () {
     $user = Auth::user();
-    if (!$user) {
+    if (! $user) {
         return redirect()->route('login');
     }
-    $orders = \App\Domains\Order\Models\Order::where('user_id', $user->id)->latest()->get();
+    $orders = Order::where('user_id', $user->id)->latest()->get();
+
     return view('orders.index', compact('orders'));
 })->name('orders.index')->middleware('auth');
 
 Route::get('/profile', function () {
     $user = Auth::user();
-    if (!$user) {
+    if (! $user) {
         return redirect()->route('login');
     }
+
     return view('profile.edit', compact('user'));
 })->name('profile.edit')->middleware('auth');
 
@@ -85,7 +86,7 @@ Route::get('/order/success/{id}', [OrderSuccessController::class, 'show'])
 Route::get('/api/order/{orderId}/track', [OrderTrackingController::class, 'apiTrack'])
     ->name('api.order.track')->middleware('auth');
 
-Route::get('/api/ping', function () {
+Route::match(['get', 'head'], '/api/ping', function () {
     return response()->json(['status' => 'ok']);
 })->name('api.ping');
 
@@ -97,7 +98,7 @@ Route::prefix('vendor')->name('vendor.')->middleware(['ensure.tenant', 'auth'])-
     Route::post('orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
     Route::post('orders/{order}/update-status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
     Route::get('orders/{order}/receipt', [OrderController::class, 'receipt'])->name('orders.receipt');
-    
+
     Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('settings', [SettingsController::class, 'update'])->name('settings.update');
 });

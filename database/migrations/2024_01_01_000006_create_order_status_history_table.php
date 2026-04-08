@@ -13,7 +13,7 @@ return new class extends Migration
             $table->uuid('order_id');
             $table->string('from_status', 20)->nullable();
             $table->string('to_status', 20);
-            $table->jsonb('metadata')->nullable();
+            $table->json('metadata')->nullable();
             $table->timestamp('created_at')->useCurrent();
 
             $table->foreign('order_id')

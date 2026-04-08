@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Push\PushSubscription;
-use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
+use Minishlink\WebPush\WebPush;
 
 class PushNotificationService
 {

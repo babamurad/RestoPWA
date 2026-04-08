@@ -4,16 +4,22 @@ declare(strict_types=1);
 
 namespace App\Livewire\Cart;
 
-use Livewire\Component;
+use Illuminate\View\View;
 use Livewire\Attributes\On;
+use Livewire\Component;
 
 class CartDrawer extends Component
 {
     public bool $isOpen = false;
+
     public array $items = [];
+
     public int $totalQuantity = 0;
+
     public float $totalPrice = 0.0;
+
     public string $currentVendorId = '';
+
     public bool $isOffline = false;
 
     protected $listeners = [
@@ -26,7 +32,7 @@ class CartDrawer extends Component
 
     public function mount(): void
     {
-        $this->isOffline = !app()->runningInConsole() && !request()->ajax();
+        $this->isOffline = ! app()->runningInConsole() && ! request()->ajax();
         $this->dispatch('request-cart-state');
     }
 
@@ -74,7 +80,7 @@ class CartDrawer extends Component
         $this->dispatch('cart-checkout');
     }
 
-    public function addItem(string $productId, array $modifiers = [], int $price): void
+    public function addItem(string $productId, array $modifiers, int $price): void
     {
         $this->dispatch('cart-add-item', [
             'productId' => $productId,
@@ -97,7 +103,7 @@ class CartDrawer extends Component
         $this->isOffline = true;
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('livewire.cart.cart-drawer');
     }

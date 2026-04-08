@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Domains\Vendor\Models;
 
-
+use App\Domains\Menu\Models\Category;
+use App\Domains\Vendor\Traits\BelongsToVendor;
+use Carbon\Carbon;
 use Database\Factories\RestaurantFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property string $id
@@ -25,22 +29,24 @@ use Illuminate\Database\Eloquent\Builder;
  * @property array|null $settings
  * @property mixed $delivery_zones
  * @property bool $is_active
- * @property \Carbon\Carbon|null $created_at
- * @property \Carbon\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class Restaurant extends Model
 {
+    use BelongsToVendor;
     use HasFactory;
     use HasUuids;
 
-    protected static function newFactory(): \Illuminate\Database\Eloquent\Factories\Factory
+    protected static function newFactory(): Factory
     {
-        return new RestaurantFactory();
+        return RestaurantFactory::new();
     }
 
     protected static function booted(): void
     {
         parent::booted();
+        static::bootBelongsToVendor();
     }
 
     /**
@@ -78,7 +84,7 @@ class Restaurant extends Model
 
     /**
      * Возвращает geometry как array координат.
-     * 
+     *
      * @return array<mixed>
      */
     public function deliveryZones(): array
@@ -88,6 +94,7 @@ class Restaurant extends Model
 
         if (is_string($zones)) {
             $decoded = json_decode($zones, true);
+
             return is_array($decoded) ? $decoded : [];
         }
 
@@ -95,7 +102,7 @@ class Restaurant extends Model
     }
 
     /**
-     * @param Builder<static> $query
+     * @param  Builder<static>  $query
      * @return Builder<static>
      */
     public function scopeActive(Builder $query): Builder
@@ -111,17 +118,17 @@ class Restaurant extends Model
         if ($this->image && str_starts_with($this->image, 'http')) {
             return $this->image;
         }
-        
-        return $this->image 
-            ? asset('storage/' . $this->image) 
+
+        return $this->image
+            ? asset('storage/'.$this->image)
             : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=400';
     }
 
     /**
      * Get the categories for the restaurant.
      */
-    public function categories(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function categories(): HasMany
     {
-        return $this->hasMany(\App\Domains\Menu\Models\Category::class, 'vendor_id');
+        return $this->hasMany(Category::class, 'vendor_id');
     }
 }

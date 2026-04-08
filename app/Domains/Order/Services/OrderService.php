@@ -5,18 +5,24 @@ declare(strict_types=1);
 namespace App\Domains\Order\Services;
 
 use App\Domains\Order\Models\Order;
-use App\Domains\Order\Models\OrderStatusHistory;
 use App\Domains\Vendor\Models\Restaurant;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_CONFIRMED = 'confirmed';
+
     public const STATUS_PREPARING = 'preparing';
+
     public const STATUS_READY = 'ready';
+
     public const STATUS_DELIVERING = 'delivering';
+
     public const STATUS_COMPLETED = 'completed';
+
     public const STATUS_CANCELLED = 'cancelled';
 
     public function createOrder(array $data): Order
@@ -71,37 +77,37 @@ class OrderService
     public function getWorkingHours(Restaurant $restaurant): ?array
     {
         $settings = $restaurant->settings;
-        
-        if (!$settings || !isset($settings['working_hours'])) {
+
+        if (! $settings || ! isset($settings['working_hours'])) {
             return null;
         }
 
         return $settings['working_hours'];
     }
 
-    public function isWithinWorkingHours(Restaurant $restaurant, ?\Carbon\Carbon $time = null): bool
+    public function isWithinWorkingHours(Restaurant $restaurant, ?Carbon $time = null): bool
     {
         $workingHours = $this->getWorkingHours($restaurant);
-        
-        if (!$workingHours) {
+
+        if (! $workingHours) {
             return true;
         }
 
         $time = $time ?? now();
         $dayOfWeek = strtolower($time->format('l'));
-        
-        if (!isset($workingHours[$dayOfWeek])) {
+
+        if (! isset($workingHours[$dayOfWeek])) {
             return false;
         }
 
         $hours = $workingHours[$dayOfWeek];
-        
+
         if (isset($hours['closed']) && $hours['closed']) {
             return false;
         }
 
-        $openTime = \Carbon\Carbon::parse($hours['open'], $restaurant->settings['timezone'] ?? 'UTC');
-        $closeTime = \Carbon\Carbon::parse($hours['close'], $restaurant->settings['timezone'] ?? 'UTC');
+        $openTime = Carbon::parse($hours['open'], $restaurant->settings['timezone'] ?? 'UTC');
+        $closeTime = Carbon::parse($hours['close'], $restaurant->settings['timezone'] ?? 'UTC');
 
         return $time->between($openTime, $closeTime);
     }

@@ -6,8 +6,8 @@ namespace App\Domains\Menu\Http\Controllers;
 
 use App\Domains\Menu\Models\Category;
 use App\Domains\Menu\Models\Product;
-use App\Http\Resources\ProductResource;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Http\Resources\ProductResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -25,7 +25,7 @@ class MenuController
         $cacheTags = ['menu', "vendor:{$vendorId}"];
 
         $data = Cache::tags($cacheTags)->remember(
-            "menu.{$vendorId}.category." . ($categoryId ?? 'all'),
+            "menu.{$vendorId}.category.".($categoryId ?? 'all'),
             3600,
             function () use ($vendorId, $categoryId) {
                 $categories = $this->getCategories($vendorId);
@@ -49,7 +49,7 @@ class MenuController
             'price' => (int) $product->price,
             'description' => $product->description,
             'modifiers' => $product->modifiers ?? collect(),
-            'image_url' => $product->image ? asset('storage/' . $product->image) : null,
+            'image_url' => $product->image ? asset('storage/'.$product->image) : null,
             'is_available' => $product->is_available,
             'weight_g' => $product->weight_g,
             'category' => $product->category ? [
@@ -128,8 +128,8 @@ class MenuController
         $prices = $query->pluck('price')->toArray();
 
         return [
-            'min' => !empty($prices) ? (int) min($prices) : 0,
-            'max' => !empty($prices) ? (int) max($prices) : 0,
+            'min' => ! empty($prices) ? (int) min($prices) : 0,
+            'max' => ! empty($prices) ? (int) max($prices) : 0,
         ];
     }
 }

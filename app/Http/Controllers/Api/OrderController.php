@@ -16,7 +16,7 @@ class OrderController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             $request->validate([
                 'user_id' => 'required_without:token|string',
                 'token' => 'required_without:user_id|string',

@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Models\User;
+use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -57,8 +58,9 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->bootUsing(function () {
-                \Filament\Facades\Filament::auth(function (): ?User {
+                Filament::auth(function (): ?User {
                     $user = auth()->user();
+
                     return ($user && $user->is_admin) ? $user : null;
                 });
             });

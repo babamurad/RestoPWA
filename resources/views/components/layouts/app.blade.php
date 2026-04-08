@@ -22,6 +22,7 @@
 <body class="bg-gray-50 overflow-x-hidden" x-data="cartManager">
     <script>
         window.vapidPublicKey = '{{ config('services.push.public_key') }}';
+        window.apiPingUrl = '{{ route('api.ping') }}';
     </script>
 
     <div class="max-w-lg mx-auto bg-white min-h-screen shadow-xl relative md:max-w-4xl lg:max-w-6xl xl:max-w-7xl lg:bg-transparent lg:shadow-none transition-all duration-300">

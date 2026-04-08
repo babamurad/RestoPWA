@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Order\Http\Controllers;
 
 use App\Domains\Order\Models\Order;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -23,7 +23,7 @@ class OrderTrackingController
         ]);
     }
 
-    public function apiTrack(string $orderId): \Illuminate\Http\JsonResponse
+    public function apiTrack(string $orderId): JsonResponse
     {
         $order = Order::with('statusHistory')
             ->where('user_id', Auth::id())
@@ -35,7 +35,7 @@ class OrderTrackingController
             'address' => $order->address,
             'items' => $order->items,
             'total' => $order->total,
-            'status_history' => $order->statusHistory->map(fn($h) => [
+            'status_history' => $order->statusHistory->map(fn ($h) => [
                 'status' => $h->to_status,
                 'timestamp' => $h->created_at,
             ]),

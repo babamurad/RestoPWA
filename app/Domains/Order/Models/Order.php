@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace App\Domains\Order\Models;
 
 use App\Casts\MoneyCast;
-use App\Models\User;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Database\Factories\OrderFactory;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -27,17 +31,27 @@ use Illuminate\Support\Facades\Auth;
  * @property string|null $payment_method
  * @property string|null $comment
  * @property bool $is_offline
- * @property \Carbon\Carbon $created_at
+ * @property Carbon $created_at
  */
 class Order extends Model
 {
-    use HasUuids;
+    use HasFactory, HasUuids;
+
+    protected static function newFactory(): Factory
+    {
+        return OrderFactory::new();
+    }
 
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_CONFIRMED = 'confirmed';
+
     public const STATUS_PREPARING = 'preparing';
+
     public const STATUS_DELIVERING = 'delivering';
+
     public const STATUS_DELIVERED = 'delivered';
+
     public const STATUS_CANCELLED = 'cancelled';
 
     public const STATUSES = [
@@ -50,9 +64,13 @@ class Order extends Model
     ];
 
     public const FILTER_NEW = 'new';
+
     public const FILTER_IN_PROGRESS = 'in_progress';
+
     public const FILTER_DELIVERING = 'delivering';
+
     public const FILTER_COMPLETED = 'completed';
+
     public const FILTER_CANCELLED = 'cancelled';
 
     public const FILTERS = [
@@ -137,14 +155,15 @@ class Order extends Model
 
     public function getCanTransitionToAttribute(): bool
     {
-        return !empty($this->getNextStatuses());
+        return ! empty($this->getNextStatuses());
     }
 
     public function getItemsCountAttribute(): int
     {
-        if (!$this->items) {
+        if (! $this->items) {
             return 0;
         }
+
         return array_sum(array_column($this->items, 'quantity'));
     }
 
@@ -160,20 +179,21 @@ class Order extends Model
 
     public function getCustomerAddressAttribute(): ?string
     {
-        if (!isset($this->address['address'])) {
+        if (! isset($this->address['address'])) {
             return null;
         }
         $parts = array_filter([
             $this->address['address'] ?? null,
             $this->address['house'] ?? null,
-            $this->address['apartment'] ? 'кв. ' . $this->address['apartment'] : null,
+            $this->address['apartment'] ? 'кв. '.$this->address['apartment'] : null,
         ]);
+
         return implode(', ', $parts);
     }
 
     public function getOrderNumberAttribute(): string
     {
-        return '#' . strtoupper(substr($this->id, 0, 8));
+        return '#'.strtoupper(substr($this->id, 0, 8));
     }
 
     public function getClientNameAttribute(): ?string

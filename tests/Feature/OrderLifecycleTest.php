@@ -15,25 +15,27 @@ class OrderLifecycleTest extends TestCase
     use RefreshDatabase;
 
     private Restaurant $restaurant;
+
     private Product $product;
+
     private User $user;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->restaurant = Restaurant::factory()->create([
-            'id' => 'test-vendor',
             'slug' => 'test-restaurant',
             'is_active' => true,
         ]);
-        
+        $this->restaurant->update(['vendor_id' => $this->restaurant->id]);
+
         $this->product = Product::factory()->create([
             'vendor_id' => $this->restaurant->id,
             'price' => 10000, // 100.00
             'is_available' => true,
         ]);
-        
+
         $this->user = User::factory()->create();
     }
 
@@ -55,8 +57,8 @@ class OrderLifecycleTest extends TestCase
                     [
                         'product_id' => $this->product->id,
                         'quantity' => 2,
-                    ]
-                ]
+                    ],
+                ],
             ]);
         $response->assertStatus(200)
             ->assertJsonPath('data.total', 200.0);
@@ -73,14 +75,14 @@ class OrderLifecycleTest extends TestCase
                         'quantity' => 2,
                         'unit_price' => 100.0,
                         'total_price' => 200.0,
-                    ]
+                    ],
                 ],
                 'total' => 200.0,
                 'address' => [
                     'address' => 'Test Street 10',
                     'lat' => 55.75,
                     'lon' => 37.61,
-                ]
+                ],
             ]);
 
         $response->assertStatus(201)
@@ -110,8 +112,8 @@ class OrderLifecycleTest extends TestCase
                         'product_id' => $this->product->id,
                         'quantity' => 1,
                         'price' => 10000,
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
         $response->assertStatus(200);
@@ -133,8 +135,8 @@ class OrderLifecycleTest extends TestCase
                     [
                         'product_id' => $this->product->id,
                         'quantity' => 1,
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
         $response->assertStatus(200);
@@ -158,7 +160,7 @@ class OrderLifecycleTest extends TestCase
                     [
                         'product_id' => $this->product->id,
                         'quantity' => 1,
-                    ]
+                    ],
                 ],
                 'total' => 100.0,
             ]);
@@ -166,6 +168,6 @@ class OrderLifecycleTest extends TestCase
         // Should return 400 or 403 because current vendor is set to 'other-vendor'
         // and we are trying to create an order for 'test-vendor'.
         // Or the Global Scope will prevent finding either.
-        $response->assertStatus(400); 
+        $response->assertStatus(400);
     }
 }

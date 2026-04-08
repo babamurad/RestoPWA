@@ -7,17 +7,25 @@ namespace App\Livewire\Geo;
 use App\Domains\Geo\Services\GeoService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class AddressSelector extends Component
 {
     public string $address = '';
+
     public float $lat = 0;
+
     public float $lon = 0;
+
     public array $suggestions = [];
+
     public string $selectedVendorId = '';
+
     public bool $isInDeliveryZone = false;
+
     public bool $isDetectingLocation = false;
+
     public ?string $error = null;
 
     private GeoService $geoService;
@@ -46,20 +54,20 @@ class AddressSelector extends Component
         $this->error = null;
         $this->isDetectingLocation = true;
 
-        $this->js(<<<JS
+        $this->js(<<<'JS'
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
-                        \$wire.setLocation(position.coords.latitude, position.coords.longitude);
+                        $wire.setLocation(position.coords.latitude, position.coords.longitude);
                     },
                     (error) => {
-                        \$wire.setError('Не удалось определить местоположение: ' + error.message);
-                        \$wire.setIsDetectingLocation(false);
+                        $wire.setError('Не удалось определить местоположение: ' + error.message);
+                        $wire.setIsDetectingLocation(false);
                     }
                 );
             } else {
-                \$wire.setError('Геолокация не поддерживается браузером');
-                \$wire.setIsDetectingLocation(false);
+                $wire.setError('Геолокация не поддерживается браузером');
+                $wire.setIsDetectingLocation(false);
             }
         JS);
     }
@@ -95,6 +103,7 @@ class AddressSelector extends Component
     {
         if (strlen($query) < 3) {
             $this->suggestions = [];
+
             return;
         }
 
@@ -102,7 +111,7 @@ class AddressSelector extends Component
 
         try {
             $apiKey = config('services.yandex_maps.key', '');
-            
+
             if (empty($apiKey)) {
                 return;
             }
@@ -117,11 +126,11 @@ class AddressSelector extends Component
 
             if ($response->successful()) {
                 $features = $response->json('response.GeoObjectCollection.featureMember', []);
-                
+
                 $this->suggestions = array_map(function ($item) {
                     $geo = $item['GeoObject'];
                     $pos = explode(' ', $geo['Point']['pos']);
-                    
+
                     return [
                         'address' => $geo['metaDataProperty']['GeocoderMetaData']['text'],
                         'lat' => (float) ($pos[1] ?? 0),
@@ -131,14 +140,14 @@ class AddressSelector extends Component
                 }, $features);
             }
         } catch (\Exception $e) {
-            Log::error('Address search error: ' . $e->getMessage());
+            Log::error('Address search error: '.$e->getMessage());
             $this->suggestions = [];
         }
     }
 
     public function selectAddress(int $index): void
     {
-        if (!isset($this->suggestions[$index])) {
+        if (! isset($this->suggestions[$index])) {
             return;
         }
 
@@ -149,8 +158,9 @@ class AddressSelector extends Component
         $this->suggestions = [];
         $this->error = null;
 
-        if (!$this->selectedVendorId) {
+        if (! $this->selectedVendorId) {
             $this->error = 'Выберите ресторан для проверки зоны доставки';
+
             return;
         }
 
@@ -159,7 +169,7 @@ class AddressSelector extends Component
 
     private function checkDeliveryZone(): void
     {
-        if (!$this->lat || !$this->lon) {
+        if (! $this->lat || ! $this->lon) {
             return;
         }
 
@@ -169,8 +179,9 @@ class AddressSelector extends Component
             $this->selectedVendorId
         );
 
-        if (!$this->isInDeliveryZone) {
+        if (! $this->isInDeliveryZone) {
             $this->error = 'Этот адрес находится за пределами зоны доставки выбранного ресторана';
+
             return;
         }
 
@@ -179,7 +190,7 @@ class AddressSelector extends Component
                 'address' => $this->address,
                 'lat' => $this->lat,
                 'lon' => $this->lon,
-            ]
+            ],
         ]);
 
         $this->dispatch('address-selected', [
@@ -194,7 +205,7 @@ class AddressSelector extends Component
         $this->searchAddress($value);
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('livewire.geo.address-selector');
     }

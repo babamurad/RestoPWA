@@ -77,11 +77,20 @@ async function checkConnectivity() {
     }
 
     try {
-        const response = await fetch('/api/ping', { 
-            method: 'HEAD', 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
+        const response = await fetch(window.apiPingUrl || '/api/ping', { 
+            method: 'GET', 
             cache: 'no-store',
-            headers: { 'Cache-Control': 'no-cache' } 
+            signal: controller.signal,
+            headers: { 
+                'Cache-Control': 'no-cache',
+                'Accept': 'application/json'
+            } 
         });
+        
+        clearTimeout(timeoutId);
         
         if (response.ok) {
             setOfflineState(false);

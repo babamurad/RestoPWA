@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
 use App\Domains\Order\Models\Order;
 use App\Filament\Resources\OrderResource\Pages;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -15,7 +17,7 @@ class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
 
-    protected static string | BackedEnum | null $navigationIcon = null;
+    protected static string|BackedEnum|null $navigationIcon = null;
 
     protected static ?string $navigationLabel = 'Заказы';
 
@@ -27,7 +29,7 @@ class OrderResource extends Resource
     {
         return $schema
             ->components([
-                Forms\Components\Section::make('Информация о заказе')
+                Section::make('Информация о заказе')
                     ->schema([
                         Forms\Components\TextInput::make('status')
                             ->label('Статус')
@@ -36,7 +38,7 @@ class OrderResource extends Resource
                             ->label('Оплата')
                             ->disabled(),
                     ])->columns(2),
-                Forms\Components\Section::make('Клиент')
+                Section::make('Клиент')
                     ->schema([
                         Forms\Components\TextInput::make('client_name')
                             ->label('Имя')
@@ -94,12 +96,12 @@ class OrderResource extends Resource
                     ])
                     ->query(function ($query, array $data) {
                         return $query
-                            ->when($data['created_from'], fn($q) => $q->whereDate('created_at', '>=', $data['created_from']))
-                            ->when($data['created_until'], fn($q) => $q->whereDate('created_at', '<=', $data['created_until']));
+                            ->when($data['created_from'], fn ($q) => $q->whereDate('created_at', '>=', $data['created_from']))
+                            ->when($data['created_until'], fn ($q) => $q->whereDate('created_at', '<=', $data['created_until']));
                     }),
             ])
             ->actions([
-                Tables\Actions\Action::make('changeStatus')
+                Actions\Action::make('changeStatus')
                     ->label('Сменить статус')
                     ->form([
                         Forms\Components\Select::make('new_status')
@@ -111,11 +113,11 @@ class OrderResource extends Resource
                         $order->update(['status' => $data['new_status']]);
                     })
                     ->icon('heroicon-m-pencil'),
-                Tables\Actions\ViewAction::make(),
+                Actions\ViewAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

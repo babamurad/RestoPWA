@@ -14,7 +14,7 @@ class EnsureAdmin
     {
         $user = $request->user();
 
-        if (!$user || !$user->is_admin) {
+        if (! $user || ! $user->is_admin) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Access denied. Admin privileges required.'], 403);
             }

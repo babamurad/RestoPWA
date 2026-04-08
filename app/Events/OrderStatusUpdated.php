@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Events;
 
-use App\Domains\Order\Models\Order;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -17,9 +16,13 @@ class OrderStatusUpdated implements ShouldBroadcastNow
     use SerializesModels;
 
     public string $orderId;
+
     public string $status;
+
     public string $timestamp;
+
     public array $metadata;
+
     public ?string $vendorId;
 
     public function __construct(string $orderId, string $status, array $metadata = [], ?string $vendorId = null)
@@ -34,11 +37,11 @@ class OrderStatusUpdated implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         $channels = [
-            new PrivateChannel('orders.' . $this->orderId),
+            new PrivateChannel('orders.'.$this->orderId),
         ];
 
         if ($this->vendorId) {
-            $channels[] = new Channel('restaurant.' . $this->vendorId);
+            $channels[] = new Channel('restaurant.'.$this->vendorId);
         }
 
         return $channels;

@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
-use App\Events\OrderStatusUpdated;
+use App\Domains\Order\Models\Order;
 use App\Domains\Order\Models\OrderStatusHistory;
+use App\Events\OrderStatusUpdated;
 
 class LogOrderStatusUpdate
 {
     public function handle(OrderStatusUpdated $event): void
     {
-        $order = \App\Domains\Order\Models\Order::find($event->orderId);
+        $order = Order::find($event->orderId);
 
-        if (!$order) {
+        if (! $order) {
             return;
         }
 

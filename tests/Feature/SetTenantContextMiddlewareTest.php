@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Domains\Vendor\Services\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Request;
 use Tests\TestCase;
 
 class SetTenantContextMiddlewareTest extends TestCase

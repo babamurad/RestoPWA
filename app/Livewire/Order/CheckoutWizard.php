@@ -8,38 +8,53 @@ use App\Domains\Geo\Services\GeoService;
 use App\Domains\Order\Models\Order;
 use App\Domains\Order\Services\OrderService;
 use App\Domains\Vendor\Models\Restaurant;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class CheckoutWizard extends Component
 {
     public int $currentStep = 1;
+
     public string $vendorId = '';
+
     public ?Restaurant $restaurant = null;
 
     public array $address = [];
+
     public ?string $deliveryTime = null;
+
     public bool $isAsap = true;
+
     public string $paymentMethod = 'card';
+
     public string $comment = '';
 
     public array $cartItems = [];
+
     public float $cartTotal = 0;
+
     public float $deliveryFee = 0;
+
     public float $finalTotal = 0;
 
     public bool $isOffline = false;
+
     public bool $isProcessing = false;
+
     public ?Order $createdOrder = null;
+
     public ?string $error = null;
 
     private OrderService $orderService;
+
     private GeoService $geoService;
 
     public function boot(): void
     {
         $this->orderService = app(OrderService::class);
         $this->geoService = app(GeoService::class);
-        $this->isOffline = !app()->runningInConsole() && !request()->ajax();
+        $this->isOffline = ! app()->runningInConsole() && ! request()->ajax();
     }
 
     public function mount(): void
@@ -53,7 +68,7 @@ class CheckoutWizard extends Component
         if ($vendorId) {
             $this->vendorId = $vendorId;
             $this->restaurant = Restaurant::find($vendorId);
-            
+
             if ($this->restaurant && $this->address) {
                 $this->deliveryFee = (float) ($this->restaurant->delivery_fee ?? 0);
             }
@@ -86,11 +101,13 @@ class CheckoutWizard extends Component
     {
         if (empty($this->address['address'] ?? '')) {
             $this->error = 'Выберите адрес доставки';
+
             return false;
         }
 
         if (empty($this->address['lat'] ?? '') || empty($this->address['lon'] ?? '')) {
             $this->error = 'Координаты адреса не определены';
+
             return false;
         }
 
@@ -101,8 +118,9 @@ class CheckoutWizard extends Component
                 $this->restaurant->id
             );
 
-            if (!$isInZone) {
+            if (! $isInZone) {
                 $this->error = 'Адрес находится за пределами зоны доставки';
+
                 return false;
             }
         }
@@ -112,15 +130,17 @@ class CheckoutWizard extends Component
 
     private function validateTime(): bool
     {
-        if (!$this->isAsap && empty($this->deliveryTime)) {
+        if (! $this->isAsap && empty($this->deliveryTime)) {
             $this->error = 'Выберите время доставки';
+
             return false;
         }
 
-        if (!$this->isAsap && $this->restaurant) {
-            $scheduledTime = \Carbon\Carbon::parse($this->deliveryTime);
-            if (!$this->orderService->isWithinWorkingHours($this->restaurant, $scheduledTime)) {
+        if (! $this->isAsap && $this->restaurant) {
+            $scheduledTime = Carbon::parse($this->deliveryTime);
+            if (! $this->orderService->isWithinWorkingHours($this->restaurant, $scheduledTime)) {
                 $this->error = 'Ресторан не работает в выбранное время';
+
                 return false;
             }
         }
@@ -130,8 +150,9 @@ class CheckoutWizard extends Component
 
     private function validatePayment(): bool
     {
-        if (!in_array($this->paymentMethod, ['card', 'cash', 'sbp'])) {
+        if (! in_array($this->paymentMethod, ['card', 'cash', 'sbp'])) {
             $this->error = 'Выберите способ оплаты';
+
             return false;
         }
 
@@ -161,7 +182,7 @@ class CheckoutWizard extends Component
 
         if ($step > $this->currentStep) {
             for ($i = $this->currentStep; $i < $step; $i++) {
-                if (!$this->validateStep()) {
+                if (! $this->validateStep()) {
                     return;
                 }
             }
@@ -173,7 +194,7 @@ class CheckoutWizard extends Component
 
     public function submitOrder(): void
     {
-        if (!$this->validateStep()) {
+        if (! $this->validateStep()) {
             return;
         }
 
@@ -181,7 +202,7 @@ class CheckoutWizard extends Component
         $this->error = null;
 
         try {
-            $userId = \Illuminate\Support\Facades\Auth::check() ? \Illuminate\Support\Facades\Auth::id() : null;
+            $userId = Auth::check() ? Auth::id() : null;
 
             $orderData = [
                 'vendor_id' => $this->vendorId,
@@ -204,7 +225,7 @@ class CheckoutWizard extends Component
             }
 
         } catch (\Exception $e) {
-            $this->error = 'Ошибка при создании заказа: ' . $e->getMessage();
+            $this->error = 'Ошибка при создании заказа: '.$e->getMessage();
         } finally {
             $this->isProcessing = false;
         }
@@ -229,14 +250,14 @@ class CheckoutWizard extends Component
         session(['pending_orders' => $pendingOrders]);
 
         $this->createdOrder = (object) [
-            'id' => 'pending_' . uniqid(),
+            'id' => 'pending_'.uniqid(),
             'status' => 'pending',
             'is_offline' => true,
         ];
 
         $this->dispatch('order-queued', ['order' => $orderData]);
 
-        $this->js(<<<JS
+        $this->js(<<<'JS'
             if ('serviceWorker' in navigator && 'SyncManager' in window) {
                 navigator.serviceWorker.ready.then(function(swReg) {
                     swReg.sync.register('order-sync').catch(function(err) {
@@ -258,7 +279,7 @@ class CheckoutWizard extends Component
 
     private function clearCart(): void
     {
-        session()->forget('cart_' . $this->vendorId);
+        session()->forget('cart_'.$this->vendorId);
         session()->forget('current_address');
         $this->cartItems = [];
         $this->cartTotal = 0;

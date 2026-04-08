@@ -11,15 +11,25 @@ use Livewire\Component;
 class Catalog extends Component
 {
     public string $vendorId = '';
+
     public ?int $categoryId = null;
+
     public array $products = [];
+
     public int $page = 1;
+
     public bool $hasMorePages = true;
+
     public array $categories = [];
+
     public string $selectedProductId = '';
+
     public array $selectedModifiers = [];
+
     public int $selectedQuantity = 1;
+
     public int $selectedProductPrice = 0;
+
     public string $selectedProductName = '';
 
     private const PER_PAGE = 20;
@@ -55,13 +65,14 @@ class Catalog extends Component
 
         $newProducts = array_map(function ($product) {
             $minPrice = $this->calculateMinPrice($product);
+
             return [
                 'id' => $product->id,
                 'name' => $product->name,
                 'price' => (int) $product->price,
                 'min_price' => $minPrice,
                 'description' => $product->description,
-                'image' => $product->image ? asset('storage/' . $product->image) : null,
+                'image' => $product->image ? asset('storage/'.$product->image) : null,
                 'modifiers' => $product->modifiers ? $product->modifiers->toArray() : [],
                 'is_available' => $product->is_available,
                 'category_name' => $product->category?->name,
@@ -80,7 +91,7 @@ class Catalog extends Component
         $basePrice = (int) $product->price;
         $modifiers = $product->modifiers;
 
-        if (!$modifiers || $modifiers->isEmpty()) {
+        if (! $modifiers || $modifiers->isEmpty()) {
             return $basePrice;
         }
 
@@ -93,7 +104,7 @@ class Catalog extends Component
 
     public function loadMore(): void
     {
-        if (!$this->hasMorePages) {
+        if (! $this->hasMorePages) {
             return;
         }
 
@@ -113,7 +124,7 @@ class Catalog extends Component
     public function openModifierModal(string $productId): void
     {
         $product = Product::find($productId);
-        if (!$product) {
+        if (! $product) {
             return;
         }
 
@@ -133,7 +144,7 @@ class Catalog extends Component
 
     public function addToCart(): void
     {
-        if (!$this->selectedProductId) {
+        if (! $this->selectedProductId) {
             return;
         }
 

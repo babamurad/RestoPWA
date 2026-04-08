@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -30,7 +30,7 @@ return new class extends Migration
             $table->index('owner_id');
             $table->index('is_active');
 
-            if (!$hasPostGis) {
+            if (! $hasPostGis) {
                 $table->text('delivery_zones')->nullable();
             }
         });
@@ -45,8 +45,9 @@ return new class extends Migration
     {
         try {
             $result = DB::select("SELECT proname FROM pg_proc WHERE proname = 'addgeometrycolumn' LIMIT 1");
-            return !empty($result);
-        } catch (\Throwable $e) {
+
+            return ! empty($result);
+        } catch (Throwable $e) {
             return false;
         }
     }

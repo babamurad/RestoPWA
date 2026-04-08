@@ -29,7 +29,7 @@ class CartController extends Controller
         $vendorId = $validated['vendor_id'];
         $restaurant = Restaurant::findOrFail($vendorId);
         $inputItems = collect($validated['items']);
-        
+
         $productIds = $inputItems->pluck('product_id')->unique();
         $products = Product::whereIn('id', $productIds)
             ->where('vendor_id', $vendorId)
@@ -45,13 +45,15 @@ class CartController extends Controller
             /** @var Product|null $product */
             $product = $products->get($productId);
 
-            if (!$product) {
+            if (! $product) {
                 $errors[] = "Товар {$productId} не найден или не принадлежит данному ресторану.";
+
                 continue;
             }
 
-            if (!$product->is_available) {
+            if (! $product->is_available) {
                 $errors[] = "Товар '{$product->name}' временно недоступен.";
+
                 continue;
             }
 

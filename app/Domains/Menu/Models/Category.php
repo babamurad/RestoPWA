@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domains\Menu\Models;
 
+use App\Domains\Vendor\Models\Restaurant;
 use App\Domains\Vendor\Traits\BelongsToVendor;
+use Database\Factories\CategoryFactory;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -20,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Category extends Model
 {
     use BelongsToVendor;
+    use HasFactory;
 
     /**
      * @var list<string>
@@ -57,11 +62,16 @@ class Category extends Model
     }
 
     /**
-     * @return BelongsTo<\App\Domains\Vendor\Models\Restaurant, static>
+     * @return BelongsTo<Restaurant, static>
      */
     public function restaurant(): BelongsTo
     {
-        return $this->belongsTo(\App\Domains\Vendor\Models\Restaurant::class, 'vendor_id');
+        return $this->belongsTo(Restaurant::class, 'vendor_id');
+    }
+
+    protected static function newFactory(): Factory
+    {
+        return CategoryFactory::new();
     }
 
     protected static function booted(): void

@@ -15,18 +15,22 @@ class OrderSubmissionTest extends TestCase
     use RefreshDatabase;
 
     private Restaurant $restaurant;
+
     private Product $product;
+
     private User $user;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
-        $this->restaurant = Restaurant::factory()->create(['id' => 'test-vendor']);
+
+        $this->restaurant = Restaurant::factory()->create();
+        $this->restaurant->update(['vendor_id' => $this->restaurant->id]);
+
         $this->product = Product::factory()->create([
             'vendor_id' => $this->restaurant->id,
             'price' => 10000, // 100.00
-            'is_active' => true,
+            'is_available' => true,
         ]);
         $this->user = User::factory()->create();
     }
@@ -43,7 +47,7 @@ class OrderSubmissionTest extends TestCase
                         'quantity' => 1,
                         'unit_price' => 100,
                         'total_price' => 100,
-                    ]
+                    ],
                 ],
                 'total' => 100,
             ]);
@@ -64,7 +68,7 @@ class OrderSubmissionTest extends TestCase
                         'quantity' => 2,
                         'unit_price' => 100,
                         'total_price' => 200,
-                    ]
+                    ],
                 ],
                 'total' => 200,
                 'address' => [
@@ -86,8 +90,9 @@ class OrderSubmissionTest extends TestCase
 
     public function test_order_submission_respects_tenant_context(): void
     {
-        $otherRestaurant = Restaurant::factory()->create(['id' => 'other-vendor']);
-        
+        $otherRestaurant = Restaurant::factory()->create();
+        $otherRestaurant->update(['vendor_id' => $otherRestaurant->id]);
+
         // Attempting to order from other-vendor while header says test-vendor
         $response = $this->actingAs($this->user)
             ->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
@@ -99,15 +104,13 @@ class OrderSubmissionTest extends TestCase
                         'quantity' => 1,
                         'unit_price' => 100,
                         'total_price' => 100,
-                    ]
+                    ],
                 ],
                 'total' => 100,
             ]);
 
-        // Depending on implementation, it might fail validation or just use the header's vendor.
-        // In our current implementation, we just validate vendor_id matches request.
-        // But the TenantContext is set to 'test-vendor'.
-        // If the OrderService doesn't check against TenantContext, it might create it for 'other-vendor'.
-        // Let's see if we should enforce this.
+        // Should fail with 404 because the Global Scope prevents finding
+        // a restaurant that doesn't belong to the current tenant context.
+        $response->assertStatus(404);
     }
 }

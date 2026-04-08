@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
 use App\Domains\Menu\Models\Category;
 use App\Filament\Resources\CategoryResource\Pages;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -15,7 +17,7 @@ class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
 
-    protected static string | BackedEnum | null $navigationIcon = null;
+    protected static string|BackedEnum|null $navigationIcon = null;
 
     protected static ?string $navigationLabel = 'Категории';
 
@@ -27,7 +29,7 @@ class CategoryResource extends Resource
     {
         return $schema
             ->components([
-                Forms\Components\Section::make('Основная информация')
+                Section::make('Основная информация')
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->label('Название')
@@ -42,7 +44,7 @@ class CategoryResource extends Resource
                             ->relationship('parent', 'name')
                             ->searchable(),
                     ])->columns(3),
-                Forms\Components\Section::make('Настройки')
+                Section::make('Настройки')
                     ->schema([
                         Forms\Components\Toggle::make('is_active')
                             ->label('Активна')
@@ -82,12 +84,12 @@ class CategoryResource extends Resource
                     ->label('Активность'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

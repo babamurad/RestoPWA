@@ -2,17 +2,16 @@
 
 namespace Tests\Unit;
 
+use App\Domains\Vendor\Services\TenantContext;
 use App\Http\Middleware\SetTenantContext;
-use Illuminate\Http\Request;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\Response;
 
 class SetTenantContextSubdomainTest extends TestCase
 {
     public function test_extracts_vendor_from_subdomain_pattern(): void
     {
         $middleware = new SetTenantContext(
-            app(\App\Domains\Vendor\Services\TenantContext::class)
+            app(TenantContext::class)
         );
 
         $vendorFromSubdomain = $this->extractVendorFromSubdomain('vendor123.resto.local');

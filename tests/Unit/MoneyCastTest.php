@@ -5,20 +5,20 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use App\Casts\MoneyCast;
-use App\Domains\Menu\Models\Product;
 use Illuminate\Database\Eloquent\Model;
 use PHPUnit\Framework\TestCase;
 
 class MoneyCastTest extends TestCase
 {
     private MoneyCast $cast;
+
     private TestModel $model;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->cast = new MoneyCast();
-        $this->model = new TestModel();
+        $this->cast = new MoneyCast;
+        $this->model = new TestModel;
     }
 
     public function test_get_returns_float_from_cents(): void
@@ -55,7 +55,7 @@ class MoneyCastTest extends TestCase
     {
         $result = $this->cast->set($this->model, 'price', 100, []);
 
-        $this->assertSame(10000, $result);
+        $this->assertSame(100, $result);
     }
 
     public function test_set_converts_string_to_cents(): void

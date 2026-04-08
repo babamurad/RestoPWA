@@ -15,11 +15,11 @@ class ProductResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'price' => (int) $this->price,
-            'description' => $this->whenHas('description', fn() => $this->description),
+            'description' => $this->whenHas('description', fn () => $this->description),
             'modifiers' => $this->modifiers ?? collect(),
-            'image_url' => $this->whenHas('image', fn() => asset('storage/' . $this->image)),
+            'image_url' => $this->whenHas('image', fn () => asset('storage/'.$this->image)),
             'is_available' => $this->is_available,
-            'weight_g' => $this->whenHas('weight_g', fn() => $this->weight_g),
+            'weight_g' => $this->whenHas('weight_g', fn () => $this->weight_g),
         ];
     }
 }

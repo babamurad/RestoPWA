@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -12,17 +12,17 @@ class RestaurantController extends Controller
     public function index(Request $request)
     {
         $query = Restaurant::with('vendor');
-        
+
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $query->where('name', 'like', '%'.$request->search.'%');
         }
-        
+
         if ($request->filled('status')) {
             $query->where('is_active', $request->status === 'active');
         }
-        
+
         $restaurants = $query->orderBy('name')->paginate(20);
-        
+
         return view('admin.restaurants.index', compact('restaurants'));
     }
 
@@ -44,7 +44,7 @@ class RestaurantController extends Controller
         ]);
 
         $validated['vendor_id'] = auth()->user()->vendor_id ?? 1;
-        
+
         Restaurant::create($validated);
 
         return redirect()->route('admin.restaurants.index')

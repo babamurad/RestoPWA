@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
 use App\Domains\Menu\Models\Category;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -13,18 +13,18 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         $query = Category::with('restaurant');
-        
+
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $query->where('name', 'like', '%'.$request->search.'%');
         }
-        
+
         if ($request->filled('restaurant_id')) {
             $query->where('restaurant_id', $request->restaurant_id);
         }
-        
+
         $categories = $query->orderBy('name')->paginate(20);
         $restaurants = Restaurant::orderBy('name')->get();
-        
+
         return view('admin.categories.index', compact('categories', 'restaurants'));
     }
 
@@ -32,7 +32,7 @@ class CategoryController extends Controller
     {
         $restaurants = Restaurant::orderBy('name')->get();
         $parentCategories = Category::orderBy('name')->get();
-        
+
         return view('admin.categories.create', compact('restaurants', 'parentCategories'));
     }
 
@@ -58,7 +58,7 @@ class CategoryController extends Controller
     {
         $restaurants = Restaurant::orderBy('name')->get();
         $parentCategories = Category::where('id', '!=', $category->id)->orderBy('name')->get();
-        
+
         return view('admin.categories.edit', compact('category', 'restaurants', 'parentCategories'));
     }
 

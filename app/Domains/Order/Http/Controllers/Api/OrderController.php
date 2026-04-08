@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Domains\Order\Http\Controllers\Api;
 
 use App\Domains\Order\Services\OrderService;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -41,8 +40,8 @@ class OrderController
         ]);
 
         $user = $request->user();
-        
-        if (!$user) {
+
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'error' => 'User authentication required',

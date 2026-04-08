@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources;
 
-use BackedEnum;
 use App\Domains\Menu\Models\Product;
 use App\Filament\Resources\ProductResource\Pages;
+use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -15,7 +17,7 @@ class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static string | BackedEnum | null $navigationIcon = null;
+    protected static string|BackedEnum|null $navigationIcon = null;
 
     protected static ?string $navigationLabel = 'Товары';
 
@@ -27,7 +29,7 @@ class ProductResource extends Resource
     {
         return $schema
             ->components([
-                Forms\Components\Section::make('Основная информация')
+                Section::make('Основная информация')
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->label('Название')
@@ -38,7 +40,7 @@ class ProductResource extends Resource
                             ->maxLength(65535)
                             ->columnSpanFull(),
                     ])->columns(2),
-                Forms\Components\Section::make('Привязка')
+                Section::make('Привязка')
                     ->schema([
                         Forms\Components\Select::make('vendor_id')
                             ->label('Ресторан')
@@ -49,7 +51,7 @@ class ProductResource extends Resource
                             ->relationship('category', 'name')
                             ->searchable(),
                     ])->columns(2),
-                Forms\Components\Section::make('Цена и наличие')
+                Section::make('Цена и наличие')
                     ->schema([
                         Forms\Components\TextInput::make('price')
                             ->label('Цена')
@@ -60,7 +62,7 @@ class ProductResource extends Resource
                             ->label('Доступен')
                             ->default(true),
                     ])->columns(2),
-                Forms\Components\Section::make('Дополнительно')
+                Section::make('Дополнительно')
                     ->schema([
                         Forms\Components\TextInput::make('weight_g')
                             ->label('Вес (г)')
@@ -106,12 +108,12 @@ class ProductResource extends Resource
                     ->label('Доступность'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

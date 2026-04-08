@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Domains\Menu\Models;
 
 use App\Casts\MoneyCast;
+use App\Domains\Vendor\Models\Restaurant;
 use App\Domains\Vendor\Traits\BelongsToVendor;
+use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\AsCollection;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
@@ -28,8 +32,9 @@ use Illuminate\Support\Collection;
  */
 class Product extends Model
 {
-    use HasUuids;
     use BelongsToVendor;
+    use HasFactory;
+    use HasUuids;
 
     /**
      * @var list<string>
@@ -61,7 +66,7 @@ class Product extends Model
     /**
      * Accessor для расчета финальной цены с учетом модификаторов.
      * Возможен также вариант `protected function getFinalPriceAttribute()` (legacy).
-     * 
+     *
      * @return Attribute<mixed, never>
      */
     protected function finalPrice(): Attribute
@@ -73,28 +78,33 @@ class Product extends Model
 
                 // Пример: если у нас number/float
                 if (is_numeric($basePrice)) {
-                    $modifiersSum = $modifiers instanceof Collection 
-                        ? $modifiers->sum('price') 
+                    $modifiersSum = $modifiers instanceof Collection
+                        ? $modifiers->sum('price')
                         : 0;
-                        
+
                     return $basePrice + $modifiersSum;
                 }
 
                 // If brick/money is used, it should be something like:
                 // $baseMoney = $this->price; // Money object
                 // ...
-                return $basePrice; 
+                return $basePrice;
             }
         );
     }
 
     /**
-     * @param Builder<static> $query
+     * @param  Builder<static>  $query
      * @return Builder<static>
      */
     public function scopeAvailable(Builder $query): Builder
     {
         return $query->where('is_available', true);
+    }
+
+    protected static function newFactory(): Factory
+    {
+        return ProductFactory::new();
     }
 
     protected static function booted(): void
@@ -113,7 +123,7 @@ class Product extends Model
         }
 
         return $this->image
-            ? asset('storage/' . $this->image)
+            ? asset('storage/'.$this->image)
             : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200';
     }
 
@@ -130,6 +140,6 @@ class Product extends Model
      */
     public function restaurant(): BelongsTo
     {
-        return $this->belongsTo(\App\Domains\Vendor\Models\Restaurant::class, 'vendor_id');
+        return $this->belongsTo(Restaurant::class, 'vendor_id');
     }
 }

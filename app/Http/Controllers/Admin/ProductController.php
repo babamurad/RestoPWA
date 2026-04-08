@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Domains\Menu\Models\Product;
 use App\Domains\Menu\Models\Category;
+use App\Domains\Menu\Models\Product;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -14,27 +14,27 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $query = Product::with(['category', 'restaurant']);
-        
+
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $query->where('name', 'like', '%'.$request->search.'%');
         }
-        
+
         if ($request->filled('restaurant_id')) {
             $query->where('restaurant_id', $request->restaurant_id);
         }
-        
+
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
         }
-        
+
         if ($request->filled('status')) {
             $query->where('is_available', $request->status === 'available');
         }
-        
+
         $products = $query->orderBy('name')->paginate(20);
         $restaurants = Restaurant::orderBy('name')->get();
         $categories = Category::orderBy('name')->get();
-        
+
         return view('admin.products.index', compact('products', 'restaurants', 'categories'));
     }
 
@@ -42,7 +42,7 @@ class ProductController extends Controller
     {
         $restaurants = Restaurant::orderBy('name')->get();
         $categories = Category::orderBy('name')->get();
-        
+
         return view('admin.products.create', compact('restaurants', 'categories'));
     }
 
@@ -71,7 +71,7 @@ class ProductController extends Controller
     {
         $restaurants = Restaurant::orderBy('name')->get();
         $categories = Category::orderBy('name')->get();
-        
+
         return view('admin.products.edit', compact('product', 'restaurants', 'categories'));
     }
 

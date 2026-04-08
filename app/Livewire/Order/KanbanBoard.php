@@ -6,7 +6,6 @@ namespace App\Livewire\Order;
 
 use App\Domains\Order\Models\Order;
 use App\Domains\Order\Services\OrderService;
-use App\Domains\Vendor\Services\TenantContext;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
@@ -53,11 +52,11 @@ class KanbanBoard extends Component
     {
         $tenant = app('tenant');
         $this->vendorId = $tenant?->id ?? '';
-        
+
         if (empty($this->vendorId) && auth()->check()) {
             $this->vendorId = auth()->user()->vendor_id ?? '';
         }
-        
+
         $this->orderService = app(OrderService::class);
     }
 
@@ -86,7 +85,7 @@ class KanbanBoard extends Component
             ->where('vendor_id', $this->vendorId)
             ->first();
 
-        if (!$order) {
+        if (! $order) {
             return;
         }
 
@@ -130,6 +129,7 @@ class KanbanBoard extends Component
                 return $key;
             }
         }
+
         return null;
     }
 

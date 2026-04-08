@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Domains\Order\Models\Order;
+use App\Services\PushNotificationService;
 use Illuminate\Support\Facades\Log;
 
 class OrderObserver
 {
     public function updated(Order $order): void
     {
-        if (!$order->wasChanged('status')) {
+        if (! $order->wasChanged('status')) {
             return;
         }
 
@@ -24,13 +25,13 @@ class OrderObserver
 
     private function sendPushNotification(Order $order, string $status): void
     {
-        if (!$order->user_id) {
+        if (! $order->user_id) {
             return;
         }
 
         try {
-            $pushService = app(\App\Services\PushNotificationService::class);
-            
+            $pushService = app(PushNotificationService::class);
+
             $titles = [
                 'cooking' => 'Заказ начали готовить',
                 'delivering' => 'Заказ в пути',
@@ -54,7 +55,7 @@ class OrderObserver
                 ]
             );
         } catch (\Throwable $e) {
-            Log::warning('Push notification failed: ' . $e->getMessage());
+            Log::warning('Push notification failed: '.$e->getMessage());
         }
     }
 }
