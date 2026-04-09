@@ -28,6 +28,7 @@ function setupOrderSubmission(registration) {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
                     'X-Vendor-ID': payload.vendor_id,
+                    ...(payload.idempotency_key ? { 'X-Idempotency-Key': payload.idempotency_key } : {}),
                 },
                 body: JSON.stringify(payload),
             });

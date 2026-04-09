@@ -29,5 +29,46 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+            if ($request->is('api/*')) {
+                $code = 500;
+                $message = $e->getMessage();
+                $errors = [];
+
+                if ($e instanceof \Illuminate\Validation\ValidationException) {
+                    $code = 422;
+                    $errors = $e->errors();
+                } elseif ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException || 
+                          $e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
+                    $code = 404;
+                    $message = 'Ресурс не найден';
+                } elseif ($e instanceof \Illuminate\Auth\AuthenticationException) {
+                    $code = 401;
+                    $message = 'Unauthenticated';
+                } elseif ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                    $code = $e->getStatusCode();
+                }
+
+                $response = [
+                    'success' => false,
+                    'message' => $message,
+                    'code' => $code,
+                ];
+
+                if (! empty($errors)) {
+                    $response['errors'] = $errors;
+                }
+
+                if (config('app.debug') && $code === 500) {
+                    $response['debug'] = [
+                        'exception' => get_class($e),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                        'trace' => array_slice($e->getTrace(), 0, 10)
+                    ];
+                }
+
+                return response()->json($response, $code);
+            }
+        });
     })->create();

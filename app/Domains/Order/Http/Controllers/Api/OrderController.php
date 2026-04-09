@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Domains\Order\Http\Controllers\Api;
 
+use App\Domains\Order\Models\Order;
 use App\Domains\Order\Services\OrderService;
+use App\Http\Traits\ApiResponses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class OrderController
 {
+    use ApiResponses;
     private OrderService $orderService;
 
     public function __construct()
@@ -42,13 +45,26 @@ class OrderController
         $user = $request->user();
 
         if (! $user) {
-            return response()->json([
-                'success' => false,
-                'error' => 'User authentication required',
-            ], 401);
+            return $this->error('User authentication required', 401);
         }
 
         $userId = $user->id;
+
+        $idempotencyKey = $request->header('X-Idempotency-Key');
+        if ($idempotencyKey) {
+            $existingOrder = Order::where('user_id', $userId)
+                ->where('idempotency_key', $idempotencyKey)
+                ->first();
+
+            if ($existingOrder) {
+                return $this->success([
+                    'order_id' => $existingOrder->id,
+                    'status' => $existingOrder->status,
+                    'redirect_url' => route('order.success', $existingOrder->id),
+                    'is_duplicate' => true,
+                ]);
+            }
+        }
 
         $items = array_map(function ($item) {
             return [
@@ -74,13 +90,13 @@ class OrderController
             'comment' => $validated['comment'] ?? null,
             'created_via' => 'pwa',
             'is_offline' => $request->boolean('is_offline', false),
+            'idempotency_key' => $idempotencyKey,
         ]);
 
-        return response()->json([
-            'success' => true,
+        return $this->success([
             'order_id' => $order->id,
             'status' => $order->status,
             'redirect_url' => route('order.success', $order->id),
-        ], 201);
+        ], null, 201);
     }
 }

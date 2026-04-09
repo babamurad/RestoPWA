@@ -2,6 +2,15 @@
 
 All notable changes to the RestoPWA project will be documented in this file.
 
+## [1.2.0] - 2026-04-07
+
+### Added
+- **Quality Gate**: Инициализация quality gate (полный прогон php artisan test, pint, vitest).
+- **Access Control Tests**: `AccessControlTest.php` с 5 тест-кейсами на защищённые маршруты.
+- **Order Idempotency**: `idempotency_key` для order submit (backend) + генерация ключа на клиенте.
+- **API Responses**: Единый формат API ошибок через трейт `ApiResponses`.
+- **Checkout Conflict Resolution**: UX с подтверждением изменений корзины (изменение цен/наличия) перед оплатой.
+
 ## [1.1.0] - 2026-04-06
 
 ### Added

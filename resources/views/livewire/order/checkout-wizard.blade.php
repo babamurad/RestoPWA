@@ -13,6 +13,10 @@
     cartTotal: @entangle('cartTotal'),
     deliveryFee: @entangle('deliveryFee'),
     finalTotal: @entangle('finalTotal'),
+    priceChanges: @entangle('priceChanges'),
+    unavailableItems: @entangle('unavailableItems'),
+    conflictsConfirmed: false,
+    isSyncing: false,
     
     async init() {
         // Fetch cart data from Dexie if not already loaded
@@ -27,7 +31,42 @@
         window.addEventListener('connectivity-changed', (e) => {
             this.isOffline = e.detail.isOffline;
         });
-    }
+    },
+
+    async handleNext() {
+        if (this.currentStep === 3) {
+            this.isSyncing = true;
+            try {
+                const vendorId = '{{ $vendorId }}';
+                const syncData = await window.CartService.syncWithServer(vendorId, this.cartItems);
+                
+                if (syncData) {
+                    this.$wire.setConflicts(syncData.price_changes, syncData.unavailable_items);
+                    
+                    // Update current cart items in Livewire to reflect server state (names, prices)
+                    const updatedItems = await window.CartService.getCartByVendor(vendorId);
+                    this.cartItems = updatedItems;
+                    this.$wire.updateCartData(updatedItems, syncData.subtotal);
+                    
+                    // Reset confirmation if there are new conflicts
+                    if (syncData.price_changes.length > 0 || syncData.unavailable_items.length > 0) {
+                        this.conflictsConfirmed = false;
+                    } else {
+                        // Automatically skip to final confirmation if no conflicts
+                        this.conflictsConfirmed = true;
+                        this.$wire.nextStep();
+                        return;
+                    }
+                }
+            } catch (e) {
+                this.$wire.set('error', 'Ошибка синхронизации с сервером. Проверьте соединение.');
+                return;
+            } finally {
+                this.isSyncing = false;
+            }
+        }
+        this.$wire.nextStep();
+    },
 }" class="max-w-lg mx-auto bg-white min-h-screen relative font-inter">
 
     {{-- Success State --}}
@@ -71,7 +110,7 @@
                 
                 {{-- Steps Progress --}}
                 <div class="flex gap-1.5 pr-2">
-                    @for($i = 1; $i <= 4; $i++)
+                    @for($i = 1; $i <= 5; $i++)
                         <div class="w-2 h-2 rounded-full transition-all duration-300 {{ $currentStep >= $i ? 'bg-orange-500' : 'bg-gray-200' }}"></div>
                     @endfor
                 </div>
@@ -201,6 +240,89 @@
                     @break
 
                 @case(4)
+                    {{-- Cart Verification / Conflict Resolution --}}
+                    <section class="space-y-6 animate-slide-up">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900">Проверка корзины</h3>
+                        </div>
+
+                        @if(empty($priceChanges) && empty($unavailableItems))
+                            <div class="p-8 text-center bg-green-50 rounded-3xl border border-green-100">
+                                <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-green-500 shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                </div>
+                                <p class="font-bold text-green-800">Все товары доступны!</p>
+                                <p class="text-sm text-green-600 mt-1">Цены актуальны, можно продолжать.</p>
+                            </div>
+                        @else
+                            <div class="space-y-4">
+                                @if(!empty($priceChanges))
+                                    <div class="p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                                        <div class="flex items-center gap-2 mb-3 text-amber-700 font-bold text-sm">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                            <span>Изменение цен</span>
+                                        </div>
+                                        <div class="bg-white rounded-xl overflow-hidden border border-amber-100 divide-y divide-gray-50">
+                                            @foreach($priceChanges as $change)
+                                                <div class="p-3 flex justify-between items-center text-sm">
+                                                    <span class="text-gray-600 font-medium">{{ $change['name'] }}</span>
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-gray-400 line-through">{{ number_format($change['old_price'], 0, '.', ' ') }}</span>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500"><path d="M5 12h14l-7-7M12 19l7-7"/></svg>
+                                                        <span class="font-bold text-gray-900">{{ number_format($change['new_price'], 0, '.', ' ') }} ₽</span>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+
+                                @if(!empty($unavailableItems))
+                                    <div class="p-4 bg-red-50 rounded-2xl border border-red-100">
+                                        <div class="flex items-center gap-2 mb-3 text-red-700 font-bold text-sm">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                                            <span>Недоступные товары</span>
+                                        </div>
+                                        <div class="space-y-2">
+                                            @foreach($unavailableItems as $uItem)
+                                                <div class="flex items-center gap-3 p-2 bg-white/50 rounded-lg">
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="font-bold text-gray-900 text-sm truncate">{{ $uItem['name'] }}</p>
+                                                        <p class="text-[10px] text-red-500 font-bold uppercase">{{ $uItem['reason'] }}</p>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                        <p class="text-xs text-red-400 mt-3 font-medium italic">Эти товары были удалены из вашего заказа автоматически.</p>
+                                    </div>
+                                @endif
+
+                                <div class="pt-2">
+                                    <button x-on:click="conflictsConfirmed = true" 
+                                        class="w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-3"
+                                        :class="conflictsConfirmed ? 'bg-green-500 text-white' : 'bg-orange-100 text-orange-600 hover:bg-orange-200'">
+                                        <template x-if="conflictsConfirmed">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                        </template>
+                                        <span x-text="conflictsConfirmed ? 'Изменения приняты' : 'Принять изменения и продолжить'"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        @endif
+
+                        <div class="flex gap-3">
+                            <button @click="window.location.href = '{{ route('restaurant.show', $vendorId) }}'" 
+                                class="flex-1 py-4 bg-gray-50 text-gray-500 font-bold rounded-2xl hover:bg-gray-100 transition-all">
+                                Вернуться в меню
+                            </button>
+                        </div>
+                    </section>
+                    @break
+
+                @case(5)
                     {{-- Confirmation / Summary --}}
                     <section class="space-y-6 animate-slide-up">
                         <h3 class="text-lg font-bold text-gray-900">Подтверждение заказа</h3>
@@ -307,13 +429,14 @@
                     </button>
                 @endif
                 
-                @if($currentStep < 4)
-                    <button wire:click="nextStep" 
-                        class="flex-1 px-6 py-4 bg-orange-500 text-white font-bold rounded-2xl shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all btn-press">
-                        Продолжить
+                @if($currentStep < 5)
+                    <button @click="handleNext()" :disabled="isSyncing || (currentStep === 4 && !conflictsConfirmed)"
+                        class="flex-1 px-6 py-4 bg-orange-500 text-white font-bold rounded-2xl shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all btn-press flex items-center justify-center gap-3 disabled:opacity-50">
+                        <span x-show="!isSyncing" x-text="currentStep === 4 ? 'К оплате' : 'Продолжить'"></span>
+                        <div x-show="isSyncing" class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
                     </button>
                 @else
-                    <button wire:click="submitOrder" wire:loading.attr="disabled"
+                    <button wire:click="submitOrder" wire:loading.attr="disabled" :disabled="!conflictsConfirmed"
                         class="flex-1 px-6 py-4 bg-orange-500 text-white font-bold rounded-2xl shadow-xl shadow-orange-200 hover:bg-orange-600 transition-all btn-press flex items-center justify-center gap-3 disabled:opacity-50">
                         <span wire:loading.remove>Подтвердить заказ</span>
                         <div wire:loading class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>

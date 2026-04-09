@@ -17,12 +17,12 @@ To ensure consistent quality, each module and feature in RestoPWA must meet the 
 ## 3. Security & Multitenancy
 - [x] `BelongsToVendor` trait applied to vendor-specific models.
 - [x] `SetTenantContext` middleware on API routes; `ensure.tenant` on web routes.
-- [ ] All data input validated via `Request::validate()`.
+- [x] All data input validated via `Request::validate()`.
 - [x] Auth guard enforced on /profile, /orders, /checkout, /vendor/*, /order/{id}/track.
 
 ## 4. Verification & Testing
-- [ ] **PHP Code Quality**: Laravel Pint passes with no violations (`./vendor/bin/pint --test`).
-- [ ] **Backend Tests**: PHPUnit feature tests cover core happy-path and error-path scenarios (`php artisan test`).
+- [x] **PHP Code Quality**: Laravel Pint passes with no violations (`./vendor/bin/pint --test`).
+- [x] **Backend Tests**: PHPUnit feature tests cover core happy-path and error-path scenarios (`php artisan test`).
 - [x] **Frontend Tests**: Vitest unit tests for CartService (`tests/CartService.test.js`).
-- [ ] **Manual Verification**: Full end-to-end flow tested (Catalogue → Cart → Checkout → Order Success).
-- [ ] **Changelog**: Updated with details of the enhancement/fix (`docs/CHANGELOG.md`).
+- [x] **Manual Verification**: Full end-to-end flow tested (Catalogue → Cart → Checkout → Order Success).
+- [x] **Changelog**: Updated with details of the enhancement/fix (`docs/CHANGELOG.md`).

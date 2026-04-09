@@ -33,6 +33,7 @@ class OrderService
             $order = Order::create([
                 'vendor_id' => $data['vendor_id'],
                 'user_id' => $data['user_id'],
+                'idempotency_key' => $data['idempotency_key'] ?? null,
                 'status' => self::STATUS_PENDING,
                 'payment_status' => 'pending',
                 'address' => $data['address'] ?? [],

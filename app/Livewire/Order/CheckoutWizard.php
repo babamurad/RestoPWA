@@ -45,6 +45,10 @@ class CheckoutWizard extends Component
     public ?Order $createdOrder = null;
 
     public ?string $error = null;
+    
+    public array $priceChanges = [];
+
+    public array $unavailableItems = [];
 
     private OrderService $orderService;
 
@@ -92,7 +96,8 @@ class CheckoutWizard extends Component
             1 => $this->validateAddress(),
             2 => $this->validateTime(),
             3 => $this->validatePayment(),
-            4 => true,
+            4 => true, // Verification step handled via Alpine/JS
+            5 => true,
             default => false,
         };
     }
@@ -176,7 +181,7 @@ class CheckoutWizard extends Component
 
     public function goToStep(int $step): void
     {
-        if ($step < 1 || $step > 4) {
+        if ($step < 1 || $step > 5) {
             return;
         }
 
@@ -293,6 +298,19 @@ class CheckoutWizard extends Component
         }, $this->cartItems));
 
         $this->finalTotal = $this->cartTotal + $this->deliveryFee;
+    }
+
+    public function setConflicts(array $priceChanges, array $unavailableItems): void
+    {
+        $this->priceChanges = $priceChanges;
+        $this->unavailableItems = $unavailableItems;
+    }
+
+    public function updateCartData(array $items, float $total): void
+    {
+        $this->cartItems = $items;
+        $this->cartTotal = $total;
+        $this->calculateTotals();
     }
 
     public function render()

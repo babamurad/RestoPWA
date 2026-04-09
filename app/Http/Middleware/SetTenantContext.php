@@ -43,7 +43,8 @@ class SetTenantContext
         } elseif ($request->is('api/*')) {
             return response()->json([
                 'success' => false,
-                'error' => 'Tenant identification required (X-Vendor-ID header or subdomain)',
+                'message' => 'Tenant identification required (X-Vendor-ID header or subdomain)',
+                'code' => 400,
             ], 400);
         }
 

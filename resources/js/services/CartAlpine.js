@@ -191,6 +191,7 @@ document.addEventListener('alpine:init', () => {
                 total: total,
                 delivery_fee: deliveryFee,
                 is_offline: !navigator.onLine,
+                idempotency_key: crypto.randomUUID(),
                 created_at: new Date().toISOString()
             };
 
@@ -225,6 +226,7 @@ document.addEventListener('alpine:init', () => {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
                             'X-Vendor-ID': order.payload.vendor_id,
+                            'X-Idempotency-Key': order.payload.idempotency_key,
                         },
                         body: JSON.stringify({
                             ...order.payload,

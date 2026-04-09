@@ -87,7 +87,12 @@ Route::get('/api/order/{orderId}/track', [OrderTrackingController::class, 'apiTr
     ->name('api.order.track')->middleware('auth');
 
 Route::match(['get', 'head'], '/api/ping', function () {
-    return response()->json(['status' => 'ok']);
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'status' => 'ok',
+        ],
+    ]);
 })->name('api.ping');
 
 Route::prefix('vendor')->name('vendor.')->middleware(['ensure.tenant', 'auth'])->group(function () {

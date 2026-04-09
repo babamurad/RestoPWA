@@ -157,6 +157,9 @@ const CartService = {
      * @returns {Promise<number>}
      */
     async queueOrder(orderPayload) {
+        if (!orderPayload.idempotency_key) {
+            orderPayload.idempotency_key = crypto.randomUUID();
+        }
         return db.pendingOrders.add({
             payload: orderPayload,
             retries: 0,
@@ -217,6 +220,66 @@ const CartService = {
                     image: item.image,
                 });
             }
+        }
+    },
+    /**
+     * @param {string} vendorId
+     * @param {CartItem[]} items
+     * @returns {Promise<Object>}
+     */
+    async syncWithServer(vendorId, items) {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        
+        try {
+            const response = await fetch('/api/v1/cart/sync', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    vendor_id: vendorId,
+                    items: items.map(item => ({
+                        product_id: item.productId,
+                        quantity: item.quantity,
+                        price: item.price,
+                        modifiers: Object.keys(item.modifiers || {})
+                    }))
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Sync failed');
+            }
+
+            const result = await response.json();
+            
+            if (result.success && result.data) {
+                // Remove unavailable items from local cart
+                if (result.data.unavailable_items && result.data.unavailable_items.length > 0) {
+                    for (const item of result.data.unavailable_items) {
+                        const existing = await db.cart
+                            .where('productId')
+                            .equals(item.product_id)
+                            .and(r => r.vendorId === vendorId)
+                            .toArray();
+                        
+                        for (const cartItem of existing) {
+                            await db.cart.delete(cartItem.id);
+                        }
+                    }
+                }
+
+                // Automatically update local cart with server data
+                await this.bulkUpdateItems(vendorId, result.data.validated_items);
+                return result.data;
+            }
+            
+            return null;
+        } catch (error) {
+            console.error('Cart sync error:', error);
+            throw error;
         }
     },
 };
