@@ -104,9 +104,8 @@
                     <span class="text-sm text-gray-500">Сумма заказа</span>
                     <span class="text-lg font-bold text-gray-900">{{ $formattedPrice }} ₽</span>
                 </div>
-                <button wire:click="checkout"
-                        class="w-full flex items-center justify-center gap-2 px-6 py-4 bg-orange-500 text-white font-semibold rounded-2xl hover:bg-orange-600 transition-all touch-feedback btn-press shadow-lg shadow-orange-200">
-                    <span>Оформить заказ</span>
+                <button wire:click="checkout" dusk="cart-checkout-button" class="w-full flex items-center justify-center gap-3 h-14 bg-orange-500 text-white font-bold rounded-2xl hover:bg-orange-600 shadow-xl shadow-orange-500/30 transition-all touch-feedback active:scale-95 group">
+                    <span>К оформлению</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                 </button>
                 <button wire:click="clearCart" class="w-full py-2 text-xs text-gray-400 hover:text-gray-600 transition-colors">

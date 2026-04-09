@@ -88,6 +88,7 @@
                     </div>
                     <button 
                         wire:click="openModifierModal('{{ $product['id'] }}')"
+                        dusk="open-modifier-modal-{{ $product['id'] }}"
                         @if(!$product['is_available']) disabled @endif
                         class="mt-2 w-full py-2 px-3 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -221,6 +222,7 @@
                 <div class="sticky bottom-0 bg-white border-t px-6 py-4">
                     <button 
                         wire:click="addToCart"
+                        dusk="add-to-cart-submit"
                         class="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                     >
                         <span>Добавить</span>

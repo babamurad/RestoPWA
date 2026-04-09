@@ -437,6 +437,7 @@
                     </button>
                 @else
                     <button wire:click="submitOrder" wire:loading.attr="disabled" :disabled="!conflictsConfirmed"
+                        dusk="checkout-submit-button"
                         class="flex-1 px-6 py-4 bg-orange-500 text-white font-bold rounded-2xl shadow-xl shadow-orange-200 hover:bg-orange-600 transition-all btn-press flex items-center justify-center gap-3 disabled:opacity-50">
                         <span wire:loading.remove>Подтвердить заказ</span>
                         <div wire:loading class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
