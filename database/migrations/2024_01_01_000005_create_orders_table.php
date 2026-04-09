@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('vendor_id');
-            $table->uuid('user_id');
+            $table->uuid('user_id')->nullable();
             $table->string('status', 20)->default('pending');
             $table->jsonb('address');
             $table->jsonb('items');

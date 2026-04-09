@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Domains\Order\Models\Order;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
 
 class OrderSuccessController extends Controller
@@ -19,8 +20,15 @@ class OrderSuccessController extends Controller
             abort(403, 'У вас нет доступа к этому заказу.');
         }
 
+        $signedTrackingUrl = URL::temporarySignedRoute(
+            'order.track.guest',
+            now()->addHours(24),
+            ['orderId' => $id]
+        );
+
         return view('order.success', [
             'order' => $order,
+            'signedTrackingUrl' => $signedTrackingUrl,
         ]);
     }
 }

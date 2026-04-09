@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
     <title>Отслеживание заказа</title>
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-50">
-    <div x-data="orderTracker('{{ $orderId }}')" x-init="init()" class="min-h-screen">
-    <div x-data="orderTracker('{{ $orderId }}')" x-init="init()" class="min-h-screen bg-gray-50">
+    <div x-data="orderTracker('{{ $orderId }}', '{{ $signedApiUrl }}')" x-init="init()" class="min-h-screen bg-gray-50">
         {{-- Header (Mobile & Desktop) --}}
         <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 transition-all">
             <div class="max-w-lg mx-auto md:max-w-4xl lg:max-w-6xl px-4 h-14 md:h-16 flex items-center justify-between">
@@ -129,12 +129,12 @@
             </div>
         </main>
     </div>
-    </div>
 
     <script>
-        function orderTracker(orderId) {
+        function orderTracker(orderId, signedApiUrl) {
             return {
                 orderId: orderId,
+                signedApiUrl: signedApiUrl,
                 currentStatus: '{{ $order->status }}',
                 statusOrder: ['pending', 'confirmed', 'preparing', 'ready', 'delivering', 'completed'],
                 statusClasses: {
@@ -157,6 +157,23 @@
                     if (this.currentStatus === 'delivering') {
                         this.initMap();
                         this.subscribeToTrackingChannel();
+                    }
+
+                    // Polling fallback for guests or connection issues
+                    if (this.signedApiUrl) {
+                        setInterval(() => this.pollStatus(), 5000);
+                    }
+                },
+
+                async pollStatus() {
+                    try {
+                        const response = await fetch(this.signedApiUrl);
+                        const data = await response.json();
+                        if (data.status && data.status !== this.currentStatus) {
+                            this.currentStatus = data.status;
+                        }
+                    } catch (e) {
+                        console.error('Polling failed:', e);
                     }
                 },
 

@@ -42,7 +42,7 @@
 
             {{-- Actions --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 animate-slide-up" style="animation-delay: 0.3s">
-                <a href="{{ route('order.track', $order->id) }}" class="flex items-center justify-center gap-3 px-8 py-5 bg-orange-500 text-white font-bold rounded-2xl hover:bg-orange-600 shadow-xl shadow-orange-500/20 transition-all card-hover">
+                <a href="{{ $signedTrackingUrl ?? route('order.track', $order->id) }}" class="flex items-center justify-center gap-3 px-8 py-5 bg-orange-500 text-white font-bold rounded-2xl hover:bg-orange-600 shadow-xl shadow-orange-500/20 transition-all card-hover">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                     <span>Отследить заказ</span>
                 </a>

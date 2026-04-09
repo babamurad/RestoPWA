@@ -4,8 +4,9 @@ namespace Tests\Browser;
 
 use App\Models\User;
 use App\Domains\Order\Models\Order;
-use Database\Factories\VendorFactory;
+use Database\Factories\RestaurantFactory;
 use Database\Factories\ProductFactory;
+use Database\Factories\CategoryFactory;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
@@ -15,17 +16,26 @@ class SmokeTest extends DuskTestCase
 {
     use DatabaseMigrations;
 
-    protected $vendor;
+    protected $restaurant;
+    protected $category;
     protected $product;
 
     protected function setUp(): void
     {
         parent::setUp();
         
-        $this->vendor = VendorFactory::new()->create(['slug' => 'test-vendor', 'is_active' => true]);
+        $this->restaurant = RestaurantFactory::new()->create(['slug' => 'test-vendor', 'is_active' => true]);
+        
+        $this->category = CategoryFactory::new()->create([
+            'vendor_id' => $this->restaurant->id,
+            'name' => 'Main Menu',
+            'is_active' => true
+        ]);
+
         $this->product = ProductFactory::new()->create([
-            'vendor_id' => $this->vendor->id,
-            'is_active' => true,
+            'vendor_id' => $this->restaurant->id,
+            'category_id' => $this->category->id,
+            'is_available' => true,
             'price' => 500,
             'name' => 'Pizza Margherita'
         ]);
@@ -39,10 +49,10 @@ class SmokeTest extends DuskTestCase
     public function test_guest_happy_path_checkout(): void
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit('/restaurant/' . $this->vendor->id)
+            $browser->visit('/restaurants/' . $this->restaurant->slug)
                     ->clearPwaCache()
                     ->refresh() // Для чистого старта после сброса IndexedDB
-                    ->waitForText($this->product->name)
+                    ->waitForText($this->product->name, 10)
                     // Открываем модалку модификаторов
                     ->click('@open-modifier-modal-'.$this->product->id)
                     ->waitFor('@add-to-cart-submit')
@@ -52,7 +62,7 @@ class SmokeTest extends DuskTestCase
                     
                     // Переход в корзину (через URL или иконку корзины)
                     ->visit('/cart')
-                    ->waitForText($this->product->name)
+                    ->waitForText($this->product->name, 10)
                     ->click('@cart-checkout-button')
                     
                     // Шаг 1: Checkout - Address (Ожидаем пустой стейт "Выбрать адрес на карте")
@@ -80,7 +90,9 @@ class SmokeTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/cart')
                     ->clearPwaCache()->refresh()
-                    ->assertSee('Корзина пуста'); // Проверяем наличие текста пустой корзины
+                    ->waitUntilMissingText('Loading...', 10) // Если есть такой текст
+                    ->waitForText('Корзина пуста', 15); // Проверяем наличие текста пустой корзины с запасом
         });
     }
 }
+

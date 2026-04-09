@@ -24,9 +24,8 @@ class BelongsToVendorScope implements Scope
         $vendorId = $tenantContext->getCurrentVendor();
 
         if ($vendorId) {
-            $builder->where('vendor_id', $vendorId);
-        } else {
-            $builder->whereNull($model->getTable().'.id');
+            $builder->where($model->getTable().'.vendor_id', $vendorId);
         }
     }
 }
+

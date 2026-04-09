@@ -138,41 +138,10 @@
             </div>
 
             {{-- Right: Menu Items Grid --}}
-            <div class="col-span-3 space-y-12">
-                {{-- Mobile Categories Scroll --}}
-                <div class="md:hidden -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
-                    <div class="flex gap-2">
-                        <button @click="activeCategory = 'all'" 
-                                :class="activeCategory === 'all' ? 'bg-orange-500 text-white' : 'bg-white text-gray-500 border border-gray-100'"
-                                class="px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-bold transition-all">
-                            Все
-                        </button>
-                        @foreach($restaurant->categories as $category)
-                            <button @click="activeCategory = 'cat-{{ $category->id }}'" 
-                                    :class="activeCategory === 'cat-{{ $category->id }}' ? 'bg-orange-500 text-white' : 'bg-white text-gray-500 border border-gray-100'"
-                                    class="px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-bold transition-all">
-                                {{ $category->name }}
-                            </button>
-                        @endforeach
-                    </div>
-                </div>
-
-                @foreach($restaurant->categories as $category)
-                    <section x-show="activeCategory === 'all' || activeCategory === 'cat-{{ $category->id }}'" 
-                             class="animate-slide-up" x-cloak>
-                        <div class="flex items-center gap-4 mb-6">
-                            <h3 class="text-2xl font-bold text-gray-900 font-inter">{{ $category->name }}</h3>
-                            <div class="flex-1 h-[1px] bg-gray-100"></div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                            @foreach($category->products as $product)
-                                <x-product-card :product="$product" />
-                            @endforeach
-                        </div>
-                    </section>
-                @endforeach
+            <div class="col-span-3">
+                <livewire:menu.catalog :vendor-id="$restaurant->id" />
             </div>
+
         </div>
 
     </main>

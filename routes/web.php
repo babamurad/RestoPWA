@@ -80,11 +80,17 @@ Route::view('/offline', 'offline');
 Route::get('/order/{orderId}/track', [OrderTrackingController::class, 'track'])
     ->name('order.track')->middleware('auth');
 
+Route::get('/order/{orderId}/track/guest', [OrderTrackingController::class, 'track'])
+    ->name('order.track.guest')->middleware('signed');
+
 Route::get('/order/success/{id}', [OrderSuccessController::class, 'show'])
     ->name('order.success');
 
 Route::get('/api/order/{orderId}/track', [OrderTrackingController::class, 'apiTrack'])
     ->name('api.order.track')->middleware('auth');
+
+Route::get('/api/order/{orderId}/track/guest', [OrderTrackingController::class, 'apiTrack'])
+    ->name('api.order.track.guest')->middleware('signed');
 
 Route::match(['get', 'head'], '/api/ping', function () {
     return response()->json([

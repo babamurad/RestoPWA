@@ -37,8 +37,8 @@ class SetTenantContext
 
         if ($vendorId) {
             $this->tenantContext->setCurrentVendor((string) $vendorId);
-        } elseif ($request->is('api/ping')) {
-            // Allow health check without tenant
+        } elseif ($request->is('api/ping') || $request->is('api/order/*/track*')) {
+            // Allow health check and guest tracking without tenant header
             return $next($request);
         } elseif ($request->is('api/*')) {
             return response()->json([
