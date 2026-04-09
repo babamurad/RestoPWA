@@ -360,7 +360,7 @@
 - SEC-2 vendor auth policy ✅
 - Filament Admin Panel ✅
 
-### Sprint 2 (текущий)
+### Sprint 2 (текущий) — **ЗАВЕРШЁН ✅**
 - quality gate stabilization (php artisan test — полный прогон),
 - cart sync conflict UX,
 - idempotent submit improvements,
@@ -428,13 +428,13 @@
 | Product/Web Flow | B | ✅ Основной контур рабочий |
 | API & Tenant Isolation | B | ✅ `SetTenantContext` на всех v1 route |
 | Offline-first (PWA) | B+ | ✅ Dexie + SW + pendingOrders queue |
-| Security & Access Control | **B+** *(было C)* | ✅ auth на tracking и vendor закрыты |
+| Security & Access Control | **B+** *(было C)* | ✅ auth на tracking и vendor закрыты, API ошибки унифицированы |
 | Filament Admin Panel | B | ✅ 4 ресурса работают (Filament v5) |
 | Документация | B | ✅ Единый ТЗ + changelog + tenant-audit |
-| Test Coverage | C+ | ⚠️ Есть feature-тесты, нужно расширять |
-| Quality Gate | C+ | ⚠️ Тесты работают, CI-пайплайн — backlog |
+| Test Coverage | B | ✅ Есть feature-тесты на protected routes, cart sync, idempotency |
+| Quality Gate | B | ✅ Тесты работают (php artisan test, pint), базовый пайплайн |
 
-**Следующий приоритет:** Sprint 2 — quality gate stabilization + checkout hardening.
+**Следующий приоритет:** Sprint 3 — E2E smoke + bugfix wave.
 
 ---
 
@@ -443,4 +443,4 @@
 Это ТЗ фиксирует полный маршрут от текущего состояния к production-качеству и дальнейшему развитию.  
 Дальше вам не нужно «думать архитектуру каждый день» — достаточно брать следующий пункт этапа, выполнять критерии приёмки и закрывать спринты последовательно.
 
-**P0 закрыт. Следующий шаг — Sprint 2 (P1).**
+**P0 и Sprint 2 закрыты. Следующий шаг — Sprint 3.**
