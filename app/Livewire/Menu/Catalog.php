@@ -72,9 +72,10 @@ class Catalog extends Component
                 'price' => (int) $product->price,
                 'min_price' => $minPrice,
                 'description' => $product->description,
-                'image' => $product->image ? asset('storage/'.$product->image) : null,
+                'image' => $product->image_url,
                 'modifiers' => $product->modifiers ? $product->modifiers->toArray() : [],
                 'is_available' => $product->is_available,
+                'weight_g' => $product->weight_g,
                 'category_name' => $product->category?->name,
             ];
         }, $products->items());
@@ -150,11 +151,20 @@ class Catalog extends Component
 
         $totalPrice = $this->calculateTotalPrice();
 
+        $productImage = '';
+        foreach ($this->products as $p) {
+            if ($p['id'] === $this->selectedProductId) {
+                $productImage = $p['image'];
+                break;
+            }
+        }
+
         $this->dispatch('cart-add-item', [
             'productId' => $this->selectedProductId,
             'vendorId' => $this->vendorId,
             'price' => $totalPrice,
             'productName' => $this->selectedProductName,
+            'image' => $productImage,
             'modifiers' => $this->selectedModifiers,
             'quantity' => $this->selectedQuantity,
         ]);

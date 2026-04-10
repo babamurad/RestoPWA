@@ -49,17 +49,20 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
-        async addItem({ productId, vendorId, productName, image, modifiers = {}, price }) {
+        async addItem({ productId, vendorId, productName, image, modifiers = {}, price, quantity = 1 }) {
+            console.log('CartAlpine: Adding item', { productId, vendorId, productName });
             try {
                 if (this.currentVendorId && this.currentVendorId !== vendorId) {
+                    console.log('CartAlpine: Clearing different vendor cart');
                     await window.CartService.clearVendorCart(this.currentVendorId);
                 }
                 
                 this.currentVendorId = vendorId;
-                await window.CartService.addItem(productId, vendorId, productName, image, modifiers, price);
+                await window.CartService.addItem(productId, vendorId, productName, image, modifiers, price, quantity);
+                console.log('CartAlpine: Item added successfully');
                 await this.broadcastState();
             } catch (error) {
-                console.error('Failed to add item:', error);
+                console.error('CartAlpine: Failed to add item:', error);
             }
         },
 
@@ -93,6 +96,7 @@ document.addEventListener('alpine:init', () => {
 
         async broadcastState() {
             const vendorId = this.currentVendorId || '';
+            console.log('CartAlpine: Broadcasting state for vendor', vendorId);
             let items = [];
             let totals = { totalItems: 0, totalPrice: 0, totalQuantity: 0 };
 
@@ -101,6 +105,7 @@ document.addEventListener('alpine:init', () => {
             }
 
             totals = await window.CartService.getTotals();
+            console.log('CartAlpine: State totals', totals);
 
             window.dispatchEvent(new CustomEvent('cart-state', {
                 detail: {

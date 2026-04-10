@@ -26,17 +26,17 @@ class CartDrawer extends Component
         'open-cart' => 'openCart',
         'close-cart' => 'closeCart',
         'cart-updated' => 'refreshCart',
-        'browser-online' => 'syncWithServer',
-        'browser-offline' => 'setOffline',
+        'window:browser-online' => 'syncWithServer',
+        'window:browser-offline' => 'setOffline',
     ];
 
     public function mount(): void
     {
-        $this->isOffline = ! app()->runningInConsole() && ! request()->ajax();
+        $this->isOffline = false; // Will be updated via window event or JS check
         $this->dispatch('request-cart-state');
     }
 
-    #[On('cart-state')]
+    #[On('window:cart-state')]
     public function setCartState(array $state = []): void
     {
         $this->items = $state['items'] ?? [];

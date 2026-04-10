@@ -51,7 +51,22 @@ class RestaurantController extends Controller
 
     public function index(): View
     {
-        $restaurants = Restaurant::where('is_active', true)->paginate(20);
+        $query = Restaurant::where('is_active', true);
+
+        if ($search = request('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhereHas('categories', function ($qc) use ($search) {
+                      $qc->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('categories.products', function ($qp) use ($search) {
+                      $qp->where('name', 'like', "%{$search}%")
+                         ->where('is_available', true);
+                  });
+            });
+        }
+
+        $restaurants = $query->paginate(20)->withQueryString();
 
         return view('restaurants.index', compact('restaurants'));
     }

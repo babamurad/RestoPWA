@@ -68,11 +68,18 @@ const CartService = {
      * @param {string} [image]
      * @param {Object} [modifiers={}]
      * @param {number} price - price in cents
+     * @param {number} [quantity=1]
      * @returns {Promise<number>}
      */
-    async addItem(productId, vendorId, productName, image, modifiers = {}, price) {
+    async addItem(productId, vendorId, productName, image, modifiers = {}, price, quantity = 1) {
         const modifiersHash = hashModifiers(modifiers);
         
+        // Defensive check to prevent IndexedDB DataError: "The parameter is not a valid key"
+        if (!vendorId || !productId || typeof modifiersHash !== 'string') {
+            console.error('Invalid keys for cart addition:', { vendorId, productId, modifiersHash });
+            throw new Error('Invalid product data: missing required identifiers');
+        }
+
         const existingItem = await db.cart
             .where('[vendorId+productId+modifiersHash]')
             .equals([vendorId, productId, modifiersHash])
@@ -80,11 +87,12 @@ const CartService = {
 
         if (existingItem) {
             await db.cart.update(existingItem.id, {
-                quantity: existingItem.quantity + 1
+                quantity: existingItem.quantity + quantity
             });
             return existingItem.id;
         }
 
+        console.log('CartService: Adding to IndexedDB', { productId, vendorId, quantity });
         const id = await db.cart.add({
             productId,
             vendorId,
@@ -92,10 +100,11 @@ const CartService = {
             image,
             modifiersHash,
             modifiers,
-            quantity: 1,
+            quantity: quantity,
             price,
             addedAt: new Date()
         });
+        console.log('CartService: Added with ID', id);
         return id;
     },
 

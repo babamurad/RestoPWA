@@ -30,7 +30,7 @@
         }
         return this.selectedModifiers.some(m => m.id === modifier.id);
     }
-}" x-init="$watch('selectedProductId', value => { if(value) { $el.classList.add('overflow-hidden'); } else { $el.classList.remove('overflow-hidden'); } })">
+}" x-init="$watch('showModal', value => { if(value) { $el.classList.add('overflow-hidden'); } else { $el.classList.remove('overflow-hidden'); } })">
 
     @if(!empty($categories))
         <div class="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
@@ -51,49 +51,82 @@
         </div>
     @endif
 
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div class="space-y-3" x-data="{ 
+        cartItems: [],
+        getQuantity(productId) {
+            const item = this.cartItems.find(i => i.productId === productId);
+            return item ? item.quantity : 0;
+        }
+    }" x-init="
+        window.addEventListener('cart-state', (e) => {
+            this.cartItems = e.detail.items || [];
+        });
+        $dispatch('request-cart-state');
+    ">
         @foreach($products as $product)
-            <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-                <div class="aspect-square bg-gray-100 relative">
-                    @if($product['image'])
-                        <img 
-                            src="{{ $product['image'] }}" 
-                            alt="{{ $product['name'] }}"
-                            loading="lazy"
-                            class="w-full h-full object-cover"
-                        >
-                    @else
-                        <div class="w-full h-full flex items-center justify-center text-gray-400">
-                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                        </div>
-                    @endif
+            <div class="flex gap-3 p-3 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all animate-slide-up card-hover">
+                {{-- Product Image --}}
+                <div class="relative flex-shrink-0 w-24 h-24 overflow-hidden rounded-xl bg-gray-50">
+                    <img 
+                        src="{{ $product['image'] }}" 
+                        alt="{{ $product['name'] }}"
+                        loading="lazy"
+                        class="w-full h-full object-cover"
+                    >
                     @if(!$product['is_available'])
                         <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
-                            <span class="text-white text-sm font-medium">Нет в наличии</span>
+                            <span class="text-white text-[10px] font-bold uppercase">Нет</span>
                         </div>
                     @endif
                 </div>
-                <div class="p-3">
-                    <h3 class="font-medium text-gray-900 text-sm line-clamp-2 mb-1">{{ $product['name'] }}</h3>
-                    <div class="flex items-center justify-between">
-                        <span class="text-blue-600 font-semibold">
-                            @if($product['min_price'] > $product['price'])
-                                от {{ number_format($product['min_price'], 0, '.', ' ') }} ₽
-                            @else
-                                {{ number_format($product['price'], 0, '.', ' ') }} ₽
+
+                {{-- Product Details --}}
+                <div class="flex flex-col flex-1 min-w-0">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <h4 class="font-bold text-gray-900 line-clamp-1 text-sm md:text-base">{{ $product['name'] }}</h4>
+                            @if($product['weight_g'])
+                                <span class="text-[10px] md:text-xs text-gray-400 font-medium">{{ $product['weight_g'] }} г</span>
                             @endif
-                        </span>
+                        </div>
                     </div>
-                    <button 
-                        wire:click="openModifierModal('{{ $product['id'] }}')"
-                        dusk="open-modifier-modal-{{ $product['id'] }}"
-                        @if(!$product['is_available']) disabled @endif
-                        class="mt-2 w-full py-2 px-3 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        В корзину
-                    </button>
+                    
+                    <p class="mt-1 text-[11px] md:text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                        {{ $product['description'] }}
+                    </p>
+
+                    <div class="flex items-center justify-between mt-auto pt-2">
+                        <div class="flex flex-col">
+                            <span class="font-black text-gray-900 text-sm md:text-base">
+                                {{ number_format($product['price'], 0, '.', ' ') }} ₽
+                            </span>
+                        </div>
+
+                        {{-- Quantity Controls / Add Button --}}
+                        <template x-if="getQuantity('{{ $product['id'] }}') > 0">
+                            <div class="flex items-center gap-2.5 bg-gray-50 p-1 rounded-full border border-gray-100">
+                                <button @click="$dispatch('cart-update-quantity', { itemId: cartItems.find(i => i.productId === '{{ $product['id'] }}').id, quantity: getQuantity('{{ $product['id'] }}') - 1 })" 
+                                        class="flex items-center justify-center w-7 h-7 rounded-full bg-white text-gray-700 shadow-sm hover:bg-gray-100 transition-all touch-feedback">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
+                                </button>
+                                <span class="w-4 text-center font-bold text-xs text-gray-900" x-text="getQuantity('{{ $product['id'] }}')"></span>
+                                <button @click="$dispatch('cart-update-quantity', { itemId: cartItems.find(i => i.productId === '{{ $product['id'] }}').id, quantity: getQuantity('{{ $product['id'] }}') + 1 })" 
+                                        class="flex items-center justify-center w-7 h-7 rounded-full bg-orange-500 text-white shadow-sm hover:bg-orange-600 transition-all touch-feedback">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                                </button>
+                            </div>
+                        </template>
+                        <template x-if="getQuantity('{{ $product['id'] }}') === 0">
+                            <button 
+                                wire:click="openModifierModal('{{ $product['id'] }}')"
+                                dusk="open-modifier-modal-{{ $product['id'] }}"
+                                @if(!$product['is_available']) disabled @endif
+                                class="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all touch-feedback disabled:opacity-50"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                            </button>
+                        </template>
+                    </div>
                 </div>
             </div>
         @endforeach
