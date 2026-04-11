@@ -73,7 +73,8 @@ async function networkFirst(request, cacheName) {
         const response = await fetch(request);
         const responseClone = response.clone();
         
-        if (request.method === 'GET' && response.ok) {
+        // Only cache valid GET responses with http/https scheme
+        if (request.method === 'GET' && response.ok && request.url.startsWith('http')) {
             const cache = await caches.open(cacheName);
             await cache.put(request, responseClone);
         }
@@ -98,7 +99,8 @@ async function cacheFirst(request, cacheName) {
     try {
         const response = await fetch(request);
         
-        if (response.ok && request.method === 'GET') {
+        // Only cache valid GET responses with http/https scheme
+        if (response.ok && request.method === 'GET' && request.url.startsWith('http')) {
             const cache = await caches.open(cacheName);
             cache.put(request, response.clone());
         }
@@ -222,7 +224,7 @@ async function syncOrders() {
                     
                     await showNotification('Заказ успешно отправлен', {
                         body: `Заказ №${result.order_id?.slice(0, 8)} принят`,
-                        icon: '/icon-192x192.png',
+                        icon: '/icons/icon-192x192.svg',
                         tag: `order-${result.order_id}`,
                         data: { order_id: result.order_id },
                     });
@@ -240,7 +242,7 @@ async function syncOrders() {
         if (failed.length > 0 && failed.every(o => o.retries >= 3)) {
             await showNotification('Не удалось отправить заказ', {
                 body: 'Попробуйте повторить заказ вручную при подключении к сети',
-                icon: '/icon-192x192.png',
+                icon: '/icons/icon-192x192.svg',
                 tag: 'order-sync-failed',
             });
         }
@@ -294,7 +296,7 @@ async function incrementRetry(orderId) {
                 order.status = 'failed';
                 showNotification('Ошибка отправки заказа', {
                     body: 'Не удалось отправить заказ. Попробуйте позже вручную',
-                    icon: '/icons/icon-192.png',
+                    icon: '/icons/icon-192x192.svg',
                 });
             }
             
@@ -396,8 +398,8 @@ self.addEventListener('push', (event) => {
     
     const options = {
         body: data.body || '',
-        icon: data.icon || '/icon-192x192.png',
-        badge: data.badge || '/icon-192x192.png',
+        icon: data.icon || '/icons/icon-192x192.svg',
+        badge: data.badge || '/icons/icon-192x192.svg',
         data: data.data || {},
         vibrate: [100, 50, 100],
         actions: [

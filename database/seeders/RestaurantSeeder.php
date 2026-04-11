@@ -146,7 +146,7 @@ class RestaurantSeeder extends Seeder
             [
                 'name' => 'Coffee Time',
                 'description' => 'Специалитет кофе и свежая выпечка. Идеальное место для завтрака.',
-                'image' => 'https://images.unsplash.com/photo-1554118811-0d8c8ddee6ec?w=400&h=300&fit=crop',
+                'image' => 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop',
                 'cover_image' => 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&h=400&fit=crop',
                 'rating' => 4.4,
                 'review_count' => 428,
