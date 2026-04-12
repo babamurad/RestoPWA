@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Masterclass для Senior Dev</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 25px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s;
+        }
+
+        .section:hover {
+            transform: translateX(5px);
+        }
+
+        .section h2 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: 'CODE';
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 10px;
+            color: #718096;
+            letter-spacing: 1px;
+        }
+
+        .preview {
+            background: white;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 10px;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .interactive-demo {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .path-builder {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .tip {
+            background: #fffaf0;
+            border-left: 4px solid #ed8936;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .tip strong {
+            color: #c05621;
+        }
+
+        svg.demo-svg {
+            border: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        .animation-box {
+            margin: 20px 0;
+        }
+
+        .cheatsheet {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .cheat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .cheat-item .cmd {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .cheat-item .desc {
+            color: #718096;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎨 SVG Masterclass</h1>
+        <p class="subtitle">Практическое руководство для разработчиков</p>
+
+        <div class="tip">
+            <strong>💡 Почему SVG?</strong><br>
+            • Масштабируется без потери качества (векторная графика)<br>
+            • Встроен в DOM — можно манипулировать через JS/CSS<br>
+            • Маленький размер файла для простой графики<br>
+            • Поддерживает анимации и интерактивность<br>
+            • SEO-friendly (текст в SVG индексируется)
+        </div>
+
+        <h2 style="margin: 30px 0 20px; color: #2d3748;">1. Базовые формы (Basic Shapes)</h2>
+
+        <div class="grid">
+            <div class="section">
+                <h2>Прямоугольник & Круг</h2>
+                <div class="code-block">&lt;rect x="10" y="10"
+                    width="80" height="60"
+                    rx="10" ry="10"
+                    fill="#667eea"
+                    stroke="#2d3748"
+                    stroke-width="3"/&gt;
+
+                    &lt;circle cx="150" cy="40" r="30"
+                    fill="#ed8936"/&gt;</div>
+                <div class="preview">
+                    <svg width="200" height="100" class="demo-svg">
+                        <rect x="10" y="10" width="80" height="60" rx="10" ry="10" fill="#667eea" stroke="#2d3748"
+                            stroke-width="3" />
+                        <circle cx="150" cy="40" r="30" fill="#ed8936" />
+                    </svg>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Линии & Полигоны</h2>
+                <div class="code-block">&lt;line x1="10" y1="50"
+                    x2="190" y2="50"
+                    stroke="#667eea"
+                    stroke-width="4"
+                    stroke-linecap="round"/&gt;
+
+                    &lt;polygon points="100,10 150,90 50,90"
+                    fill="#48bb78"/&gt;</div>
+                <div class="preview">
+                    <svg width="200" height="100" class="demo-svg">
+                        <line x1="10" y1="50" x2="190" y2="50" stroke="#667eea" stroke-width="4"
+                            stroke-linecap="round" />
+                        <polygon points="100,10 150,90 50,90" fill="#48bb78" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <h2 style="margin: 30px 0 20px; color: #2d3748;">2. Path — самое мощное</h2>
+
+        <div class="interactive-demo">
+            <h3>Интерактивный Path Builder</h3>
+            <p>Нажимай кнопки, чтобы построить путь:</p>
+            <div class="path-builder">
+                <svg id="pathCanvas" width="300" height="200" class="demo-svg" style="background: #f7fafc;">
+                    <path id="dynamicPath" d="M 50 100" fill="none" stroke="#667eea" stroke-width="3" />
+                    <circle id="startPoint" cx="50" cy="100" r="4" fill="#667eea" />
+                </svg>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button onclick="addLine()">Добавить линию (L)</button>
+                    <button onclick="addCurve()">Кривая Безье (C)</button>
+                    <button onclick="addQuad()">Квадратичная (Q)</button>
+                    <button onclick="closePath()">Замкнуть (Z)</button>
+                    <button onclick="clearPath()">Очистить</button>
+                </div>
+            </div>
+            <div class="code-block" id="pathCode" style="margin-top: 20px;">M 50 100</div>
+        </div>
+
+        <div class="grid">
+            <div class="section">
+                <h2>Иконка "Сердце"</h2>
+                <div class="code-block">&lt;path d="M 100 180
+                    C 100 180, 10 130, 10 60
+                    C 10 30, 40 10, 70 10
+                    C 85 10, 100 25, 100 25
+                    C 100 25, 115 10, 130 10
+                    C 160 10, 190 30, 190 60
+                    C 190 130, 100 180, 100 180 Z"
+                    fill="#e53e3e"/&gt;</div>
+                <div class="preview">
+                    <svg width="200" height="200" class="demo-svg">
+                        <path
+                            d="M 100 180 C 100 180, 10 130, 10 60 C 10 30, 40 10, 70 10 C 85 10, 100 25, 100 25 C 100 25, 115 10, 130 10 C 160 10, 190 30, 190 60 C 190 130, 100 180, 100 180 Z"
+                            fill="#e53e3e" />
+                    </svg>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Градиенты</h2>
+                <div class="code-block">&lt;defs&gt;
+                    &lt;linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"&gt;
+                    &lt;stop offset="0%" style="stop-color:#667eea;stop-opacity:1" /&gt;
+                    &lt;stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" /&gt;
+                    &lt;/linearGradient&gt;
+                    &lt;/defs&gt;
+                    &lt;rect width="180" height="80" fill="url(#grad1)" rx="10"/&gt;</div>
+                <div class="preview">
+                    <svg width="200" height="100" class="demo-svg">
+                        <defs>
+                            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <rect width="180" height="80" fill="url(#grad1)" rx="10" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <h2 style="margin: 30px 0 20px; color: #2d3748;">3. Анимации (SMIL)</h2>
+
+        <div class="grid">
+            <div class="section">
+                <h2>Морфинг форм</h2>
+                <div class="code-block">&lt;path d="M 50 50 L 150 50 L 150 150 L 50 150 Z"&gt;
+                    &lt;animate
+                    attributeName="d"
+                    dur="3s"
+                    repeatCount="indefinite"
+                    values="M 50 50 L 150 50 L 150 150 L 50 150 Z;
+                    M 100 50 L 150 150 L 50 150 L 100 50 Z;
+                    M 50 50 L 150 50 L 150 150 L 50 150 Z"/&gt;
+                    &lt;/path&gt;</div>
+                <div class="preview animation-box">
+                    <svg width="200" height="200" class="demo-svg">
+                        <path fill="#667eea" opacity="0.8">
+                            <animate attributeName="d" dur="3s" repeatCount="indefinite" values="M 50 50 L 150 50 L 150 150 L 50 150 Z;
+                                        M 100 50 L 150 150 L 50 150 L 100 50 Z;
+                                        M 50 50 L 150 50 L 150 150 L 50 150 Z" />
+                        </path>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Вращение и трансформация</h2>
+                <div class="code-block">&lt;g&gt;
+                    &lt;rect x="75" y="75" width="50" height="50" fill="#ed8936"&gt;
+                    &lt;animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    from="0 100 100"
+                    to="360 100 100"
+                    dur="4s"
+                    repeatCount="indefinite"/&gt;
+                    &lt;/rect&gt;
+                    &lt;/g&gt;</div>
+                <div class="preview animation-box">
+                    <svg width="200" height="200" class="demo-svg">
+                        <rect x="75" y="75" width="50" height="50" fill="#ed8936">
+                            <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100"
+                                dur="4s" repeatCount="indefinite" />
+                        </rect>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" style="margin-top: 30px;">
+            <h2>📋 Шпаргалка по командам Path</h2>
+            <div class="cheatsheet">
+                <div class="cheat-item">
+                    <span class="cmd">M x y</span>
+                    <div class="desc">Move To — переместить курсор</div>
+                </div>
+                <div class="cheat-item">
+                    <span class="cmd">L x y</span>
+                    <div class="desc">Line To — линия к точке</div>
+                </div>
+                <div class="cheat-item">
+                    <span class="cmd">H x</span>
+                    <div class="desc">Horizontal Line</div>
+                </div>
+                <div class="cheat-item">
+                    <span class="cmd">V y</span>
+                    <div class="desc">Vertical Line</div>
+                </div>
+                <div class="cheat-item">
+                    <span class="cmd">C x1 y1, x2 y2, x y</span>
+                    <div class="desc">Cubic Bezier (3 точки)</div>
+                </div>
+                <div class="cheat-item">
+                    <span class="cmd">Q x1 y1, x y</span>
+                    <div class="desc">Quadratic Bezier (2 точки)</div>
+                </div>
+                <div class="cheat-item">
+                    <span class="cmd">A rx ry rot large sweep x y</span>
+                    <div class="desc">Arc — дуга эллипса</div>
+                </div>
+                <div class="cheat-item">
+                    <span class="cmd">Z</span>
+                    <div class="desc">Close Path — замкнуть</div>
+                </div>
+            </div>
+            <p style="margin-top: 15px; color: #718096; font-size: 14px;">
+                <strong>Важно:</strong> Заглавные буквы — абсолютные координаты, строчные — относительные (от текущей
+                позиции).
+            </p>
+        </div>
+
+        <div class="tip" style="margin-top: 30px;">
+            <strong>🚀 Pro Tips для разработчиков:</strong><br>
+            • Используй <code>viewBox</code> для адаптивности — это изменяет систему координат, а не размер холста<br>
+            • <code>preserveAspectRatio</code> контролирует поведение при изменении пропорций<br>
+            • Для иконок используй <code>symbol</code> и <code>use</code> для переиспользования<br>
+            • <code>currentColor</code> наследует цвет текста родителя — удобно для темизации<br>
+            • Оптимизируй SVG через <a href="https://jakearchibald.github.io/svgomg/" target="_blank">SVGOMG</a> перед
+            продакшеном
+        </div>
+
+        <div class="interactive-demo" style="margin-top: 30px;">
+            <h3>Дополнительные ресурсы</h3>
+            <ul style="text-align: left; max-width: 600px; margin: 20px auto; line-height: 2;">
+                <li><strong>MDN SVG Tutorial:</strong> developer.mozilla.org/en-US/docs/Web/SVG/Tutorial</li>
+                <li><strong>SVG Path Editor:</strong> yqnn.github.io/svg-path-editor/</li>
+                <li><strong>GSAP для сложных анимаций:</strong> greensock.com/gsap/</li>
+                <li><strong>Heroicons:</strong> Библиотека SVG-иконок для референса</li>
+                <li><strong>D3.js:</strong> Если нужна data visualization на SVG</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let pathD = "M 50 100";
+        let currentX = 50;
+        let currentY = 100;
+        const pathElement = document.getElementById('dynamicPath');
+        const codeElement = document.getElementById('pathCode');
+
+        function updatePath() {
+            pathElement.setAttribute('d', pathD);
+            codeElement.textContent = pathD;
+        }
+
+        function addLine() {
+            currentX += 40;
+            currentY += (Math.random() - 0.5) * 60;
+            pathD += ` L ${currentX} ${currentY}`;
+            updatePath();
+        }
+
+        function addCurve() {
+            const x1 = currentX + 20;
+            const y1 = currentY - 30;
+            currentX += 60;
+            currentY += (Math.random() - 0.5) * 40;
+            const x2 = currentX - 20;
+            const y2 = currentY - 30;
+            pathD += ` C ${x1} ${y1}, ${x2} ${y2}, ${currentX} ${currentY}`;
+            updatePath();
+        }
+
+        function addQuad() {
+            const qx = currentX + 30;
+            const qy = currentY - 40;
+            currentX += 60;
+            currentY += (Math.random() - 0.5) * 30;
+            pathD += ` Q ${qx} ${qy}, ${currentX} ${currentY}`;
+            updatePath();
+        }
+
+        function closePath() {
+            pathD += " Z";
+            updatePath();
+            pathElement.setAttribute('fill', 'rgba(102, 126, 234, 0.2)');
+        }
+
+        function clearPath() {
+            pathD = "M 50 100";
+            currentX = 50;
+            currentY = 100;
+            pathElement.setAttribute('fill', 'none');
+            updatePath();
+        }
+    </script>
+</body>
+
+</html>
