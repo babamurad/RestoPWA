@@ -19,20 +19,20 @@
         </div>
     @endif
 
-    <div class="space-y-3" x-data="{ 
-        cartItems: [],
-        getQuantity(productId) {
-            const item = this.cartItems.find(i => i.productId == productId);
-            if (item) console.log('Catalog: Quantity for ' + productId + ' is ' + item.quantity);
-            return item ? item.quantity : 0;
-        }
-    }" x-init="
-        window.addEventListener('cart-state', (e) => {
-            console.log('Catalog: cart-state received', e.detail.items);
-            this.cartItems = e.detail.items || [];
-        });
-        window.dispatchEvent(new CustomEvent('request-cart-state'));
-    ">
+    <div class="space-y-3" 
+        x-data="{ 
+            cartItems: [],
+            getQuantity(productId) {
+                const item = this.cartItems.find(i => i.productId == productId);
+                return item ? item.quantity : 0;
+            },
+            getItem(productId) {
+                return this.cartItems.find(i => i.productId == productId);
+            }
+        }" 
+        @cart-state.window="cartItems = $event.detail.items || []"
+        x-init="window.dispatchEvent(new CustomEvent('request-cart-state'))"
+    >
         @foreach($products as $product)
             <div class="flex gap-3 p-3 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all animate-slide-up card-hover">
                 {{-- Product Image --}}
@@ -75,12 +75,12 @@
                         {{-- Quantity Controls / Add Button --}}
                         <template x-if="getQuantity('{{ $product['id'] }}') > 0">
                             <div class="flex items-center gap-2">
-                                <button @click="$dispatch('cart-update-quantity', { itemId: cartItems.find(i => i.productId == '{{ $product['id'] }}').id, quantity: getQuantity('{{ $product['id'] }}') - 1 })" 
+                                <button @click="const item = getItem('{{ $product['id'] }}'); if(item) $dispatch('cart-update-quantity', { itemId: item.id, quantity: item.quantity - 1 })" 
                                         class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors touch-feedback">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
                                 </button>
                                 <span class="w-6 text-center font-semibold" x-text="getQuantity('{{ $product['id'] }}')"></span>
-                                <button @click="$dispatch('cart-update-quantity', { itemId: cartItems.find(i => i.productId == '{{ $product['id'] }}').id, quantity: getQuantity('{{ $product['id'] }}') + 1 })" 
+                                <button @click="const item = getItem('{{ $product['id'] }}'); if(item) $dispatch('cart-update-quantity', { itemId: item.id, quantity: item.quantity + 1 })" 
                                         class="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-colors touch-feedback">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                                 </button>

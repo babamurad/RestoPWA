@@ -61,7 +61,7 @@ class Catalog extends Component
             return [
                 'id' => $product->id,
                 'name' => $product->name,
-                'price' => (int) $product->price,
+                'price' => (int) round($product->price * 100),
                 'min_price' => $minPrice,
                 'description' => $product->description,
                 'image' => $product->image_url,
@@ -81,7 +81,7 @@ class Catalog extends Component
 
     private function calculateMinPrice(Product $product): int
     {
-        $basePrice = (int) $product->price;
+        $basePrice = (int) round($product->price * 100);
         $modifiers = $product->modifiers;
 
         if (! $modifiers || $modifiers->isEmpty()) {
@@ -92,7 +92,7 @@ class Catalog extends Component
             ->where('type', 'single')
             ->min('price') ?? 0;
 
-        return $basePrice + $minModifiersPrice;
+        return $basePrice + (int) $minModifiersPrice;
     }
 
 

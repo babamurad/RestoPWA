@@ -55,8 +55,11 @@ document.addEventListener('alpine:init', () => {
         async addItem({ productId, vendorId, productName, image, modifiers = {}, price, quantity = 1 }) {
             console.log('CartAlpine: Adding item', { productId, vendorId, productName });
             try {
-                if (this.currentVendorId && this.currentVendorId !== vendorId) {
-                    console.log('CartAlpine: Clearing different vendor cart');
+                const normalizedVendorId = String(vendorId).toLowerCase().trim();
+                const currentNormalizedId = this.currentVendorId ? String(this.currentVendorId).toLowerCase().trim() : null;
+
+                if (currentNormalizedId && currentNormalizedId !== normalizedVendorId) {
+                    console.log('CartAlpine: Clearing different vendor cart', { current: currentNormalizedId, new: normalizedVendorId });
                     await window.CartService.clearVendorCart(this.currentVendorId);
                 }
                 
