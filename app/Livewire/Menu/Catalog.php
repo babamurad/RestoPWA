@@ -22,15 +22,7 @@ class Catalog extends Component
 
     public array $categories = [];
 
-    public string $selectedProductId = '';
 
-    public array $selectedModifiers = [];
-
-    public int $selectedQuantity = 1;
-
-    public int $selectedProductPrice = 0;
-
-    public string $selectedProductName = '';
 
     private const PER_PAGE = 20;
 
@@ -103,6 +95,7 @@ class Catalog extends Component
         return $basePrice + $minModifiersPrice;
     }
 
+
     public function loadMore(): void
     {
         if (! $this->hasMorePages) {
@@ -122,68 +115,38 @@ class Catalog extends Component
         $this->loadProducts();
     }
 
-    public function openModifierModal(string $productId): void
+
+
+    public function addDirectlyToCart(string $productId): void
     {
         $product = Product::find($productId);
         if (! $product) {
             return;
         }
 
-        $this->selectedProductId = $productId;
-        $this->selectedProductPrice = (int) $product->price;
-        $this->selectedProductName = $product->name;
-        $this->selectedModifiers = [];
-        $this->selectedQuantity = 1;
-    }
-
-    public function closeModifierModal(): void
-    {
-        $this->selectedProductId = '';
-        $this->selectedModifiers = [];
-        $this->selectedQuantity = 1;
-    }
-
-    public function addToCart(): void
-    {
-        if (! $this->selectedProductId) {
-            return;
-        }
-
-        $totalPrice = $this->calculateTotalPrice();
+        $minPrice = $this->calculateMinPrice($product);
 
         $productImage = '';
         foreach ($this->products as $p) {
-            if ($p['id'] === $this->selectedProductId) {
+            if ($p['id'] === $productId) {
                 $productImage = $p['image'];
                 break;
             }
         }
-
-        $this->dispatch('cart-add-item', [
-            'productId' => $this->selectedProductId,
-            'vendorId' => $this->vendorId,
-            'price' => $totalPrice,
-            'productName' => $this->selectedProductName,
-            'image' => $productImage,
-            'modifiers' => $this->selectedModifiers,
-            'quantity' => $this->selectedQuantity,
-        ]);
-
-        $this->closeModifierModal();
-        $this->dispatch('open-cart');
-    }
-
-    public function calculateTotalPrice(): int
-    {
-        $price = $this->selectedProductPrice;
-
-        foreach ($this->selectedModifiers as $modifier) {
-            if (isset($modifier['price'])) {
-                $price += (int) $modifier['price'];
-            }
+        
+        if (empty($productImage) && $product->image_url) {
+            $productImage = $product->image_url;
         }
 
-        return $price * $this->selectedQuantity;
+        $this->dispatch('cart-add-item',
+            productId: $productId,
+            vendorId: $this->vendorId,
+            price: $minPrice,
+            productName: $product->name,
+            image: $productImage,
+            modifiers: [],
+            quantity: 1
+        );
     }
 
     public function render()

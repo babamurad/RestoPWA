@@ -16,10 +16,12 @@ document.addEventListener('alpine:init', () => {
 
         listenToLivewire() {
             window.addEventListener('request-cart-state', () => {
+                console.log('CartAlpine: request-cart-state received');
                 this.broadcastState();
             });
 
             window.addEventListener('cart-update-quantity', (e) => {
+                console.log('CartAlpine: cart-update-quantity received', e.detail);
                 this.updateQuantity(e.detail.itemId, e.detail.quantity);
             });
 
@@ -40,6 +42,7 @@ document.addEventListener('alpine:init', () => {
             });
 
             window.addEventListener('set-vendor', (e) => {
+                console.log('CartAlpine: set-vendor received', e.detail);
                 this.currentVendorId = e.detail.vendorId;
                 this.broadcastState();
             });

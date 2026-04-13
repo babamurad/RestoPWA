@@ -43,63 +43,26 @@ class RestaurantController extends Controller
             ];
         });
 
-        $query = Restaurant::where('is_active', true);
+        $popularRestaurants = Restaurant::where('is_active', true)->limit(10)->get();
 
-        if ($search = request('search')) {
-            $searchLower = mb_strtolower($search, 'UTF-8');
-            $query->where(function ($q) use ($searchLower) {
-                $q->whereRaw('LOWER(name) LIKE ?', ["%{$searchLower}%"])
-                  ->orWhereHas('categories', function ($qc) use ($searchLower) {
-                      $qc->whereRaw('LOWER(name) LIKE ?', ["%{$searchLower}%"]);
-                  })
-                  ->orWhereHas('categories.products', function ($qp) use ($searchLower) {
-                      $qp->whereRaw('LOWER(name) LIKE ?', ["%{$searchLower}%"])
-                         ->where('is_available', true);
-                  });
-            });
-            $popularRestaurants = collect(); // Hide popular restaurants when searching
-        } else {
-            $popularRestaurants = Restaurant::where('is_active', true)->limit(10)->get();
-        }
+        $restaurants = Restaurant::with(['categories' => function ($q) {
+            $q->where('is_active', true)->with(['products' => function ($pq) {
+                $pq->where('is_available', true);
+            }]);
+        }])->where('is_active', true)->get();
 
-        $restaurants = $query->paginate(20)->withQueryString();
-
-        $view = view('home', compact('categories', 'popularRestaurants', 'restaurants'));
-
-        if (request()->ajax()) {
-            return $view->fragment('search-results');
-        }
-
-        return $view;
+        return view('home', compact('categories', 'popularRestaurants', 'restaurants'));
     }
 
     public function index(): View|string
     {
-        $query = Restaurant::where('is_active', true);
+        $restaurants = Restaurant::with(['categories' => function ($q) {
+            $q->where('is_active', true)->with(['products' => function ($pq) {
+                $pq->where('is_available', true);
+            }]);
+        }])->where('is_active', true)->get();
 
-        if ($search = request('search')) {
-            $searchLower = mb_strtolower($search, 'UTF-8');
-            $query->where(function ($q) use ($searchLower) {
-                $q->whereRaw('LOWER(name) LIKE ?', ["%{$searchLower}%"])
-                  ->orWhereHas('categories', function ($qc) use ($searchLower) {
-                      $qc->whereRaw('LOWER(name) LIKE ?', ["%{$searchLower}%"]);
-                  })
-                  ->orWhereHas('categories.products', function ($qp) use ($searchLower) {
-                      $qp->whereRaw('LOWER(name) LIKE ?', ["%{$searchLower}%"])
-                         ->where('is_available', true);
-                  });
-            });
-        }
-
-        $restaurants = $query->paginate(20)->withQueryString();
-
-        $view = view('restaurants.index', compact('restaurants'));
-
-        if (request()->ajax()) {
-            return $view->fragment('search-results');
-        }
-
-        return $view;
+        return view('restaurants.index', compact('restaurants'));
     }
 
     public function show(Restaurant $restaurant): View

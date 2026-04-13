@@ -6,7 +6,7 @@
         <x-header />
     @endif
 
-    <main x-data="{ activeCategory: null }" class="max-w-lg mx-auto md:max-w-4xl lg:max-w-6xl xl:max-w-7xl px-4 py-6 space-y-8 lg:py-10 pb-24 lg:pb-12">
+    <main x-data="{ activeCategory: null, searchQuery: '' }" @global-search.window="searchQuery = $event.detail" class="max-w-lg mx-auto md:max-w-4xl lg:max-w-6xl xl:max-w-7xl px-4 py-6 space-y-8 lg:py-10 pb-24 lg:pb-12">
         {{-- Categories --}}
         <section>
             <div class="flex items-center justify-between mb-4">
@@ -104,10 +104,9 @@
         </section>
 
         <div id="search-results-container" class="space-y-8">
-            @fragment('search-results')
             {{-- Популярные рестораны --}}
         @if($popularRestaurants->count())
-            <section>
+            <section x-show="!searchQuery">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-xl font-bold text-gray-900 font-inter">Популярные сейчас</h2>
                     <a href="{{ route('restaurants.index') }}" class="text-sm text-orange-500 font-bold hover:text-orange-600 transition-colors flex items-center gap-1">
@@ -157,8 +156,7 @@
         {{-- Все рестораны --}}
         <section>
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-gray-900 font-inter">
-                    {{ request('search') ? 'Результаты поиска' : 'Рестораны рядом' }}
+                <h2 class="text-xl font-bold text-gray-900 font-inter" x-text="searchQuery ? 'Результаты поиска' : 'Рестораны рядом'">
                 </h2>
                 <button class="text-orange-500 p-2 md:hidden">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg>
@@ -168,7 +166,10 @@
             @if($restaurants->count())
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     @foreach($restaurants as $restaurant)
-                        <div x-show="!activeCategory || {{ json_encode($restaurant->categories->pluck('name')->toArray()) }}.includes(activeCategory)"
+                        @php
+                            $searchableText = mb_strtolower(str_replace("'", "\'", $restaurant->name . ' ' . $restaurant->categories->pluck('name')->join(' ') . ' ' . $restaurant->categories->flatMap->products->pluck('name')->join(' ')), 'UTF-8');
+                        @endphp
+                        <div x-show="(!activeCategory || {{ json_encode($restaurant->categories->pluck('name')->toArray()) }}.includes(activeCategory)) && (!searchQuery || '{{ $searchableText }}'.includes(searchQuery))"
                              x-transition:enter="transition ease-out duration-300"
                              x-transition:enter-start="opacity-0 translate-y-4"
                              x-transition:enter-end="opacity-100 translate-y-0"
@@ -190,11 +191,6 @@
                     <button @click="activeCategory = null" class="mt-4 text-orange-500 font-bold hover:underline">Показать все</button>
                 </div>
 
-                @if($restaurants->hasPages())
-                    <div class="mt-10 flex justify-center">
-                        {{ $restaurants->links() }}
-                    </div>
-                @endif
             @else
                 <div class="flex flex-col items-center justify-center py-20 text-gray-400 bg-white rounded-3xl border border-gray-100 shadow-sm">
                     <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
@@ -207,7 +203,6 @@
                 </div>
             @endif
         </section>
-            @endfragment
         </div>
     </main>
 

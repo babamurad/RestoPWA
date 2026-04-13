@@ -8,11 +8,13 @@
         cartQuantity: 0,
         toggleInfo() { this.isInfoOpen = !this.isInfoOpen }
     }" x-init="
-        $dispatch('set-vendor', { vendorId: '{{ $restaurant->id }}' });
+        window.dispatchEvent(new CustomEvent('set-vendor', { detail: { vendorId: '{{ $restaurant->id }}' } }));
         window.addEventListener('cart-state', (e) => {
-            this.cartTotal = e.detail.totalPrice;
-            this.cartQuantity = e.detail.totalQuantity;
+            console.log('restaurant-show: cart-state received', e.detail);
+            this.cartTotal = e.detail.totalPrice || 0;
+            this.cartQuantity = e.detail.totalQuantity || 0;
         });
+        window.dispatchEvent(new CustomEvent('request-cart-state'));
     ">
         {{-- Header with back button --}}
         <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 transition-all duration-300">

@@ -12,26 +12,28 @@
         @once
         <script>
             document.addEventListener('alpine:init', () => {
-                Alpine.data('liveSearch', (initialQuery, actionUrl) => ({
+                Alpine.data('liveSearch', (initialQuery) => ({
                     search: initialQuery,
                     init() {
-                        this.$watch('search', () => this.performSearch());
-                    },
-                    async performSearch(force = false) {
-                        if(!force && this.search.length > 0 && this.search.length < 3) return;
-                        
-                        let url = new URL(actionUrl);
-                        if(this.search.length > 0) {
-                            url.searchParams.set('search', this.search);
-                        }
-                        
-                        history.pushState(null, '', url.toString());
+                        this.$watch('search', () => {
+                            let val = this.search.trim().toLowerCase();
+                            this.$dispatch('global-search', val);
+                            
+                            // Keep URL in sync
+                            let url = new URL(window.location.href);
+                            if(val.length > 0) {
+                                url.searchParams.set('search', val);
+                            } else {
+                                url.searchParams.delete('search');
+                            }
+                            history.replaceState(null, '', url.toString() || '?');
+                        });
 
-                        let response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                        let html = await response.text();
-                        let target = document.getElementById('search-results-container');
-                        if(target) {
-                            target.innerHTML = html;
+                        // Dispatch initial search query on load
+                        if (this.search) {
+                            setTimeout(() => {
+                                this.$dispatch('global-search', this.search.trim().toLowerCase());
+                            }, 50);
                         }
                     }
                 }));
@@ -44,11 +46,11 @@
                 <form action="{{ request()->routeIs('home') ? route('home') : route('restaurants.index') }}" 
                       method="GET" 
                       class="relative"
-                      x-data="liveSearch('{{ request('search') }}', '{{ request()->routeIs('home') ? route('home') : route('restaurants.index') }}')"
-                      @submit.prevent="performSearch(true)">
+                      x-data="liveSearch('{{ request('search') }}')"
+                      @submit.prevent>
                     <input type="text" 
                            name="search"
-                           x-model.debounce.250ms="search"
+                           x-model="search"
                            placeholder="Найти блюдо, ресторан или категорию..."
                            class="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-2xl text-sm focus:ring-2 focus:ring-orange-500 transition-all">
                     <svg class="absolute left-3 top-2.5 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -58,11 +60,11 @@
             <form action="{{ request()->routeIs('home') ? route('home') : route('restaurants.index') }}" 
                   method="GET" 
                   class="flex-1 md:hidden relative"
-                  x-data="liveSearch('{{ request('search') }}', '{{ request()->routeIs('home') ? route('home') : route('restaurants.index') }}')"
-                  @submit.prevent="performSearch(true)">
+                  x-data="liveSearch('{{ request('search') }}')"
+                  @submit.prevent>
                 <input type="text" 
                        name="search"
-                       x-model.debounce.250ms="search"
+                       x-model="search"
                        placeholder="Поиск"
                        class="w-full pl-8 pr-3 py-2 bg-gray-100 border-none rounded-full text-sm focus:ring-2 focus:ring-orange-500 transition-all">
                 <svg class="absolute left-2.5 top-2.5 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
