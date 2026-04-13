@@ -1,12 +1,12 @@
 @props(['showSearch' => true, 'showProfile' => true])
 
 <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
-    <div class="max-w-lg mx-auto md:max-w-4xl lg:max-w-6xl xl:max-w-7xl flex items-center gap-3 px-4 h-14 md:h-16">
-        <div class="flex items-center gap-2">
-            <div class="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 bg-orange-500 rounded-lg shadow-md shadow-orange-200">
+    <div class="max-w-lg mx-auto md:max-w-4xl lg:max-w-6xl xl:max-w-7xl flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-14 md:h-16">
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div class="flex shrink-0 items-center justify-center w-8 h-8 md:w-10 md:h-10 bg-orange-500 rounded-lg shadow-md shadow-orange-200">
                 <span class="text-white font-bold text-sm md:text-base tracking-tighter">R</span>
             </div>
-            <span class="font-bold text-xl md:text-2xl gradient-text tracking-tight">RestoPWA</span>
+            <span class="font-bold text-lg sm:text-xl md:text-2xl gradient-text tracking-tight shrink-0 hidden min-[360px]:block">RestoPWA</span>
         </div>
         
         @once
@@ -63,9 +63,9 @@
                 <input type="text" 
                        name="search"
                        x-model.debounce.250ms="search"
-                       placeholder="Поиск..."
-                       class="w-full pl-9 pr-4 py-2 bg-gray-100 border-none rounded-full text-sm focus:ring-2 focus:ring-orange-500 transition-all">
-                <svg class="absolute left-3 top-2.5 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                       placeholder="Поиск"
+                       class="w-full pl-8 pr-3 py-2 bg-gray-100 border-none rounded-full text-sm focus:ring-2 focus:ring-orange-500 transition-all">
+                <svg class="absolute left-2.5 top-2.5 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             </form>
         @endif
 
@@ -82,7 +82,7 @@
                         </div>
                     </a>
                 @else
-                    <a href="{{ route('login') }}" class="px-6 py-2 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-black transition-all">
+                    <a href="{{ route('login') }}" class="px-4 sm:px-6 py-1.5 sm:py-2 shrink-0 bg-gray-900 text-white text-xs sm:text-sm font-bold rounded-xl hover:bg-black transition-all">
                         Войти
                     </a>
                 @endauth
