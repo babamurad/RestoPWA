@@ -33,17 +33,17 @@
 }" x-init="$watch('showModal', value => { if(value) { $el.classList.add('overflow-hidden'); } else { $el.classList.remove('overflow-hidden'); } })">
 
     @if(!empty($categories))
-        <div class="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+        <div class="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide px-4 md:px-0">
             <button 
                 wire:click="filterByCategory(null)"
-                class="px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors {{ $categoryId === null ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
+                class="px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all touch-feedback {{ $categoryId === null ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20' : 'bg-gray-50 text-gray-600 hover:bg-gray-100' }}"
             >
                 Все
             </button>
             @foreach($categories as $category)
                 <button 
                     wire:click="filterByCategory({{ $category['id'] }})"
-                    class="px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors {{ $categoryId == $category['id'] ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
+                    class="px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all touch-feedback {{ $categoryId == $category['id'] ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20' : 'bg-gray-50 text-gray-600 hover:bg-gray-100' }}"
                 >
                     {{ $category['name'] }}
                 </button>
@@ -199,21 +199,21 @@
                                     <div class="space-y-2">
                                         @foreach($modifiers as $modifier)
                                             <label 
-                                                class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                                                :class="isSelected({{ json_encode($modifier) }}) ? 'border-blue-500 bg-blue-50' : 'border-gray-200'"
+                                                class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-orange-50/50 transition-colors"
+                                                :class="isSelected({{ json_encode($modifier) }}) ? 'border-orange-500 bg-orange-50 text-orange-900' : 'border-gray-100'"
                                             >
                                                 @if($modifier['type'] === 'single')
                                                     <input 
                                                         type="radio" 
                                                         :name="'modifier_' . $group"
-                                                        class="w-4 h-4 text-blue-600"
+                                                        class="w-4 h-4 text-orange-500 focus:ring-orange-500 border-gray-300"
                                                         @change="selectedModifiers = selectedModifiers.filter(m => m.group !== '{{ $group }}'); selectedModifiers.push({{ json_encode($modifier) }})"
                                                         :checked="isSelected({{ json_encode($modifier) }})"
                                                     >
                                                 @else
                                                     <input 
                                                         type="checkbox" 
-                                                        class="w-4 h-4 text-blue-600 rounded"
+                                                        class="w-4 h-4 text-orange-500 rounded focus:ring-orange-500 border-gray-300"
                                                         @change="toggleModifier({{ json_encode($modifier) }})"
                                                         :checked="isSelected({{ json_encode($modifier) }})"
                                                     >
@@ -256,9 +256,9 @@
                     <button 
                         wire:click="addToCart"
                         dusk="add-to-cart-submit"
-                        class="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                        class="w-full py-4 px-4 bg-orange-500 text-white font-bold rounded-2xl shadow-lg shadow-orange-500/30 hover:bg-orange-600 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                     >
-                        <span>Добавить</span>
+                        <span>Добавить за</span>
                         <span x-text="totalPrice.toLocaleString() + ' ₽'"></span>
                     </button>
                 </div>
