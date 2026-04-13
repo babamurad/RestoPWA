@@ -11,14 +11,48 @@
                     </a>
                     <h1 class="flex-1 text-lg font-bold text-gray-900 truncate">Все рестораны</h1>
                 </div>
+
+                @once
+                <script>
+                    document.addEventListener('alpine:init', () => {
+                        Alpine.data('liveSearch', (initialQuery, actionUrl) => ({
+                            search: initialQuery,
+                            init() {
+                                this.$watch('search', () => this.performSearch());
+                            },
+                            async performSearch(force = false) {
+                                if(!force && this.search.length > 0 && this.search.length < 3) return;
+                                
+                                let url = new URL(actionUrl);
+                                if(this.search.length > 0) {
+                                    url.searchParams.set('search', this.search);
+                                }
+                                
+                                history.pushState(null, '', url.toString());
+
+                                let response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                                let html = await response.text();
+                                let target = document.getElementById('search-results-container');
+                                if(target) {
+                                    target.innerHTML = html;
+                                }
+                            }
+                        }));
+                    });
+                </script>
+                @endonce
                 
                 {{-- Search Bar --}}
-                <form action="{{ route('restaurants.index') }}" method="GET" class="px-4 pb-3">
+                <form action="{{ route('restaurants.index') }}" 
+                      method="GET" 
+                      class="px-4 pb-3"
+                      x-data="liveSearch('{{ request('search') }}', '{{ route('restaurants.index') }}')"
+                      @submit.prevent="performSearch(true)">
                     <div class="relative">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                         <input type="text" 
                                name="search"
-                               value="{{ request('search') }}"
+                               x-model.debounce.250ms="search"
                                placeholder="Поиск ресторанов и блюд..." 
                                class="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-medium placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-orange-100 focus:border-orange-200 transition-all">
                         @if(request('search'))
@@ -32,6 +66,8 @@
 
             <main class="px-4 py-4">
                 
+                <div id="search-results-container">
+                    @fragment('search-results')
                 <div class="flex items-center justify-between mb-4">
                     <p class="text-sm text-gray-500 font-medium">
                         Найдено: <span id="restaurants-count">{{ $restaurants->total() }}</span> ресторанов
@@ -62,6 +98,8 @@
                         <p class="text-gray-400 text-center mt-2 max-w-[260px] leading-relaxed text-sm">Попробуйте изменить параметры поиска</p>
                     </div>
                 @endif
+                    @endfragment
+                </div>
 
             </main>
 

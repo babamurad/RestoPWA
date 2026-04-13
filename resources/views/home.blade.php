@@ -103,7 +103,9 @@
             </div>
         </section>
 
-        {{-- Популярные рестораны --}}
+        <div id="search-results-container" class="space-y-8">
+            @fragment('search-results')
+            {{-- Популярные рестораны --}}
         @if($popularRestaurants->count())
             <section>
                 <div class="flex items-center justify-between mb-4">
@@ -155,7 +157,9 @@
         {{-- Все рестораны --}}
         <section>
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-gray-900 font-inter">Рестораны рядом</h2>
+                <h2 class="text-xl font-bold text-gray-900 font-inter">
+                    {{ request('search') ? 'Результаты поиска' : 'Рестораны рядом' }}
+                </h2>
                 <button class="text-orange-500 p-2 md:hidden">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg>
                 </button>
@@ -203,6 +207,8 @@
                 </div>
             @endif
         </section>
+            @endfragment
+        </div>
     </main>
 
     {{-- Bottom Navigation --}}
