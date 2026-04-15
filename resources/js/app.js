@@ -1,6 +1,9 @@
 import './bootstrap';
 import './services/CartService';
 import './services/CartAlpine';
+import Swal from 'sweetalert2'
+
+window.Swal = Swal
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -18,10 +21,10 @@ if ('serviceWorker' in navigator) {
 function setupOrderSubmission(registration) {
     window.addEventListener('submit-order', async (e) => {
         const payload = e.detail;
-        
+
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
-            
+
             const response = await fetch('/api/v1/orders', {
                 method: 'POST',
                 headers: {
@@ -32,10 +35,10 @@ function setupOrderSubmission(registration) {
                 },
                 body: JSON.stringify(payload),
             });
-            
+
             if (response.ok) {
                 const result = await response.json();
-                
+
                 if (result.redirect_url) {
                     window.location.href = result.redirect_url;
                 } else {
@@ -43,21 +46,38 @@ function setupOrderSubmission(registration) {
                 }
             } else {
                 const error = await response.json();
-                alert('Ошибка оформления заказа: ' + (error.message || 'Попробуйте позже'));
+                window.Swal.fire({
+                    title: 'Ошибка оформления заказа',
+                    text: error.message || 'Попробуйте позже',
+                    icon: 'error',
+                    confirmButtonText: 'Закрыть',
+                    confirmButtonColor: '#f97316',
+                    customClass: { popup: 'rounded-2xl' },
+                });
             }
         } catch (error) {
             console.error('Order submission error:', error);
-            
+
             if (registration.active) {
                 await registration.active.sync.register({
                     tag: 'order-sync',
                 });
             }
-            
-            alert('Заказ сохранён локально и будет отправлен при появлении интернета');
+
+            window.Swal.fire({
+                title: 'Заказ сохранён!',
+                text: 'Будет отправлен при появлении интернета',
+                icon: 'success',
+                timer: 4000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end',
+                customClass: { popup: 'rounded-2xl' },
+            });
         }
     });
-    
+
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.addEventListener('message', (event) => {
             if (event.data?.type === 'ORDER_SYNCED') {
@@ -71,7 +91,7 @@ function setupOrderSubmission(registration) {
 
 async function checkConnectivity() {
     const wasOffline = !navigator.onLine || document.body.classList.contains('is-server-offline');
-    
+
     if (!navigator.onLine) {
         setOfflineState(true, 'network');
         return;
@@ -81,18 +101,18 @@ async function checkConnectivity() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
 
-        const response = await fetch(window.apiPingUrl || '/api/ping', { 
-            method: 'GET', 
+        const response = await fetch(window.apiPingUrl || '/api/ping', {
+            method: 'GET',
             cache: 'no-store',
             signal: controller.signal,
-            headers: { 
+            headers: {
                 'Cache-Control': 'no-cache',
                 'Accept': 'application/json'
-            } 
+            }
         });
-        
+
         clearTimeout(timeoutId);
-        
+
         if (response.ok) {
             setOfflineState(false);
         } else {
@@ -115,10 +135,10 @@ function setOfflineState(isOffline, type = 'network') {
         document.body.classList.remove('is-offline', 'is-server-offline');
         if (window.Livewire) window.Livewire.dispatch('browser-online');
     }
-    
+
     // Dispatch custom event for Alpine components
-    window.dispatchEvent(new CustomEvent('connectivity-changed', { 
-        detail: { isOffline, type } 
+    window.dispatchEvent(new CustomEvent('connectivity-changed', {
+        detail: { isOffline, type }
     }));
 }
 
@@ -176,7 +196,7 @@ async function unsubscribeFromPush() {
     try {
         const registration = await navigator.serviceWorker.ready;
         const subscription = await registration.pushManager.getSubscription();
-        
+
         if (subscription) {
             await fetch('/api/v1/push/unsubscribe', {
                 method: 'POST',
@@ -186,7 +206,7 @@ async function unsubscribeFromPush() {
                 },
                 body: JSON.stringify({ endpoint: subscription.endpoint })
             });
-            
+
             await subscription.unsubscribe();
         }
     } catch (error) {

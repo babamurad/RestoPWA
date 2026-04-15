@@ -3,9 +3,21 @@ document.addEventListener('alpine:init', () => {
         isInitialized: false,
         currentVendorId: null,
 
-        init() {
+        async init() {
             this.setupEventListeners();
             this.listenToLivewire();
+
+            // Attempt to recover currentVendorId from existing items in IndexedDB
+            try {
+                const allItems = await window.CartService.getAllItems();
+                if (allItems.length > 0) {
+                    this.currentVendorId = String(allItems[0].vendorId);
+                    console.log('CartAlpine: Recovered vendor ID', this.currentVendorId);
+                    await this.broadcastState();
+                }
+            } catch (error) {
+                console.error('CartAlpine: Failed to recover vendor state:', error);
+            }
         },
 
         setupEventListeners() {
@@ -63,8 +75,8 @@ document.addEventListener('alpine:init', () => {
                     await window.CartService.clearVendorCart(this.currentVendorId);
                 }
                 
-                this.currentVendorId = vendorId;
-                await window.CartService.addItem(productId, vendorId, productName, image, modifiers, price, quantity);
+                this.currentVendorId = String(vendorId);
+                await window.CartService.addItem(productId, String(vendorId), productName, image, modifiers, price, quantity);
                 console.log('CartAlpine: Item added successfully');
                 await this.broadcastState();
             } catch (error) {
@@ -101,25 +113,44 @@ document.addEventListener('alpine:init', () => {
         },
 
         async broadcastState() {
-            const vendorId = this.currentVendorId || '';
-            console.log('CartAlpine: Broadcasting state for vendor', vendorId);
+            let vendorId = this.currentVendorId;
+            console.log('CartAlpine: Broadcasting state for vendor', vendorId || 'unknown');
+
             let items = [];
             let totals = { totalItems: 0, totalPrice: 0, totalQuantity: 0 };
 
-            if (vendorId) {
-                items = await window.CartService.getCartByVendor(vendorId);
-            }
-
-            totals = await window.CartService.getTotals();
-            console.log('CartAlpine: State totals', totals);
-
-            window.dispatchEvent(new CustomEvent('cart-state', {
-                detail: {
-                    items,
-                    ...totals,
-                    vendorId
+            try {
+                if (vendorId) {
+                    items = await window.CartService.getCartByVendor(String(vendorId));
                 }
-            }));
+
+                // Final safety check: if we have NO items for this vendor, but DB is NOT empty,
+                // recover vendor from existing items
+                if (items.length === 0) {
+                    const allItems = await window.CartService.getAllItems();
+                    if (allItems.length > 0) {
+                        console.warn('CartAlpine: Filtered items empty but DB has items. Recovering vendor.');
+                        this.currentVendorId = String(allItems[0].vendorId);
+                        vendorId = this.currentVendorId;
+                        items = await window.CartService.getCartByVendor(vendorId);
+                    }
+                }
+
+                // Always compute totals from vendor-specific items only
+                totals = await window.CartService.getTotals(vendorId);
+
+                console.log('CartAlpine: State totals', totals);
+
+                window.dispatchEvent(new CustomEvent('cart-state', {
+                    detail: {
+                        items,
+                        ...totals,
+                        vendorId
+                    }
+                }));
+            } catch (error) {
+                console.error('CartAlpine: Error during broadcastState', error);
+            }
         },
 
         async syncCartWithServer() {
@@ -153,7 +184,14 @@ document.addEventListener('alpine:init', () => {
                         await window.CartService.bulkUpdateItems(this.currentVendorId, result.data.items);
                         
                         if (result.errors && result.errors.length > 0) {
-                            alert(result.errors.join('\n'));
+                            window.Swal.fire({
+                                title: 'Внимание',
+                                html: result.errors.join('<br>'),
+                                icon: 'warning',
+                                confirmButtonText: 'Понятно',
+                                confirmButtonColor: '#f97316',
+                                customClass: { popup: 'rounded-2xl' },
+                            });
                             // Optional: Refresh if items were removed due to availability
                         }
                         
@@ -175,7 +213,14 @@ document.addEventListener('alpine:init', () => {
                 syncData = await this.syncCartWithServer();
                 
                 if (syncData && !syncData.is_min_order_met) {
-                    alert(`Минимальная сумма заказа: ${syncData.min_order} ₽`);
+                    window.Swal.fire({
+                        title: 'Минимальная сумма заказа',
+                        text: `${syncData.min_order} ₽`,
+                        icon: 'info',
+                        confirmButtonText: 'Понятно',
+                        confirmButtonColor: '#f97316',
+                        customClass: { popup: 'rounded-2xl' },
+                    });
                     return;
                 }
             }
@@ -213,7 +258,17 @@ document.addEventListener('alpine:init', () => {
                 window.dispatchEvent(new CustomEvent('cart-clear'));
                 await window.CartService.clearVendorCart(this.currentVendorId);
                 await this.broadcastState();
-                alert('Заказ сохранён и будет отправлен когда появится интернет');
+                window.Swal.fire({
+                    title: 'Заказ сохранён!',
+                    text: 'Будет отправлен когда появится интернет',
+                    icon: 'success',
+                    timer: 3500,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end',
+                    customClass: { popup: 'rounded-2xl' },
+                });
             }
         },
 
@@ -274,12 +329,17 @@ document.addEventListener('alpine:init', () => {
         badgeCount: 0,
 
         init() {
-            this.updateBadge();
-            window.addEventListener('cart-state', () => this.updateBadge());
+            // Load initial badge from DB (vendor-filtered if vendorId provided)
+            this.refreshBadge();
+            // Keep in sync via cart-state event (already vendor-filtered by broadcastState)
+            window.addEventListener('cart-state', (e) => {
+                this.badgeCount = e.detail.totalQuantity ?? 0;
+            });
         },
 
-        async updateBadge() {
-            const totals = await window.CartService.getTotals();
+        async refreshBadge() {
+            // Prefer vendor-filtered totals; fall back to all if no vendorId given
+            const totals = await window.CartService.getTotals(this.vendorId || undefined);
             this.badgeCount = totals.totalQuantity;
         },
 

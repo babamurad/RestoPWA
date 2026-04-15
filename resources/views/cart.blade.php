@@ -2,7 +2,7 @@
     <x-slot:title>Корзина - RestoPWA</x-slot:title>
 
     <div class="bg-gray-50 lg:bg-transparent min-h-screen lg:min-h-0">
-        <div class="max-w-lg mx-auto lg:max-w-none bg-gray-50 lg:bg-transparent rounded-none lg:rounded-2xl shadow-none lg:shadow-sm pb-40 lg:pb-8" 
+        <div class="max-w-lg mx-auto lg:max-w-none bg-gray-50 lg:bg-transparent rounded-none lg:rounded-2xl shadow-none lg:shadow-sm lg:pb-8" 
              x-data="{ 
                 items: [],
                 totalPrice: 0,
@@ -12,9 +12,19 @@
                 async init() {
                     this.refresh();
                     window.addEventListener('cart-state', (e) => {
-                        this.items = e.detail.items;
+                        // Resiliency check: don't overwrite with empty items if totalQuantity shows we have contents
+                        // This prevents the page from going blank due to vendor ID mismatches in the broadcasting manager
+                        if (e.detail.items.length === 0 && e.detail.totalQuantity > 0 && this.items.length > 0) {
+                            console.warn('cart.blade: Ignoring empty items broadcast because totals are > 0');
+                            this.totalPrice = e.detail.totalPrice;
+                            this.totalQuantity = e.detail.totalQuantity;
+                            return;
+                        }
+
+                        this.items = [...e.detail.items];
                         this.totalPrice = e.detail.totalPrice;
                         this.totalQuantity = e.detail.totalQuantity;
+                        this.isLoading = false;
                     });
                 },
 
@@ -28,14 +38,55 @@
                     this.isLoading = false;
                 },
 
+                _updatingId: null,
+
                 async updateQuantity(itemId, quantity) {
-                    await window.CartService.updateQuantity(itemId, quantity);
-                    this.refresh();
+                    if (this._updatingId === itemId) return;
+                    this._updatingId = itemId;
+                    try {
+                        // Route through CartAlpine so broadcastState fires only once
+                        window.dispatchEvent(new CustomEvent('cart-update-quantity', {
+                            detail: { itemId, quantity }
+                        }));
+                    } finally {
+                        setTimeout(() => { this._updatingId = null; }, 300);
+                    }
                 },
 
                 async removeItem(itemId) {
-                    if(confirm('Удалить товар из корзины?')) {
-                        await window.CartService.removeItem(itemId);
+                    const result = await Swal.fire({
+                        title: 'Удалить товар?',
+                        text: 'Позиция будет убрана из корзины',
+                        icon: 'question',
+                        showConfirmButton: true,
+                        showCancelButton: true,
+                        confirmButtonText: 'Удалить',
+                        cancelButtonText: 'Отмена',
+                        confirmButtonColor: '#f97316',
+                        customClass: { popup: 'rounded-2xl' },
+                    });
+                    if (result.isConfirmed) {
+                        // Route through CartAlpine so broadcastState fires only once
+                        window.dispatchEvent(new CustomEvent('cart-remove-item', {
+                            detail: { itemId }
+                        }));
+                    }
+                },
+
+                async confirmClear() {
+                    const result = await Swal.fire({
+                        title: 'Очистить корзину?',
+                        text: 'Все товары будут удалены',
+                        icon: 'warning',
+                        showConfirmButton: true,
+                        showCancelButton: true,
+                        confirmButtonText: 'Очистить',
+                        cancelButtonText: 'Отмена',
+                        confirmButtonColor: '#ef4444',
+                        customClass: { popup: 'rounded-2xl' },
+                    });
+                    if (result.isConfirmed) {
+                        await window.CartService.db.cart.clear();
                         this.refresh();
                     }
                 }
@@ -49,7 +100,7 @@
                     </a>
                     <h1 class="flex-1 text-lg font-bold text-gray-900 leading-none">Корзина</h1>
                     
-                    <button @click="if(confirm('Очистить всю корзину?')) { await window.CartService.db.cart.clear(); refresh(); }" 
+                    <button @click="confirmClear()" 
                             x-show="items.length > 0"
                             class="text-xs font-bold text-red-500 uppercase tracking-wider hover:bg-red-50 px-2 py-1 rounded-lg transition-all" x-cloak>
                         Очистить
@@ -57,7 +108,7 @@
                 </div>
             </header>
 
-            <main class="px-4 py-6">
+            <main class="px-4 pt-6" style="padding-bottom: calc(200px + 64px + env(safe-area-inset-bottom, 0px));">
                 
                 {{-- Loading State --}}
                 <template x-if="isLoading">
@@ -124,9 +175,12 @@
             </main>
 
             {{-- Checkout Bar --}}
-            <div class="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-t border-gray-100 p-5 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] lg:hidden" 
-                 style="padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);"
-                 x-show="!isLoading && items.length > 0" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="transform translate-y-full" x-transition:enter-end="transform translate-y-0">
+            <div class="fixed left-0 right-0 z-40 bg-white/90 backdrop-blur-xl border-t border-gray-100 p-5 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] lg:hidden" 
+                 style="bottom: calc(64px + env(safe-area-inset-bottom, 0px));"
+                 x-show="!isLoading && items.length > 0" x-cloak 
+                 x-transition:enter="transition ease-out duration-300" 
+                 x-transition:enter-start="transform translate-y-full opacity-0" 
+                 x-transition:enter-end="transform translate-y-0 opacity-100">
                 <div class="max-w-lg mx-auto">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex flex-col">
@@ -145,7 +199,6 @@
             </div>
 
             {{-- Spacing per Bottom Nav if not at cart page --}}
-            <div class="h-20 lg:hidden"></div>
             <x-bottom-nav active="cart" />
         </div>
     </div>

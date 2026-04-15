@@ -1,6 +1,6 @@
-const CACHE_NAME = 'resto-pwa-v2';
-const STATIC_CACHE = 'resto-static-v2';
-const API_CACHE = 'resto-api-v2';
+const CACHE_NAME = 'resto-pwa-v4';
+const STATIC_CACHE = 'resto-static-v4';
+const API_CACHE = 'resto-api-v4';
 
 const STATIC_ASSETS = [
     '/',

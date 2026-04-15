@@ -72,17 +72,19 @@ const CartService = {
      * @returns {Promise<number>}
      */
     async addItem(productId, vendorId, productName, image, modifiers = {}, price, quantity = 1) {
+        const normalizedVendorId = String(vendorId);
+        const normalizedProductId = String(productId);
         const modifiersHash = hashModifiers(modifiers);
         
         // Defensive check to prevent IndexedDB DataError: "The parameter is not a valid key"
-        if (!vendorId || !productId || typeof modifiersHash !== 'string') {
-            console.error('Invalid keys for cart addition:', { vendorId, productId, modifiersHash });
+        if (!normalizedVendorId || !normalizedProductId || typeof modifiersHash !== 'string') {
+            console.error('Invalid keys for cart addition:', { normalizedVendorId, normalizedProductId, modifiersHash });
             throw new Error('Invalid product data: missing required identifiers');
         }
 
         const existingItem = await db.cart
             .where('[vendorId+productId+modifiersHash]')
-            .equals([vendorId, productId, modifiersHash])
+            .equals([normalizedVendorId, normalizedProductId, modifiersHash])
             .first();
 
         if (existingItem) {
@@ -92,10 +94,10 @@ const CartService = {
             return existingItem.id;
         }
 
-        console.log('CartService: Adding to IndexedDB', { productId, vendorId, quantity });
+        console.log('CartService: Adding to IndexedDB', { productId: normalizedProductId, vendorId: normalizedVendorId, quantity });
         const id = await db.cart.add({
-            productId,
-            vendorId,
+            productId: normalizedProductId,
+            vendorId: normalizedVendorId,
             productName,
             image,
             modifiersHash,
@@ -134,7 +136,7 @@ const CartService = {
      * @returns {Promise<CartItem[]>}
      */
     async getCartByVendor(vendorId) {
-        return db.cart.where('vendorId').equals(vendorId).toArray();
+        return db.cart.where('vendorId').equals(String(vendorId)).toArray();
     },
 
     /**
@@ -142,14 +144,20 @@ const CartService = {
      * @returns {Promise<void>}
      */
     async clearVendorCart(vendorId) {
-        await db.cart.where('vendorId').equals(vendorId).delete();
+        await db.cart.where('vendorId').equals(String(vendorId)).delete();
     },
 
     /**
+     * @param {string} [vendorId] - optional vendor filter
      * @returns {Promise<CartTotals>}
      */
-    async getTotals() {
-        const items = await db.cart.toArray();
+    async getTotals(vendorId) {
+        let items;
+        if (vendorId) {
+            items = await db.cart.where('vendorId').equals(String(vendorId)).toArray();
+        } else {
+            items = await db.cart.toArray();
+        }
         const totals = items.reduce(
             (acc, item) => ({
                 totalItems: acc.totalItems + 1,
