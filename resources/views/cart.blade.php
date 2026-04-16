@@ -8,6 +8,7 @@
                 totalPrice: 0,
                 totalQuantity: 0,
                 isLoading: true,
+                isClearing: false,
 
                 async init() {
                     this.refresh();
@@ -25,6 +26,7 @@
                         this.totalPrice = e.detail.totalPrice;
                         this.totalQuantity = e.detail.totalQuantity;
                         this.isLoading = false;
+                        this.isClearing = false;
                     });
                 },
 
@@ -86,8 +88,9 @@
                         customClass: { popup: 'rounded-2xl' },
                     });
                     if (result.isConfirmed) {
-                        await window.CartService.db.cart.clear();
-                        this.refresh();
+                        this.isClearing = true;
+                        // Route through CartAlpine so broadcastState fires only once
+                        window.dispatchEvent(new CustomEvent('cart-clear'));
                     }
                 }
              }">
@@ -102,8 +105,13 @@
                     
                     <button @click="confirmClear()" 
                             x-show="items.length > 0"
-                            class="text-xs font-bold text-red-500 uppercase tracking-wider hover:bg-red-50 px-2 py-1 rounded-lg transition-all" x-cloak>
-                        Очистить
+                            :disabled="isClearing"
+                            class="flex items-center gap-1.5 text-xs font-bold text-red-500 uppercase tracking-wider hover:bg-red-50 px-2 py-1 rounded-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed" x-cloak>
+                        <svg x-show="isClearing" class="animate-spin w-3.5 h-3.5 text-red-500 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <span x-text="isClearing ? 'Очистка...' : 'Очистить'"></span>
                     </button>
                 </div>
             </header>
@@ -133,7 +141,15 @@
 
                 {{-- Cart Items List --}}
                 <template x-if="!isLoading && items.length > 0">
-                    <div class="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+                    <div class="relative space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+
+                        {{-- Clearing overlay --}}
+                        <template x-if="isClearing">
+                            <div class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/70 backdrop-blur-sm rounded-3xl">
+                                <div class="w-10 h-10 border-4 border-red-200 border-t-red-500 rounded-full animate-spin"></div>
+                                <p class="mt-3 text-sm font-semibold text-red-500">Очищаем корзину…</p>
+                            </div>
+                        </template>
                         <template x-for="item in items" :key="item.id">
                             <div class="flex gap-4 p-4 bg-white rounded-3xl border border-gray-100 shadow-sm animate-slide-up group">
                                 <div class="flex-shrink-0 w-24 h-24 overflow-hidden rounded-2xl bg-gray-50 border border-gray-50">
