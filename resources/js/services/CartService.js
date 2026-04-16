@@ -59,6 +59,16 @@ function hashModifiers(modifiers) {
     return hash.toString(16);
 }
 
+function generateUUID() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    // Fallback for non-secure contexts (HTTP)
+    return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    );
+}
+
 /** @type {CartService} */
 const CartService = {
     /**
@@ -175,7 +185,7 @@ const CartService = {
      */
     async queueOrder(orderPayload) {
         if (!orderPayload.idempotency_key) {
-            orderPayload.idempotency_key = crypto.randomUUID();
+            orderPayload.idempotency_key = generateUUID();
         }
         return db.pendingOrders.add({
             payload: orderPayload,
@@ -302,4 +312,6 @@ const CartService = {
 };
 
 window.CartService = CartService;
+window.generateUUID = generateUUID;
+export { CartService, generateUUID };
 export default CartService;

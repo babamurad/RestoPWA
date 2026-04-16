@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Vendor\Models;
 
 use App\Domains\Menu\Models\Category;
-use App\Domains\Vendor\Traits\BelongsToVendor;
+
 use Carbon\Carbon;
 use Database\Factories\RestaurantFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -34,7 +34,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Restaurant extends Model
 {
-    use BelongsToVendor;
+
     use HasFactory;
     use HasUuids;
 
@@ -46,7 +46,6 @@ class Restaurant extends Model
     protected static function booted(): void
     {
         parent::booted();
-        static::bootBelongsToVendor();
     }
 
     /**

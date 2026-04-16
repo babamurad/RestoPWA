@@ -10,13 +10,16 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
             .then((registration) => {
                 console.log('SW registered:', registration.scope);
-                setupOrderSubmission(registration);
+                // Update existing setup with registration for background sync
+                if (window.setupOrderSubmission) window.setupOrderSubmission(registration);
             })
             .catch((error) => {
                 console.error('SW registration failed:', error);
             });
     });
 }
+setupOrderSubmission(null);
+window.setupOrderSubmission = setupOrderSubmission;
 
 function setupOrderSubmission(registration) {
     window.addEventListener('submit-order', async (e) => {
@@ -39,29 +42,54 @@ function setupOrderSubmission(registration) {
             if (response.ok) {
                 const result = await response.json();
 
-                if (result.redirect_url) {
-                    window.location.href = result.redirect_url;
+                if (result.data?.redirect_url) {
+                    window.location.href = result.data.redirect_url;
                 } else {
-                    window.location.href = `/order/success/${result.order_id}`;
+                    window.location.href = `/order/success/${result.data?.order_id || ''}`;
                 }
             } else {
                 const error = await response.json();
-                window.Swal.fire({
-                    title: 'Ошибка оформления заказа',
-                    text: error.message || 'Попробуйте позже',
-                    icon: 'error',
-                    confirmButtonText: 'Закрыть',
-                    confirmButtonColor: '#f97316',
-                    customClass: { popup: 'rounded-2xl' },
-                });
+                window.dispatchEvent(new CustomEvent('submit-order-failed'));
+
+                if (response.status === 401) {
+                    window.Swal.fire({
+                        title: 'Вы не авторизованы',
+                        text: error.message || 'Для оформления заказа необходимо войти в профиль',
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonText: 'Войти',
+                        cancelButtonText: 'Позже',
+                        confirmButtonColor: '#f97316',
+                        reverseButtons: true,
+                        customClass: { popup: 'rounded-2xl' },
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = '/login';
+                        }
+                    });
+                } else {
+                    window.Swal.fire({
+                        title: 'Ошибка оформления заказа',
+                        text: error.message || 'Попробуйте позже',
+                        icon: 'error',
+                        confirmButtonText: 'Закрыть',
+                        confirmButtonColor: '#f97316',
+                        customClass: { popup: 'rounded-2xl' },
+                    });
+                }
             }
         } catch (error) {
             console.error('Order submission error:', error);
+            window.dispatchEvent(new CustomEvent('submit-order-failed'));
 
-            if (registration.active) {
-                await registration.active.sync.register({
-                    tag: 'order-sync',
-                });
+            if (registration && registration.active) {
+                try {
+                    await registration.active.sync.register({
+                        tag: 'order-sync',
+                    });
+                } catch (syncError) {
+                    console.error('Background sync registration failed:', syncError);
+                }
             }
 
             window.Swal.fire({

@@ -9,6 +9,8 @@ use App\Domains\Order\Services\OrderService;
 use App\Http\Traits\ApiResponses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class OrderController
 {
@@ -43,9 +45,15 @@ class OrderController
         ]);
 
         $user = $request->user();
+        Log::info('OrderController@store started', [
+            'has_user' => !is_null($user),
+            'user_id' => $user->id ?? 'N/A',
+            'vendor_id' => $request->vendor_id,
+            'total' => $request->total
+        ]);
 
         if (! $user) {
-            return $this->error('User authentication required', 401);
+            return $this->error('Для оформления заказа необходимо войти в профиль', 401);
         }
 
         $userId = $user->id;
@@ -93,10 +101,16 @@ class OrderController
             'idempotency_key' => $idempotencyKey,
         ]);
 
+        Log::info('Order created successfully', [
+            'order_id' => $order->id,
+            'user_id' => $order->user_id,
+            'vendor_id' => $order->vendor_id
+        ]);
+
         return $this->success([
             'order_id' => $order->id,
             'status' => $order->status,
-            'redirect_url' => route('order.success', $order->id),
+            'redirect_url' => url('/order/success/'.$order->id),
         ], null, 201);
     }
 }

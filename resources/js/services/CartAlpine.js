@@ -206,67 +206,86 @@ document.addEventListener('alpine:init', () => {
         },
 
         async checkout() {
-            if (!this.currentVendorId) return;
-
-            let syncData = null;
-            if (navigator.onLine) {
-                syncData = await this.syncCartWithServer();
-                
-                if (syncData && !syncData.is_min_order_met) {
-                    window.Swal.fire({
-                        title: 'Минимальная сумма заказа',
-                        text: `${syncData.min_order} ₽`,
-                        icon: 'info',
-                        confirmButtonText: 'Понятно',
-                        confirmButtonColor: '#f97316',
-                        customClass: { popup: 'rounded-2xl' },
-                    });
-                    return;
-                }
+            if (!this.currentVendorId) {
+                window.dispatchEvent(new CustomEvent('submit-order-failed'));
+                return;
             }
 
-            const items = await window.CartService.getCartByVendor(this.currentVendorId);
-            if (items.length === 0) return;
+            try {
+                let syncData = null;
+                if (navigator.onLine) {
+                    syncData = await this.syncCartWithServer();
+                    
+                    if (syncData && !syncData.is_min_order_met) {
+                        window.Swal.fire({
+                            title: 'Минимальная сумма заказа',
+                            text: `${syncData.min_order} ₽`,
+                            icon: 'info',
+                            confirmButtonText: 'Понятно',
+                            confirmButtonColor: '#f97316',
+                            customClass: { popup: 'rounded-2xl' },
+                        });
+                        window.dispatchEvent(new CustomEvent('submit-order-failed'));
+                        return;
+                    }
+                }
 
-            const total = syncData ? syncData.total : items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const subtotal = syncData ? syncData.subtotal : items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const deliveryFee = syncData ? syncData.delivery_fee : 0;
+                const items = await window.CartService.getCartByVendor(this.currentVendorId);
+                if (items.length === 0) {
+                    window.dispatchEvent(new CustomEvent('submit-order-failed'));
+                    return;
+                }
 
-            const orderPayload = {
-                vendor_id: this.currentVendorId,
-                items: items.map(item => ({
-                    product_id: item.productId,
-                    product_name: item.productName,
-                    image: item.image,
-                    quantity: item.quantity,
-                    unit_price: item.price,
-                    total_price: item.price * item.quantity,
-                    modifiers: item.modifiers || {},
-                })),
-                subtotal: subtotal,
-                total: total,
-                delivery_fee: deliveryFee,
-                is_offline: !navigator.onLine,
-                idempotency_key: crypto.randomUUID(),
-                created_at: new Date().toISOString()
-            };
+                const total = syncData ? syncData.total : items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                const subtotal = syncData ? syncData.subtotal : items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                const deliveryFee = syncData ? syncData.delivery_fee : 0;
 
-            if (navigator.onLine) {
-                window.dispatchEvent(new CustomEvent('submit-order', { detail: orderPayload }));
-            } else {
-                await window.CartService.queueOrder(orderPayload);
-                window.dispatchEvent(new CustomEvent('cart-clear'));
-                await window.CartService.clearVendorCart(this.currentVendorId);
-                await this.broadcastState();
+                const orderPayload = {
+                    vendor_id: this.currentVendorId,
+                    items: items.map(item => ({
+                        product_id: item.productId,
+                        product_name: item.productName,
+                        image: item.image,
+                        quantity: item.quantity,
+                        unit_price: item.price,
+                        total_price: item.price * item.quantity,
+                        modifiers: item.modifiers || {},
+                    })),
+                    subtotal: subtotal,
+                    total: total,
+                    delivery_fee: deliveryFee,
+                    is_offline: !navigator.onLine,
+                    idempotency_key: window.generateUUID ? window.generateUUID() : Math.random().toString(36).substring(2),
+                    created_at: new Date().toISOString()
+                };
+
+                if (navigator.onLine) {
+                    window.dispatchEvent(new CustomEvent('submit-order', { detail: orderPayload }));
+                } else {
+                    await window.CartService.queueOrder(orderPayload);
+                    window.dispatchEvent(new CustomEvent('cart-clear'));
+                    await window.CartService.clearVendorCart(this.currentVendorId);
+                    await this.broadcastState();
+                    window.Swal.fire({
+                        title: 'Заказ сохранён!',
+                        text: 'Будет отправлен когда появится интернет',
+                        icon: 'success',
+                        timer: 3500,
+                        timerProgressBar: true,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end',
+                        customClass: { popup: 'rounded-2xl' },
+                    });
+                }
+            } catch (error) {
+                console.error('Checkout error:', error);
                 window.Swal.fire({
-                    title: 'Заказ сохранён!',
-                    text: 'Будет отправлен когда появится интернет',
-                    icon: 'success',
-                    timer: 3500,
-                    timerProgressBar: true,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: 'top-end',
+                    title: 'Ошибка',
+                    text: 'Не удалось обработать заказ. Пожалуйста, попробуйте еще раз.',
+                    icon: 'error',
+                    confirmButtonText: 'ОК',
+                    confirmButtonColor: '#f97316',
                     customClass: { popup: 'rounded-2xl' },
                 });
             }

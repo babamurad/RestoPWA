@@ -8,7 +8,9 @@ use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\Vendor\KanbanController;
 use App\Http\Controllers\Vendor\OrderController;
 use App\Http\Controllers\Vendor\ProductController;
+use App\Domains\Order\Http\Controllers\Api\OrderController as ApiOrderController;
 use App\Http\Controllers\Vendor\SettingsController;
+use App\Http\Middleware\SetTenantContext;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -37,6 +39,12 @@ Route::get('/orders', function () {
     if (! $user) {
         return redirect()->route('login');
     }
+
+    \Log::info('Web /orders accessed', [
+        'user_id' => $user->id,
+        'user_name' => $user->name
+    ]);
+
     $orders = Order::where('user_id', $user->id)->latest()->get();
 
     return view('orders.index', compact('orders'));
@@ -100,6 +108,10 @@ Route::match(['get', 'head'], '/api/ping', function () {
         ],
     ]);
 })->name('api.ping');
+
+Route::middleware([SetTenantContext::class, 'auth'])->group(function () {
+    Route::post('/api/v1/orders', [ApiOrderController::class, 'store'])->name('api.orders.store');
+});
 
 Route::prefix('vendor')->name('vendor.')->middleware(['ensure.tenant', 'auth'])->group(function () {
     Route::resource('products', ProductController::class)->except(['show']);

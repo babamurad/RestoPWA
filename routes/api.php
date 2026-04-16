@@ -46,8 +46,6 @@ Route::middleware([SetTenantContext::class])->prefix('v1')->group(function () {
         ]);
     })->name('api.categories.index');
 
-    Route::post('orders', [DomainOrderController::class, 'store'])
-        ->name('api.orders.store');
 
     Route::post('cart/sync', [CartController::class, 'sync'])
         ->name('api.cart.sync');
