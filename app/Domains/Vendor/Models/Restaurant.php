@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Vendor\Models;
 
 use App\Domains\Menu\Models\Category;
+use App\Domains\Menu\Models\Product;
 
 use Carbon\Carbon;
 use Database\Factories\RestaurantFactory;
@@ -129,5 +130,13 @@ class Restaurant extends Model
     public function categories(): HasMany
     {
         return $this->hasMany(Category::class, 'vendor_id');
+    }
+
+    /**
+     * Get the products for the restaurant.
+     */
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class, 'vendor_id');
     }
 }

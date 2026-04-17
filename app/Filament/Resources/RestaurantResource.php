@@ -40,6 +40,18 @@ class RestaurantResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
+                        Forms\Components\FileUpload::make('image')
+                            ->label('Изображение (Логотип)')
+                            ->image()
+                            ->disk('public')
+                            ->directory('restaurants/images')
+                            ->columnSpanFull(),
+                        Forms\Components\FileUpload::make('cover_image')
+                            ->label('Обложка')
+                            ->image()
+                            ->disk('public')
+                            ->directory('restaurants/covers')
+                            ->columnSpanFull(),
                         Forms\Components\Textarea::make('description')
                             ->label('Описание')
                             ->maxLength(65535)
@@ -68,6 +80,9 @@ class RestaurantResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('image')
+                    ->label('Логотип')
+                    ->circular(),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Название')
                     ->searchable()

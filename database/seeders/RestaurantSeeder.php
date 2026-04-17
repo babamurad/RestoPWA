@@ -20,7 +20,7 @@ class RestaurantSeeder extends Seeder
             ['email' => 'owner@restopwa.local'],
             [
                 'name' => 'Restaurant Owner',
-                'password' => bcrypt('password'),
+                'password' => 'password',
             ]
         );
 
@@ -31,7 +31,7 @@ class RestaurantSeeder extends Seeder
             unset($restaurantData['menu']);
 
             $restaurantData['slug'] = Str::slug($restaurantData['name']);
-            $restaurantData['owner_id'] = $owner->id;
+            $restaurantData['vendor_id'] = $owner->id;
 
             $existing = Restaurant::withoutGlobalScopes()->where('slug', $restaurantData['slug'])->first();
             if ($existing) {

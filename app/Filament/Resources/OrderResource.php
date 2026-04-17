@@ -75,8 +75,9 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->label('Статус')
                     ->sortable()
-                    ->formatStateUsing(fn (string $state): string => Order::STATUSES[$state] ?? $state)
-                    ->html(),
+                    ->formatStateUsing(fn (string $state): string => Order::STATUSES[$state]['label'] ?? $state)
+                    ->color(fn (string $state): string => Order::STATUSES[$state]['color'] ?? 'gray')
+                    ->badge(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Дата')
                     ->dateTime('d.m.Y H:i')
@@ -85,7 +86,7 @@ class OrderResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Статус')
-                    ->options(Order::STATUSES),
+                    ->options(collect(Order::STATUSES)->map(fn($status) => $status['label'])->toArray()),
                 Tables\Filters\SelectFilter::make('vendor_id')
                     ->label('Ресторан')
                     ->relationship('restaurant', 'name'),
@@ -106,7 +107,7 @@ class OrderResource extends Resource
                     ->form([
                         Forms\Components\Select::make('new_status')
                             ->label('Новый статус')
-                            ->options(Order::STATUSES)
+                            ->options(collect(Order::STATUSES)->map(fn($status) => $status['label'])->toArray())
                             ->required(),
                     ])
                     ->action(function (Order $order, array $data) {

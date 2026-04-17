@@ -18,22 +18,24 @@ class EnsureTenant
      */
     public function handle(Request $request, Closure $next): Response
     {
+        $user = $request->user();
+
+        if (! $user) {
+            return redirect()->route('login');
+        }
+
+        // We check if the user is a restaurateur by looking for their restaurant.
+        $restaurant = Restaurant::where('vendor_id', $user->id)->first();
+
+        if (! $restaurant) {
+            abort(403, 'Доступ запрещен. Вы не являетесь администратором ресторана.');
+        }
+
+        // Determine if tenant matches the user's restaurant
         $tenant = app('tenant');
-
-        if (! $tenant || ! isset($tenant->id)) {
-            // Если мы на хосте restopwa и нет вендора, можем попробовать редирект или 403
-            if ($request->getHost() === 'restopwa') {
-                // Временно для разработки можно использовать первый попавшийся ресторан,
-                // если это критично для тестов. Но лучше кинуть 403 с пояснением.
-                $firstRestaurant = Restaurant::first();
-                if ($firstRestaurant) {
-                    $request->session()->put('vendor_id', $firstRestaurant->vendor_id);
-
-                    return redirect()->refresh();
-                }
-            }
-
-            abort(403, 'Vendor context is missing. Please use a vendor subdomain or provide X-Vendor-ID header.');
+        
+        if (! $tenant || ! isset($tenant->vendor_id) || $tenant->vendor_id !== $user->id) {
+            $request->session()->put('vendor_id', $restaurant->vendor_id);
         }
 
         return $next($request);

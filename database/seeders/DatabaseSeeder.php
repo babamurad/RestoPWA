@@ -20,8 +20,16 @@ class DatabaseSeeder extends Seeder
         ]);
 
         User::factory()->create([
-            'name' => 'Test User',
+            'name' => 'Admin User',
+            'email' => 'admin@restopwa.local',
+            'password' => 'password',
+            'is_admin' => true,
+        ]);
+
+        User::factory()->create([
+            'name' => 'Test Client',
             'email' => 'test@example.com',
+            'password' => 'password',
         ]);
     }
 }

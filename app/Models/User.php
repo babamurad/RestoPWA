@@ -8,12 +8,19 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Domains\Vendor\Models\Restaurant;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasTenants;
+use Filament\Panel;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 
 #[Fillable(['name', 'email', 'password', 'phone', 'is_admin'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser, HasTenants
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasUuids, Notifiable;
@@ -24,5 +31,44 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        if ($panel->getId() === 'admin') {
+            return (bool) $this->is_admin;
+        }
+
+        if ($panel->getId() === 'vendor') {
+            return $this->is_admin || Restaurant::where('vendor_id', $this->id)->exists();
+        }
+
+        return true;
+    }
+
+    public function getTenants(Panel $panel): Collection
+    {
+        if ($this->is_admin) {
+            return Restaurant::all();
+        }
+
+        return Restaurant::where('vendor_id', $this->id)->get();
+    }
+
+    public function canAccessTenant(Model $tenant): bool
+    {
+        if ($this->is_admin) {
+            return true;
+        }
+
+        return $tenant->vendor_id === $this->id;
+    }
+
+    /**
+     * Get the restaurant owned by the user (if they are a Restaurateur).
+     */
+    public function restaurant(): HasOne
+    {
+        return $this->hasOne(Restaurant::class, 'vendor_id');
     }
 }

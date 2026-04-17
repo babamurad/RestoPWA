@@ -74,6 +74,16 @@
         <div class="flex items-center gap-2">
             @if($showProfile)
                 @auth
+                    @if(auth()->user()->is_admin)
+                        <a href="/admin" class="hidden sm:flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors" title="Панель администратора">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-600"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="9" x2="9" y1="21" y2="9"/></svg>
+                        </a>
+                    @elseif(auth()->user()->restaurant()->exists())
+                        <a href="{{ route('vendor.orders.kanban') }}" class="hidden sm:flex items-center justify-center w-10 h-10 rounded-full hover:bg-orange-50 transition-colors" title="Панель ресторана">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-orange-500"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg>
+                        </a>
+                    @endif
+
                     <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-3 py-1.5 rounded-full hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all">
                         <div class="hidden md:block text-right">
                             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Профиль</p>

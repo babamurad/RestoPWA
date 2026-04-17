@@ -6,6 +6,8 @@ namespace App\Livewire\Order;
 
 use App\Domains\Order\Models\Order;
 use App\Domains\Order\Services\OrderService;
+use App\Domains\Vendor\Models\Restaurant;
+use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
@@ -50,11 +52,16 @@ class KanbanBoard extends Component
 
     public function boot(): void
     {
-        $tenant = app('tenant');
-        $this->vendorId = $tenant?->id ?? '';
+        if (Filament::hasTenancy() && $tenant = Filament::getTenant()) {
+            $this->vendorId = $tenant->id;
+        } else {
+            $tenant = app('tenant');
+            $this->vendorId = $tenant?->id ?? '';
 
-        if (empty($this->vendorId) && auth()->check()) {
-            $this->vendorId = auth()->user()->vendor_id ?? '';
+            if (empty($this->vendorId) && auth()->check()) {
+                $restaurant = Restaurant::where('vendor_id', auth()->id())->first();
+                $this->vendorId = $restaurant?->id ?? '';
+            }
         }
 
         $this->orderService = app(OrderService::class);
@@ -67,8 +74,15 @@ class KanbanBoard extends Component
 
     public function loadOrders(): void
     {
+        if (empty($this->vendorId)) {
+            foreach ($this->columns as &$column) {
+                $column['orders'] = [];
+            }
+            return;
+        }
+
         $orders = Order::where('vendor_id', $this->vendorId)
-            ->whereNotIn('status', ['cancelled'])
+            ->whereNotIn('status', [Order::STATUS_CANCELLED])
             ->orderBy('created_at', 'desc')
             ->get();
 

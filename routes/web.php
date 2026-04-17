@@ -5,11 +5,7 @@ use App\Domains\Order\Models\Order;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\OrderSuccessController;
 use App\Http\Controllers\RestaurantController;
-use App\Http\Controllers\Vendor\KanbanController;
-use App\Http\Controllers\Vendor\OrderController;
-use App\Http\Controllers\Vendor\ProductController;
 use App\Domains\Order\Http\Controllers\Api\OrderController as ApiOrderController;
-use App\Http\Controllers\Vendor\SettingsController;
 use App\Http\Middleware\SetTenantContext;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -113,15 +109,5 @@ Route::middleware([SetTenantContext::class, 'auth'])->group(function () {
     Route::post('/api/v1/orders', [ApiOrderController::class, 'store'])->name('api.orders.store');
 });
 
-Route::prefix('vendor')->name('vendor.')->middleware(['ensure.tenant', 'auth'])->group(function () {
-    Route::resource('products', ProductController::class)->except(['show']);
-    Route::get('orders/kanban', [KanbanController::class, 'index'])->name('orders.kanban');
-    Route::resource('orders', OrderController::class)->except(['create', 'store']);
-    Route::post('orders/{order}/accept', [OrderController::class, 'accept'])->name('orders.accept');
-    Route::post('orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
-    Route::post('orders/{order}/update-status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
-    Route::get('orders/{order}/receipt', [OrderController::class, 'receipt'])->name('orders.receipt');
 
-    Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
-    Route::post('settings', [SettingsController::class, 'update'])->name('settings.update');
-});
+// Vendor panel is now handled by Filament at /vendor

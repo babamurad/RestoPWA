@@ -8,4 +8,5 @@ return [
     AppServiceProvider::class,
     DomainServiceProvider::class,
     AdminPanelProvider::class,
+    App\Providers\Filament\VendorPanelProvider::class,
 ];

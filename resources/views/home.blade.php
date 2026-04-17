@@ -49,7 +49,7 @@
 
                 <div 
                     x-ref="scrollContainer"
-                    class="flex gap-3 md:gap-4 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory select-none px-1 py-1"
+                    class="flex gap-3 md:gap-4 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory select-none p-2 scroll-px-2 -m-1"
                 >
                     {{-- "All" Category Button --}}
                     <button

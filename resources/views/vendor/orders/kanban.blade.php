@@ -1,4 +1,6 @@
-@extends('layouts.app')
+@extends('vendor.layout.app')
+
+@section('title', 'Kanban заказов')
 
 @section('content')
 <div class="container mx-auto px-4 py-6">
