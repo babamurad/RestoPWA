@@ -6,13 +6,13 @@ use Filament\Pages\Page;
 
 class KanbanOrders extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-view-columns';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-view-columns';
 
     protected static string $view = 'filament.vendor.pages.kanban-orders';
 
     protected static ?string $navigationLabel = 'Канбан доска';
     protected static ?string $title = 'Канбан заказов';
-    protected static ?string $navigationGroup = 'Продажи';
+    protected static string|\UnitEnum|null $navigationGroup = 'Продажи';
 
     protected static ?int $navigationSort = 1;
 

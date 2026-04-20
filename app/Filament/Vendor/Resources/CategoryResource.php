@@ -4,8 +4,8 @@ namespace App\Filament\Vendor\Resources;
 
 use App\Domains\Menu\Models\Category;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -13,16 +13,16 @@ class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-tag';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-tag';
 
     protected static ?string $modelLabel = 'Категория';
     protected static ?string $pluralModelLabel = 'Категории';
-    protected static ?string $navigationGroup = 'Меню';
+    protected static string | \UnitEnum | null $navigationGroup = 'Меню';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Forms\Components\TextInput::make('name')
                     ->label('Название')
                     ->required()

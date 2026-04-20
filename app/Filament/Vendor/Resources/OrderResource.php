@@ -4,10 +4,8 @@ namespace App\Filament\Vendor\Resources;
 
 use App\Domains\Order\Models\Order;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Infolists;
-use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,16 +14,16 @@ class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
     protected static ?string $modelLabel = 'Заказ';
     protected static ?string $pluralModelLabel = 'Заказы';
-    protected static ?string $navigationGroup = 'Продажи';
+    protected static string | \UnitEnum | null $navigationGroup = 'Продажи';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Forms\Components\Section::make('Статус заказа')
                     ->schema([
                         Forms\Components\Select::make('status')
@@ -69,16 +67,16 @@ class OrderResource extends Resource
             ]);
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
-                Infolists\Components\Section::make('Основная информация')
+        return $schema
+            ->components([
+                \Filament\Schemas\Components\Section::make('Основная информация')
                     ->schema([
-                        Infolists\Components\TextEntry::make('id')
+                        \Filament\Infolists\Components\TextEntry::make('id')
                             ->label('ID заказа')
                             ->formatStateUsing(fn (string $state): string => '#' . substr($state, 0, 8)),
-                        Infolists\Components\TextEntry::make('status')
+                        \Filament\Infolists\Components\TextEntry::make('status')
                             ->label('Статус')
                             ->badge()
                             ->color(fn (string $state): string => match ($state) {
@@ -90,38 +88,38 @@ class OrderResource extends Resource
                                 'cancelled' => 'danger',
                                 default => 'gray',
                             }),
-                        Infolists\Components\TextEntry::make('total')
+                        \Filament\Infolists\Components\TextEntry::make('total')
                             ->label('Сумма')
                             ->money('RUB'),
-                        Infolists\Components\TextEntry::make('created_at')
+                        \Filament\Infolists\Components\TextEntry::make('created_at')
                             ->label('Дата создания')
                             ->dateTime(),
                     ])->columns(2),
 
-                Infolists\Components\Section::make('Адрес и контакт')
+                \Filament\Schemas\Components\Section::make('Адрес и контакт')
                     ->schema([
-                        Infolists\Components\TextEntry::make('user.name')
+                        \Filament\Infolists\Components\TextEntry::make('user.name')
                             ->label('Клиент')
                             ->placeholder('Гость'),
-                        Infolists\Components\TextEntry::make('address.address')
+                        \Filament\Infolists\Components\TextEntry::make('address.address')
                             ->label('Адрес'),
-                        Infolists\Components\TextEntry::make('address.phone')
+                        \Filament\Infolists\Components\TextEntry::make('address.phone')
                             ->label('Телефон'),
-                        Infolists\Components\TextEntry::make('comment')
+                        \Filament\Infolists\Components\TextEntry::make('comment')
                             ->label('Комментарий')
                             ->columnSpanFull(),
                     ])->columns(3),
 
-                Infolists\Components\Section::make('Товары')
+                \Filament\Schemas\Components\Section::make('Товары')
                     ->schema([
-                        Infolists\Components\RepeatableEntry::make('items')
+                        \Filament\Infolists\Components\RepeatableEntry::make('items')
                             ->label('')
                             ->schema([
-                                Infolists\Components\TextEntry::make('name')
+                                \Filament\Infolists\Components\TextEntry::make('name')
                                     ->label('Название'),
-                                Infolists\Components\TextEntry::make('quantity')
+                                \Filament\Infolists\Components\TextEntry::make('quantity')
                                     ->label('Кол-во'),
-                                Infolists\Components\TextEntry::make('price')
+                                \Filament\Infolists\Components\TextEntry::make('price')
                                     ->label('Цена')
                                     ->money('RUB'),
                             ])->columns(3),
