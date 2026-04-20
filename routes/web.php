@@ -26,9 +26,9 @@ Route::get('/cart', function () {
     return view('cart');
 })->name('cart');
 
-Route::get('/checkout', function () {
-    return view('livewire.order.checkout-wizard');
-})->name('checkout')->middleware('auth');
+use App\Livewire\Order\CheckoutWizard;
+
+Route::get('/checkout', CheckoutWizard::class)->name('checkout');
 
 Route::get('/orders', function () {
     $user = Auth::user();

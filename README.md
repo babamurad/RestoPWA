@@ -32,10 +32,17 @@ composer setup
 
 Мы используем **Laravel Pint** для соблюдения стандартов PSR-12 и **PHPUnit** для тестирования.
 
-Запустить все проверки:
+### Линтинг и юнит-тесты:
 ```bash
 composer check
 ```
+
+### E2E Smoke тесты (Laravel Dusk):
+Для проверки критических путей пользователя (заказ, трекинг) используйте:
+```bash
+php artisan dusk --group=smoke
+```
+Подробности см. в [docs/testing-e2e.md](docs/testing-e2e.md).
 
 ## Лицензия
 

@@ -10,10 +10,26 @@ use App\Domains\Order\Services\OrderService;
 use App\Domains\Vendor\Models\Restaurant;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class CheckoutWizard extends Component
 {
+    #[On('address-selected')]
+    public function handleAddressSelected(string $address, float $lat, float $lon): void
+    {
+        $this->address = [
+            'address' => $address,
+            'lat' => $lat,
+            'lon' => $lon,
+        ];
+        
+        if ($this->restaurant) {
+            $this->deliveryFee = (float) ($this->restaurant->delivery_fee ?? 0);
+        }
+        
+        $this->calculateTotals();
+    }
     public int $currentStep = 1;
 
     public string $vendorId = '';
@@ -68,10 +84,10 @@ class CheckoutWizard extends Component
             $this->address = $savedAddress;
         }
 
-        $vendorId = session('current_vendor_id');
+        $vendorId = session('current_vendor_id') ?? request()->query('vendor_id');
         if ($vendorId) {
-            $this->vendorId = $vendorId;
-            $this->restaurant = Restaurant::find($vendorId);
+            $this->vendorId = (string) $vendorId;
+            $this->restaurant = Restaurant::find($this->vendorId);
 
             if ($this->restaurant && $this->address) {
                 $this->deliveryFee = (float) ($this->restaurant->delivery_fee ?? 0);
@@ -315,6 +331,7 @@ class CheckoutWizard extends Component
 
     public function render()
     {
-        return view('livewire.order.checkout-wizard');
+        return view('livewire.order.checkout-wizard')
+            ->layout('components.layouts.app');
     }
 }

@@ -32,12 +32,27 @@ abstract class DuskTestCase extends BaseTestCase
             $this->script([
                 'window.localStorage.clear();',
                 'window.sessionStorage.clear();',
-                'if(window.indexedDB) { 
-                    window.indexedDB.databases().then(dbs => { 
-                        dbs.forEach(db => window.indexedDB.deleteDatabase(db.name)) 
-                    }) 
-                }'
+                "if(window.indexedDB) { window.indexedDB.databases().then(dbs => { dbs.forEach(db => window.indexedDB.deleteDatabase(db.name)) }) }"
             ]);
+            return $this;
+        });
+
+        Browser::macro('setAddress', function (string $address, float $lat, float $lon) {
+            /** @var Browser $this */
+            $this->script("
+                if (window.Livewire) {
+                    let el = document.querySelector('[dusk=\"checkout-wizard\"]');
+                    if (el) {
+                        let component = Livewire.find(el.getAttribute('wire:id'));
+                        component.set('address', { 
+                            address: '$address', 
+                            lat: $lat, 
+                            lon: $lon 
+                        });
+                        component.call('calculateTotals');
+                    }
+                }
+            ");
             return $this;
         });
     }

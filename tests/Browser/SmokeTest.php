@@ -50,37 +50,95 @@ class SmokeTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/restaurants/' . $this->restaurant->slug)
-                    ->clearPwaCache()
-                    ->refresh() // Для чистого старта после сброса IndexedDB
-                    ->waitForText($this->product->name, 10)
-                    // Открываем модалку модификаторов
-                    ->click('@open-modifier-modal-'.$this->product->id)
-                    ->waitFor('@add-to-cart-submit')
-                    // Добавляем в корзину
-                    ->click('@add-to-cart-submit')
-                    ->pause(1000) // Ждем отработки Dexie
+                    ->waitForText($this->product->name, 20);
+            
+            $browser->script("Object.defineProperty(navigator, 'onLine', { value: true }); if(window.setOfflineState) window.setOfflineState(false);");
+            
+            $browser->click('@add-to-cart-'.$this->product->id)
+                    ->pause(1500)
                     
-                    // Переход в корзину (через URL или иконку корзины)
                     ->visit('/cart')
-                    ->waitForText($this->product->name, 10)
+                    ->waitForText($this->product->name, 15)
                     ->click('@cart-checkout-button')
                     
-                    // Шаг 1: Checkout - Address (Ожидаем пустой стейт "Выбрать адрес на карте")
-                    ->waitForText('Адрес доставки')
+                    // Шаг 1: Адрес
+                    ->waitForText('Адрес доставки', 20)
+                    ->pause(3000)
+                    ->setAddress('ул. Пушкина, д. 10', 45.0, 45.0)
+                    ->pause(3000)
+                    ->press('Продолжить')
                     
-                    // В реальном E2E мы могли бы заполнить адрес через модалку,
-                    // Но для изоляции мы можем вставить адрес через Livewire 
-                    // (или прокликать модалку, если она тестируется)
-                    // В данном случае мы проверяем возможность кликнуть и оформить если валидна форма
+                    // Шаг 2: Время
+                    ->waitForText('Время доставки', 15)
+                    ->pause(1000)
+                    ->press('Продолжить')
                     
-                    // При проверке пустой формы:
+                    // Шаг 3: Контакты
+                    ->waitForText('Ваши контакты', 15)
+                    ->type('name', 'Test Guest')
+                    ->type('phone', '79998887766')
+                    ->press('Продолжить')
+                    
+                    // Шаг 4: Проверка корзины
+                    ->waitForText('Проверка корзины', 15)
+                    ->pause(1000)
+                    ->press('К оплате')
+                    
+                    // Шаг 5: Подтверждение
+                    ->waitForText('Подтверждение заказа', 15)
                     ->click('@checkout-submit-button')
-                    ->waitForText('Выберите адрес доставки') // Из validateAddress
-
-                    ;
+                    
+                    // Успех
+                    ->waitForText('Заказ оформлен!', 25)
+                    ->assertSee('Ваш заказ #');
         });
     }
     
+    /**
+     * SMK-02: Order status visibility (via direct tracking link)
+     */
+    #[Group('smoke')]
+    public function test_order_status_visibility(): void
+    {
+        $order = Order::factory()->create([
+            'vendor_id' => $this->restaurant->id,
+            'status' => 'cooking',
+            'address' => ['address' => 'Test Address'],
+            'total' => 1000
+        ]);
+
+        $url = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+            'order.track.guest',
+            now()->addHours(24),
+            ['orderId' => $order->id]
+        );
+
+        $this->browse(function (Browser $browser) use ($url) {
+            $browser->visit($url)
+                    ->waitForText('Статус заказа', 10)
+                    ->assertSee('Готовится');
+        });
+    }
+
+    /**
+     * SMK-05: Guest tracking security (tamper/invalid signature)
+     */
+    #[Group('smoke')]
+    public function test_guest_tracking_security(): void
+    {
+        $order = Order::factory()->create(['vendor_id' => $this->restaurant->id]);
+
+        $this->browse(function (Browser $browser) use ($order) {
+            // Без подписи
+            $browser->visit('/order/' . $order->id . '/track/guest')
+                    ->assertSee('403');
+            
+            // С невалидной подписью
+            $browser->visit('/order/' . $order->id . '/track/guest?signature=invalid')
+                    ->assertSee('403');
+        });
+    }
+
     /**
      * SMK-03: Пустая корзина
      */
@@ -90,8 +148,8 @@ class SmokeTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/cart')
                     ->clearPwaCache()->refresh()
-                    ->waitUntilMissingText('Loading...', 10) // Если есть такой текст
-                    ->waitForText('Корзина пуста', 15); // Проверяем наличие текста пустой корзины с запасом
+                    ->waitUntilMissingText('Loading...', 10)
+                    ->waitForText('Корзина пуста', 15);
         });
     }
 }

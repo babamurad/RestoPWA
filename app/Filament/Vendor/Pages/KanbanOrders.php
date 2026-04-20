@@ -8,7 +8,7 @@ class KanbanOrders extends Page
 {
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-view-columns';
 
-    protected static string $view = 'filament.vendor.pages.kanban-orders';
+    protected string $view = 'filament.vendor.pages.kanban-orders';
 
     protected static ?string $navigationLabel = 'Канбан доска';
     protected static ?string $title = 'Канбан заказов';

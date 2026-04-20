@@ -51,6 +51,10 @@ Route::middleware([SetTenantContext::class])->prefix('v1')->group(function () {
         ->name('api.cart.sync');
 });
 
+Route::get('ping', function () {
+    return response()->json(['status' => 'ok']);
+})->name('api.ping');
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('v1/orders', [OrderController::class, 'index'])
         ->name('api.v1.orders.index');

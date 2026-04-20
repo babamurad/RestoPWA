@@ -197,7 +197,7 @@
             </main>
 
             {{-- Checkout Bar --}}
-            <div class="fixed left-0 right-0 z-40 bg-white/90 backdrop-blur-xl border-t border-gray-100 p-5 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] lg:hidden" 
+            <div class="fixed left-0 right-0 z-40 bg-white/90 backdrop-blur-xl border-t border-gray-100 p-5 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]" 
                  style="bottom: calc(64px + env(safe-area-inset-bottom, 0px));"
                  x-show="!isLoading && items.length > 0" x-cloak 
                  x-transition:enter="transition ease-out duration-300" 

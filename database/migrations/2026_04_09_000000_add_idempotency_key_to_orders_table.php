@@ -16,7 +16,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn('idempotency_key');
+            if (config('database.default') !== 'sqlite') {
+                $table->dropColumn('idempotency_key');
+            }
         });
     }
 };

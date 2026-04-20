@@ -67,7 +67,7 @@
         }
         this.$wire.nextStep();
     },
-}" class="max-w-lg mx-auto bg-white min-h-screen relative font-inter">
+}" dusk="checkout-wizard" class="max-w-lg mx-auto bg-white min-h-screen relative font-inter">
 
     {{-- Success State --}}
     @if($createdOrder)
