@@ -52,10 +52,7 @@
                     if (syncData.price_changes.length > 0 || syncData.unavailable_items.length > 0) {
                         this.conflictsConfirmed = false;
                     } else {
-                        // Automatically skip to final confirmation if no conflicts
                         this.conflictsConfirmed = true;
-                        this.$wire.nextStep();
-                        return;
                     }
                 }
             } catch (e) {
@@ -195,38 +192,28 @@
                     @break
 
                 @case(3)
-                    {{-- Payment Method --}}
-                    <section class="space-y-4 animate-slide-up">
-                        <h3 class="text-lg font-bold text-gray-900">Метод оплаты</h3>
-                        
-                        <div class="space-y-3">
-                            @foreach([
-                                ['id' => 'card', 'name' => 'Картой в приложении', 'icon' => 'credit-card', 'desc' => 'Visa, MasterCard, МИР'],
-                                ['id' => 'cash', 'name' => 'Наличными курьеру', 'icon' => 'banknote', 'desc' => 'Подготовьте сдачу'],
-                                ['id' => 'sbp', 'name' => 'Через СБП', 'icon' => 'qr-code', 'desc' => 'Быстрая оплата по QR']
-                            ] as $pm)
-                                <button wire:click="$set('paymentMethod', '{{ $pm['id'] }}')" 
-                                    class="w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all {{ $paymentMethod === $pm['id'] ? 'border-orange-500 bg-orange-50' : 'border-gray-50 hover:bg-gray-50' }}">
-                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center {{ $paymentMethod === $pm['id'] ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-400' }}">
-                                        @if($pm['icon'] === 'credit-card')
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                                        @elseif($pm['icon'] === 'banknote')
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
-                                        @else
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><rect x="7" y="7" width="3" height="3"/><rect x="14" y="7" width="3" height="3"/><rect x="7" y="14" width="3" height="3"/><rect x="14" y="14" width="3" height="3"/></svg>
-                                        @endif
-                                    </div>
-                                    <div class="text-left">
-                                        <p class="font-bold text-gray-900">{{ $pm['name'] }}</p>
-                                        <p class="text-xs text-gray-400 font-medium">{{ $pm['desc'] }}</p>
-                                    </div>
-                                    @if($paymentMethod === $pm['id'])
-                                        <div class="ml-auto text-orange-500">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                        </div>
-                                    @endif
-                                </button>
-                            @endforeach
+                    {{-- Your Contacts --}}
+                    <section class="space-y-6 animate-slide-up">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900">Ваши контакты</h3>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <label class="text-sm font-bold text-gray-700">Как вас зовут?</label>
+                                <input type="text" wire:model="name" name="name" placeholder="Иван Иванов"
+                                    class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-orange-500/20 focus:bg-white transition-all">
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="text-sm font-bold text-gray-700">Номер телефона</label>
+                                <input type="tel" wire:model="phone" name="phone" placeholder="79998887766"
+                                    class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-orange-500/20 focus:bg-white transition-all">
+                                <p class="text-[10px] text-gray-400 font-medium px-2">Нужен для связи курьера с вами</p>
+                            </div>
                         </div>
 
                         <div class="pt-4">
@@ -314,7 +301,7 @@
                         @endif
 
                         <div class="flex gap-3">
-                            <button @click="window.location.href = '{{ route('restaurant.show', $vendorId) }}'" 
+                            <button @click="window.location.href = '{{ route('restaurants.show', $vendorId) }}'" 
                                 class="flex-1 py-4 bg-gray-50 text-gray-500 font-bold rounded-2xl hover:bg-gray-100 transition-all">
                                 Вернуться в меню
                             </button>

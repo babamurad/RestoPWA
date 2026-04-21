@@ -263,7 +263,8 @@ const CartService = {
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Vendor-ID': vendorId
                 },
                 body: JSON.stringify({
                     vendor_id: vendorId,

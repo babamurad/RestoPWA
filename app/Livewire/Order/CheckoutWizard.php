@@ -44,7 +44,9 @@ class CheckoutWizard extends Component
 
     public string $paymentMethod = 'card';
 
-    public string $comment = '';
+    public ?string $comment = '';
+    public string $name = '';
+    public string $phone = '';
 
     public array $cartItems = [];
 
@@ -58,7 +60,7 @@ class CheckoutWizard extends Component
 
     public bool $isProcessing = false;
 
-    public ?Order $createdOrder = null;
+    public ?object $createdOrder = null;
 
     public ?string $error = null;
     
@@ -104,17 +106,37 @@ class CheckoutWizard extends Component
         }
     }
 
-    public function validateStep(): bool
+    private function validateContacts(): bool
+    {
+        if (empty($this->name)) {
+            $this->error = 'Введите имя';
+
+            return false;
+        }
+
+        if (empty($this->phone)) {
+            $this->error = 'Введите номер телефона';
+
+            return false;
+        }
+
+        // Save contacts to address for OrderService/OrderModel to find them
+        $this->address['name'] = $this->name;
+        $this->address['phone'] = $this->phone;
+
+        return true;
+    }
+
+    private function validateStep(): bool
     {
         $this->error = null;
 
         return match ($this->currentStep) {
             1 => $this->validateAddress(),
             2 => $this->validateTime(),
-            3 => $this->validatePayment(),
-            4 => true, // Verification step handled via Alpine/JS
-            5 => true,
-            default => false,
+            3 => $this->validateContacts(),
+            4 => true, // Conflicts are confirmed in button logic
+            default => true,
         };
     }
 
@@ -266,15 +288,13 @@ class CheckoutWizard extends Component
 
     private function handleOfflineOrder(array $orderData): void
     {
+        $orderData['id'] = 'OFFLINE-'.time();
+        $orderData['status'] = 'pending';
+        $this->createdOrder = (object) $orderData;
+        
         $pendingOrders = session('pending_orders', []);
         $pendingOrders[] = $orderData;
         session(['pending_orders' => $pendingOrders]);
-
-        $this->createdOrder = (object) [
-            'id' => 'pending_'.uniqid(),
-            'status' => 'pending',
-            'is_offline' => true,
-        ];
 
         $this->dispatch('order-queued', ['order' => $orderData]);
 

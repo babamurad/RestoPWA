@@ -35,6 +35,11 @@ class SetTenantContext
             }
         }
 
+        // Fallback to request body for API sync/order requests
+        if (! $vendorId && ($request->is('api/v1/cart/sync') || $request->is('api/v1/orders'))) {
+            $vendorId = $request->input('vendor_id');
+        }
+
         if ($vendorId) {
             $this->tenantContext->setCurrentVendor((string) $vendorId);
         } elseif ($request->is('api/ping') || $request->is('api/order/*/track*')) {

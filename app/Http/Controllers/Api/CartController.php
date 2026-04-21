@@ -84,7 +84,7 @@ class CartController extends Controller
             }
 
             // Check for price changes
-            $clientItemUnitPrice = isset($item['price']) ? (float) $item['price'] : null;
+            $clientItemUnitPrice = isset($item['price']) ? (float) $item['price'] / 100 : null;
             if ($clientItemUnitPrice !== null && abs($clientItemUnitPrice - $serverItemUnitPrice) > 0.01) {
                 $priceChanges[] = [
                     'product_id' => $product->id,
@@ -101,8 +101,8 @@ class CartController extends Controller
                 'product_id' => $product->id,
                 'name' => $product->name,
                 'quantity' => $item['quantity'],
-                'price' => $serverItemUnitPrice,
-                'line_total' => $lineTotal,
+                'price' => (int) round($serverItemUnitPrice * 100),
+                'line_total' => (int) round($lineTotal * 100),
                 'image' => $product->image_url,
                 'modifiers' => $modifiersData,
             ];
