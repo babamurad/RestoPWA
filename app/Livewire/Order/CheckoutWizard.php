@@ -11,6 +11,7 @@ use App\Domains\Vendor\Models\Restaurant;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Rule;
 use Livewire\Component;
 
 class CheckoutWizard extends Component
@@ -46,6 +47,10 @@ class CheckoutWizard extends Component
 
     public ?string $comment = '';
     public string $name = '';
+    #[Rule(['required', 'regex:/^\+993\d{8}$/'], message: [
+        'required' => 'Введите номер телефона',
+        'regex' => 'Формат телефона: +993XXXXXXXX',
+    ])]
     public string $phone = '';
 
     public array $cartItems = [];
@@ -96,6 +101,12 @@ class CheckoutWizard extends Component
             }
         }
 
+        if (Auth::check()) {
+            $user = Auth::user();
+            $this->name = $user->name;
+            $this->phone = $user->phone ?? '';
+        }
+
         $this->calculateTotals();
     }
 
@@ -106,16 +117,27 @@ class CheckoutWizard extends Component
         }
     }
 
+    public function updatedPhone($value): void
+    {
+        $this->phone = preg_replace('/\D/', '', $value);
+        if (! str_starts_with($this->phone, '993')) {
+            $this->phone = '993' . ltrim($this->phone, '0');
+        }
+        $this->phone = '+' . $this->phone;
+    }
+
     private function validateContacts(): bool
     {
-        if (empty($this->name)) {
-            $this->error = 'Введите имя';
+        try {
+            $this->validate();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->error = $e->getMessage();
 
             return false;
         }
 
-        if (empty($this->phone)) {
-            $this->error = 'Введите номер телефона';
+        if (empty($this->name)) {
+            $this->error = 'Введите имя';
 
             return false;
         }

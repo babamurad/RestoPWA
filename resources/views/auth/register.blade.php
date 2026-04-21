@@ -40,12 +40,14 @@
                     </div>
 
                     <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-700">Телефон <span class="text-gray-400">(необязательно)</span></label>
-                        <div class="mt-1">
+                        <div class="space-y-2">
+                            <label class="text-sm font-bold text-gray-700">Номер телефона</label>
                             <input id="phone" name="phone" type="tel"
-                                   value="{{ old('phone') }}"
-                                   placeholder="+7 (999) 123-45-67"
-                                   class="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+                                   x-mask="+\9\9399999999"
+                                   value="{{ old('phone', '+993') }}"
+                                   placeholder="+99312345678"
+                                   class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-orange-500/20 focus:bg-white transition-all">
+                            <p class="text-[10px] text-gray-400 font-medium px-2">Нужен для связи курьера с вами</p>
                         </div>
                     </div>
 

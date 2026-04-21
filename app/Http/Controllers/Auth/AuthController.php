@@ -65,7 +65,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => ['required', 'confirmed', Password::min(8)],
-            'phone' => 'nullable|string|max:20',
+            'phone' => ['nullable', 'regex:/^\+993\d{8}$/', 'unique:users,phone'],
         ]);
 
         $user = User::create([

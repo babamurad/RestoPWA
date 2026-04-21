@@ -210,7 +210,9 @@
 
                             <div class="space-y-2">
                                 <label class="text-sm font-bold text-gray-700">Номер телефона</label>
-                                <input type="tel" wire:model="phone" name="phone" placeholder="79998887766"
+                                <input type="tel" wire:model.live="phone"
+                                    x-mask="+\9\9399999999"
+                                    placeholder="+99312345678"
                                     class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-orange-500/20 focus:bg-white transition-all">
                                 <p class="text-[10px] text-gray-400 font-medium px-2">Нужен для связи курьера с вами</p>
                             </div>
