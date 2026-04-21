@@ -187,11 +187,30 @@ const CartService = {
         if (!orderPayload.idempotency_key) {
             orderPayload.idempotency_key = generateUUID();
         }
+        
+        const existingOrders = await db.pendingOrders.toArray();
+        const existing = existingOrders.find(o => o.payload.idempotency_key === orderPayload.idempotency_key);
+        if (existing) {
+            console.log('CartService: Order already queued', orderPayload.idempotency_key);
+            return existing.id;
+        }
+        
         return db.pendingOrders.add({
             payload: orderPayload,
             retries: 0,
-            createdAt: new Date()
+            createdAt: new Date(),
+            status: 'pending'
         });
+    },
+
+    /**
+     * Check if order with given idempotency key is pending or synced
+     * @param {string} idempotencyKey
+     * @returns {Promise<Object|null>}
+     */
+    async getPendingOrderByKey(idempotencyKey) {
+        const orders = await db.pendingOrders.toArray();
+        return orders.find(o => o.payload.idempotency_key === idempotencyKey) || null;
     },
 
     /**

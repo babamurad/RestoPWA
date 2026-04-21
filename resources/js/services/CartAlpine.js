@@ -62,6 +62,15 @@ document.addEventListener('alpine:init', () => {
             window.addEventListener('online', () => {
                 this.syncPendingOrders();
             });
+
+            window.addEventListener('order-synced-from-sw', (e) => {
+                console.log('CartAlpine: Order synced from SW', e.detail);
+                this.broadcastState();
+            });
+
+            window.addEventListener('auth-required-from-sw', (e) => {
+                this.handleAuthError('sync');
+            });
         },
 
         async addItem({ productId, vendorId, productName, image, modifiers = {}, price, quantity = 1 }) {
@@ -225,6 +234,7 @@ document.addEventListener('alpine:init', () => {
 
             for (const order of pendingOrders) {
                 if (order.retries >= 5) {
+                    failed++;
                     continue;
                 }
 
@@ -246,6 +256,33 @@ document.addEventListener('alpine:init', () => {
                     if (response.ok) {
                         await window.CartService.removePendingOrder(order.id);
                         synced++;
+                        
+                        const result = await response.json();
+                        if (result.data?.redirect_url) {
+                            window.location.href = result.data.redirect_url;
+                        }
+                    } else if (response.status === 409) {
+                        const result = await response.json();
+                        if (result.data?.is_duplicate && result.data?.order_id) {
+                            await window.CartService.removePendingOrder(order.id);
+                            synced++;
+                            console.log('syncPendingOrders: Duplicate order acknowledged', result.data.order_id);
+                        } else {
+                            failed++;
+                        }
+                    } else if (response.status === 401) {
+                        await this.handleAuthError('sync');
+                        failed++;
+                        break;
+                    } else if (response.status === 403) {
+                        await window.CartService.removePendingOrder(order.id);
+                        window.Swal.fire({
+                            title: 'Ошибка доступа',
+                            text: 'Ваша сессия истекла. Войдите в профиль для повторной отправки заказа.',
+                            icon: 'error',
+                            confirmButtonText: 'Понятно',
+                        });
+                        failed++;
                     } else {
                         await window.CartService.incrementRetry(order.id);
                         failed++;
@@ -264,6 +301,27 @@ document.addEventListener('alpine:init', () => {
             }
 
             await this.broadcastState();
+        },
+
+        async handleAuthError(context = 'order') {
+            window.dispatchEvent(new CustomEvent('auth-error', {
+                detail: { context, timestamp: Date.now() }
+            }));
+            
+            window.Swal.fire({
+                title: 'Требуется вход',
+                text: context === 'sync' 
+                    ? 'Для отправки офлайн-заказов необходимо войти в профиль.'
+                    : 'Для оформления заказа необходимо войти в профиль.',
+                icon: 'warning',
+                confirmButtonText: 'Войти',
+                cancelButtonText: 'Отмена',
+                showCancelButton: true,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+                }
+            });
         }
     }));
 

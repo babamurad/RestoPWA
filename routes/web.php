@@ -90,6 +90,9 @@ Route::get('/order/{orderId}/track/guest', [OrderTrackingController::class, 'tra
 Route::get('/order/success/{id}', [OrderSuccessController::class, 'show'])
     ->name('order.success');
 
+Route::get('/api/order/success/{id}', [OrderSuccessController::class, 'apiShow'])
+    ->name('api.order.success');
+
 Route::get('/api/order/{orderId}/track', [OrderTrackingController::class, 'apiTrack'])
     ->name('api.order.track')->middleware('auth');
 

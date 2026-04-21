@@ -198,6 +198,7 @@ async function syncOrders() {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken,
                         'X-Vendor-ID': order.payload.vendor_id,
+                        'X-Idempotency-Key': order.payload.idempotency_key,
                     },
                     body: JSON.stringify({
                         ...order.payload,
@@ -208,14 +209,14 @@ async function syncOrders() {
                 if (response.ok) {
                     const result = await response.json();
                     await deletePendingOrder(order.id);
-                    synced.push({ orderId: order.id, serverOrderId: result.order_id });
+                    synced.push({ orderId: order.id, serverOrderId: result.data?.order_id });
                     
                     if (self.clients) {
                         self.clients.matchAll().then(clients => {
                             clients.forEach(client => {
                                 client.postMessage({
                                     type: 'ORDER_SYNCED',
-                                    orderId: result.order_id,
+                                    orderId: result.data?.order_id,
                                     localId: order.id,
                                 });
                             });
@@ -223,11 +224,34 @@ async function syncOrders() {
                     }
                     
                     await showNotification('Заказ успешно отправлен', {
-                        body: `Заказ №${result.order_id?.slice(0, 8)} принят`,
+                        body: `Заказ №${result.data?.order_id?.slice(0, 8)} принят`,
                         icon: '/icons/icon-192x192.svg',
-                        tag: `order-${result.order_id}`,
-                        data: { order_id: result.order_id },
+                        tag: `order-${result.data?.order_id}`,
+                        data: { order_id: result.data?.order_id },
                     });
+                } else if (response.status === 409) {
+                    const result = await response.json();
+                    if (result.data?.is_duplicate && result.data?.order_id) {
+                        await deletePendingOrder(order.id);
+                        synced.push({ orderId: order.id, serverOrderId: result.data.order_id });
+                        console.log('SW syncOrders: Duplicate order acknowledged', result.data.order_id);
+                    } else {
+                        await incrementRetry(order.id);
+                        failed.push(order);
+                    }
+                } else if (response.status === 401 || response.status === 403) {
+                    await incrementRetry(order.id);
+                    failed.push(order);
+                    if (self.clients) {
+                        self.clients.matchAll().then(clients => {
+                            clients.forEach(client => {
+                                client.postMessage({
+                                    type: 'ORDER_AUTH_REQUIRED',
+                                    localId: order.id,
+                                });
+                            });
+                        });
+                    }
                 } else {
                     await incrementRetry(order.id);
                     failed.push(order);
@@ -388,6 +412,33 @@ self.addEventListener('message', (event) => {
     
     if (event.data && event.data.type === 'REGISTER_PERIODIC_SYNC') {
         registerPeriodicSync();
+    }
+    
+    if (event.data && event.data.type === 'ORDER_SYNCED') {
+        event.waitUntil(
+            clients.matchAll().then(clientClients => {
+                clientClients.forEach(client => {
+                    client.postMessage({
+                        type: 'order-synced-from-sw',
+                        orderId: event.data.orderId,
+                        localId: event.data.localId,
+                    });
+                });
+            })
+        );
+    }
+    
+    if (event.data && event.data.type === 'ORDER_AUTH_REQUIRED') {
+        event.waitUntil(
+            clients.matchAll().then(clientClients => {
+                clientClients.forEach(client => {
+                    client.postMessage({
+                        type: 'auth-required-from-sw',
+                        localId: event.data.localId,
+                    });
+                });
+            })
+        );
     }
 });
 
