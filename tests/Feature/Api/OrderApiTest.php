@@ -1,0 +1,240 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature\Api;
+
+use App\Domains\Menu\Models\Product;
+use App\Domains\Vendor\Models\Restaurant;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+use Illuminate\Support\Str;
+
+class OrderApiTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private Restaurant $restaurant;
+    private Product $product;
+    private User $user;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->restaurant = Restaurant::factory()->create();
+        $this->restaurant->update(['vendor_id' => $this->restaurant->id]);
+
+        $this->product = Product::factory()->create([
+            'vendor_id' => $this->restaurant->id,
+            'price' => 10000,
+            'is_available' => true,
+        ]);
+        $this->user = User::factory()->create();
+    }
+
+    public function test_guest_cannot_create_order(): void
+    {
+        $response = $this->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
+            ->postJson('/api/v1/orders', [
+                'vendor_id' => $this->restaurant->id,
+                'items' => [
+                    [
+                        'product_id' => $this->product->id,
+                        'product_name' => 'Test Product',
+                        'quantity' => 1,
+                        'unit_price' => 100,
+                        'total_price' => 100,
+                    ],
+                ],
+                'total' => 100,
+            ]);
+
+        $response->assertStatus(401)
+            ->assertJson(['success' => false]);
+    }
+
+    public function test_authenticated_user_can_create_order(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
+            ->postJson('/api/v1/orders', [
+                'vendor_id' => $this->restaurant->id,
+                'items' => [
+                    [
+                        'product_id' => $this->product->id,
+                        'product_name' => $this->product->name,
+                        'quantity' => 2,
+                        'unit_price' => 100,
+                        'total_price' => 200,
+                    ],
+                ],
+                'total' => 200,
+                'address' => [
+                    'street' => 'Main St',
+                    'house' => '10',
+                ],
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJson([
+                'success' => true,
+                'data' => ['order_id' => 1],
+            ]);
+    }
+
+    public function test_order_creation_is_idempotent(): void
+    {
+        $idempotencyKey = (string) Str::uuid();
+
+        $payload = [
+            'vendor_id' => $this->restaurant->id,
+            'items' => [
+                [
+                    'product_id' => (string) Str::uuid(),
+                    'product_name' => 'Pizza',
+                    'quantity' => 2,
+                    'unit_price' => 10.5,
+                    'total_price' => 21.0,
+                ]
+            ],
+            'total' => 21.0,
+            'address' => ['street' => 'Abashidze 1'],
+        ];
+
+        $response1 = $this->actingAs($this->user)
+            ->withHeaders([
+                'X-Idempotency-Key' => $idempotencyKey,
+                'X-Vendor-ID' => $this->restaurant->id,
+            ])
+            ->postJson('/api/v1/orders', $payload);
+
+        $response1->assertStatus(201);
+        $orderId = $response1->json('data.order_id');
+
+        $response2 = $this->actingAs($this->user)
+            ->withHeaders([
+                'X-Idempotency-Key' => $idempotencyKey,
+                'X-Vendor-ID' => $this->restaurant->id,
+            ])
+            ->postJson('/api/v1/orders', $payload);
+
+        $response2->assertStatus(200);
+        $response2->assertJson([
+            'success' => true,
+            'data' => [
+                'order_id' => $orderId,
+                'is_duplicate' => true,
+            ],
+        ]);
+    }
+
+    public function test_order_submission_without_key_creates_new_orders(): void
+    {
+        $payload = [
+            'vendor_id' => $this->restaurant->id,
+            'items' => [
+                [
+                    'product_id' => (string) Str::uuid(),
+                    'product_name' => 'Pizza',
+                    'quantity' => 1,
+                    'unit_price' => 10.0,
+                    'total_price' => 10.0,
+                ]
+            ],
+            'total' => 10.0,
+        ];
+
+        $response1 = $this->actingAs($this->user)
+            ->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
+            ->postJson('/api/v1/orders', $payload);
+
+        $response1->assertStatus(201);
+
+        $response2 = $this->actingAs($this->user)
+            ->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
+            ->postJson('/api/v1/orders', $payload);
+
+        $response2->assertStatus(201);
+
+        $this->assertNotEquals($response1->json('data.order_id'), $response2->json('data.order_id'));
+    }
+
+    public function test_order_respects_tenant_context(): void
+    {
+        $otherRestaurant = Restaurant::factory()->create();
+        $otherRestaurant->update(['vendor_id' => $otherRestaurant->id]);
+
+        $response = $this->actingAs($this->user)
+            ->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
+            ->postJson('/api/v1/orders', [
+                'vendor_id' => $otherRestaurant->id,
+                'items' => [
+                    [
+                        'product_id' => $this->product->id,
+                        'quantity' => 1,
+                        'unit_price' => 100,
+                        'total_price' => 100,
+                    ],
+                ],
+                'total' => 100,
+            ]);
+
+        $response->assertStatus(404);
+    }
+
+    public function test_authenticated_user_can_list_own_orders(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
+            ->getJson('/api/v1/orders');
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'success',
+                'data',
+            ]);
+    }
+
+    public function test_authenticated_user_can_view_order_details(): void
+    {
+        $orderPayload = [
+            'vendor_id' => $this->restaurant->id,
+            'items' => [
+                [
+                    'product_id' => $this->product->id,
+                    'product_name' => 'Test',
+                    'quantity' => 1,
+                    'unit_price' => 100,
+                    'total_price' => 100,
+                ]
+            ],
+            'total' => 100,
+        ];
+
+        $createResponse = $this->actingAs($this->user)
+            ->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
+            ->postJson('/api/v1/orders', $orderPayload);
+
+        $orderId = $createResponse->json('data.order_id');
+
+        $response = $this->actingAs($this->user)
+            ->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
+            ->getJson("/api/v1/orders/{$orderId}");
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'data' => ['id' => $orderId],
+            ]);
+    }
+
+    public function test_unauthorized_user_cannot_list_orders(): void
+    {
+        $response = $this->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
+            ->getJson('/api/v1/orders');
+
+        $response->assertStatus(401);
+    }
+}

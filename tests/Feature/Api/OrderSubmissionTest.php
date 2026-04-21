@@ -38,7 +38,7 @@ class OrderSubmissionTest extends TestCase
     public function test_guest_cannot_submit_order_and_returns_401(): void
     {
         $response = $this->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
-            ->postJson(route('api.orders.store'), [
+            ->postJson('/api/v1/orders', [
                 'vendor_id' => $this->restaurant->id,
                 'items' => [
                     [
@@ -59,7 +59,7 @@ class OrderSubmissionTest extends TestCase
     {
         $response = $this->actingAs($this->user)
             ->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
-            ->postJson(route('api.orders.store'), [
+            ->postJson('/api/v1/orders', [
                 'vendor_id' => $this->restaurant->id,
                 'items' => [
                     [
@@ -96,7 +96,7 @@ class OrderSubmissionTest extends TestCase
         // Attempting to order from other-vendor while header says test-vendor
         $response = $this->actingAs($this->user)
             ->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
-            ->postJson(route('api.orders.store'), [
+            ->postJson('/api/v1/orders', [
                 'vendor_id' => $otherRestaurant->id, // Conflict!
                 'items' => [
                     [
