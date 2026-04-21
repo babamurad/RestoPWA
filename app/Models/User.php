@@ -71,4 +71,25 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     {
         return $this->hasOne(Restaurant::class, 'vendor_id');
     }
+
+    protected function phone(): Attribute
+    {
+        return Attribute::make(
+            // Геттер: всегда возвращает с +
+            get: fn (?string $value) => $value ? (str_starts_with($value, '+') ? $value : '+'.$value) : null,
+            
+            // Сеттер: нормализует перед сохранением
+            set: function (?string $value) {
+                if (empty($value)) return ['phone' => null];
+                
+                // Убираем всё кроме цифр, потом добавляем +
+                $digits = preg_replace('/\D+/', '', $value);
+                
+                // Защита от мусора
+                if (strlen($digits) < 8) return ['phone' => null];
+                
+                return ['phone' => '+' . $digits];
+            }
+        );
+    }
 }
