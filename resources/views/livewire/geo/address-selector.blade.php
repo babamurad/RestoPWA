@@ -1,7 +1,17 @@
 <div x-data="{
+        isLocalModalOpen: false,
         searchQuery: @entangle('address'),
         showSuggestions: false,
         debounceTimer: null,
+        init() {
+            this.$watch('isLocalModalOpen', value => {
+                console.log('%c AddressSelector: isLocalModalOpen changed to ' + value, 'background: #222; color: #bada55');
+                if (value === true) {
+                    console.trace('Who opened the modal?');
+                }
+            });
+            console.log('AddressSelector Alpine Initialized. Current local state:', this.isLocalModalOpen);
+        },
         search() {
             clearTimeout(this.debounceTimer);
             this.debounceTimer = setTimeout(() => {
@@ -14,24 +24,25 @@
             $wire.selectAddress(index);
         }
     }"
-    x-show="@entangle('isOpen')"
+    x-show="isLocalModalOpen"
+    x-cloak
     x-transition:enter="transition ease-out duration-300"
     x-transition:enter-start="opacity-0"
     x-transition:enter-end="opacity-100"
     x-transition:leave="transition ease-in duration-200"
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0"
-    @open-address-selector.window="$wire.openModal()"
-    @close-address-selector.window="$wire.closeModal()"
+    @open-address-selector.window="console.log('EVENT RECEIVED: open-address-selector'); isLocalModalOpen = true; $wire.openModal()"
+    @close-address-selector.window="isLocalModalOpen = false; $wire.closeModal()"
     class="fixed inset-0 z-50 flex items-center justify-center p-4"
     style="display: none;"
 >
     <!-- Backdrop -->
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="$wire.closeModal()"></div>
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="isLocalModalOpen = false; $wire.closeModal()"></div>
 
     <!-- Modal Content -->
     <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden"
-         x-show="@entangle('isOpen')"
+         x-show="isLocalModalOpen"
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0 scale-95"
          x-transition:enter-end="opacity-100 scale-100"
@@ -42,7 +53,7 @@
         <!-- Header -->
         <div class="flex items-center justify-between px-4 py-4 border-b border-gray-100">
             <h2 class="text-lg font-bold text-gray-900">Выберите адрес доставки</h2>
-            <button wire:click="closeModal" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <button @click="isLocalModalOpen = false; $wire.closeModal()" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
         </div>

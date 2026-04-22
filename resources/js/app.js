@@ -5,6 +5,7 @@ import Swal from 'sweetalert2'
 
 window.Swal = Swal
 
+/* 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
@@ -18,6 +19,7 @@ if ('serviceWorker' in navigator) {
             });
     });
 }
+*/
 setupOrderSubmission(null);
 window.setupOrderSubmission = setupOrderSubmission;
 

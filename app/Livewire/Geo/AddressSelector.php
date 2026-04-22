@@ -13,7 +13,7 @@ use Livewire\Component;
 
 class AddressSelector extends Component
 {
-    public bool $isOpen = false;
+    public bool $isAddressModalOpen = false;
 
     public string $address = '';
 
@@ -32,16 +32,21 @@ class AddressSelector extends Component
     public ?string $error = null;
 
     private GeoService $geoService;
+    
+    public function mount(): void
+    {
+        $this->isAddressModalOpen = false;
+    }
 
     #[On('open-address-selector')]
     public function openModal(): void
     {
-        $this->isOpen = true;
+        $this->isAddressModalOpen = true;
     }
 
     public function closeModal(): void
     {
-        $this->isOpen = false;
+        $this->isAddressModalOpen = false;
     }
 
     public function boot(): void
@@ -213,7 +218,7 @@ class AddressSelector extends Component
             lon: $this->lon
         );
 
-        $this->isOpen = false;
+        $this->isAddressModalOpen = false;
     }
 
     public function updatedAddress(string $value): void
