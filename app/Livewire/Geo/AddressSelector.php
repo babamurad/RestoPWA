@@ -8,10 +8,13 @@ use App\Domains\Geo\Services\GeoService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class AddressSelector extends Component
 {
+    public bool $isOpen = false;
+
     public string $address = '';
 
     public float $lat = 0;
@@ -29,6 +32,17 @@ class AddressSelector extends Component
     public ?string $error = null;
 
     private GeoService $geoService;
+
+    #[On('open-address-selector')]
+    public function openModal(): void
+    {
+        $this->isOpen = true;
+    }
+
+    public function closeModal(): void
+    {
+        $this->isOpen = false;
+    }
 
     public function boot(): void
     {
@@ -193,11 +207,13 @@ class AddressSelector extends Component
             ],
         ]);
 
-        $this->dispatch('address-selected', [
-            'address' => $this->address,
-            'lat' => $this->lat,
-            'lon' => $this->lon,
-        ]);
+        $this->dispatch('address-selected', 
+            address: $this->address,
+            lat: $this->lat,
+            lon: $this->lon
+        );
+
+        $this->isOpen = false;
     }
 
     public function updatedAddress(string $value): void

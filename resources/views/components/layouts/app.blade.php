@@ -36,6 +36,8 @@
         </div>
 
         <livewire:cart.cart-drawer />
+
+        <livewire:geo.address-selector />
     </div>
 
     @livewireScripts
