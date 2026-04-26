@@ -1,9 +1,10 @@
 <x-layouts.app>
     <x-slot:title>Регистрация - RestoPWA</x-slot:title>
 
-    <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <x-header :showSearch="false" />
+
+    <main class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 pb-24">
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
-            <h1 class="text-center text-3xl font-black text-gray-900">RestoPWA</h1>
             <h2 class="mt-6 text-center text-2xl font-bold text-gray-900">Создание аккаунта</h2>
             <p class="mt-2 text-center text-sm text-gray-600">
                 Уже есть аккаунт? <a href="{{ route('login') }}" class="font-medium text-orange-500 hover:text-orange-600">Войдите</a>
@@ -43,10 +44,13 @@
                         <div class="space-y-2">
                             <label class="text-sm font-bold text-gray-700">Номер телефона</label>
                             <input id="phone" name="phone" type="tel"
-                                   x-mask="+\9\9399999999"
-                                   value="{{ old('phone', '+993') }}"
-                                   placeholder="+99312345678"
-                                   class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-orange-500/20 focus:bg-white transition-all">
+                                   x-mask="99999999"
+                                   value="{{ old('phone', '') }}"
+                                   placeholder="12345678"
+                                   class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-orange-500/20 focus:bg-white transition-all @error('phone') ring-2 ring-red-500 @enderror">
+                            @error('phone')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
                             <p class="text-[10px] text-gray-400 font-medium px-2">Нужен для связи курьера с вами</p>
                         </div>
                     </div>
@@ -93,5 +97,7 @@
                 </p>
             </div>
         </div>
-    </div>
+    </main>
+
+    <x-bottom-nav active="profile" />
 </x-layouts.app>

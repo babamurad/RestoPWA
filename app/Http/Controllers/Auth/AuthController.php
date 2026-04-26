@@ -61,6 +61,13 @@ class AuthController extends Controller
 
     public function register(Request $request): JsonResponse|RedirectResponse
     {
+        if ($request->filled('phone')) {
+            $phone = preg_replace('/\D/', '', (string) $request->phone);
+            if (strlen($phone) === 8) {
+                $request->merge(['phone' => '+993' . $phone]);
+            }
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',

@@ -1,10 +1,11 @@
 <x-layouts.app>
     <x-slot:title>Вход - RestoPWA</x-slot:title>
 
-    <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <x-header :showSearch="false" />
+
+    <main class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 pb-24">
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
-            <h1 class="text-center text-3xl font-black text-gray-900">RestoPWA</h1>
-            <h2 class="mt-6 text-center text-2xl font-bold text-gray-900">Вход в аккаунт</h2>
+            <h2 class="text-center text-2xl font-bold text-gray-900">Вход в аккаунт</h2>
             <p class="mt-2 text-center text-sm text-gray-600">
                 Или <a href="{{ route('register') }}" class="font-medium text-orange-500 hover:text-orange-600">зарегистрируйтесь</a>, если у вас ещё нет аккаунта
             </p>
@@ -78,5 +79,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </main>
+
+    <x-bottom-nav active="profile" />
 </x-layouts.app>

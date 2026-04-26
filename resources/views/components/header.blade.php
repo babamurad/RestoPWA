@@ -2,12 +2,12 @@
 
 <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
     <div class="max-w-lg mx-auto md:max-w-4xl lg:max-w-6xl xl:max-w-7xl flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-14 md:h-16">
-        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <a href="{{ route('home') }}" class="flex items-center gap-1.5 sm:gap-2 shrink-0 hover:opacity-80 transition-opacity">
             <div class="flex shrink-0 items-center justify-center w-8 h-8 md:w-10 md:h-10 bg-orange-500 rounded-lg shadow-md shadow-orange-200">
                 <span class="text-white font-bold text-sm md:text-base tracking-tighter">R</span>
             </div>
             <span class="font-bold text-lg sm:text-xl md:text-2xl gradient-text tracking-tight shrink-0 hidden min-[360px]:block">RestoPWA</span>
-        </div>
+        </a>
         
         @once
         <script>

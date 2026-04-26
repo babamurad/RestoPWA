@@ -81,7 +81,6 @@ class CheckoutWizard extends Component
     {
         $this->orderService = app(OrderService::class);
         $this->geoService = app(GeoService::class);
-        $this->isOffline = ! app()->runningInConsole() && ! request()->ajax();
     }
 
     public function mount(): void

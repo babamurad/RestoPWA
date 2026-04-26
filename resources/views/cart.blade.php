@@ -33,8 +33,11 @@
 
                     window.addEventListener('submit-order-failed', () => {
                         this.isSubmitting = false;
+                        if (this._submitTimeout) clearTimeout(this._submitTimeout);
                     });
                 },
+
+                _submitTimeout: null,
 
                 async refresh() {
                     this.isLoading = true;
@@ -213,7 +216,9 @@
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-50 text-orange-600" x-text="totalQuantity + ' поз.'"></span>
                         </div>
                     </div>
-                    <button @click="isSubmitting = true; $dispatch('cart-checkout')" 
+                    <button @click="isSubmitting = true; 
+                                    this._submitTimeout = setTimeout(() => { isSubmitting = false; }, 10000);
+                                    window.dispatchEvent(new CustomEvent('cart-checkout'))" 
                             dusk="cart-checkout-button" 
                             :disabled="isLoading || isSubmitting || items.length === 0"
                             class="w-full flex items-center justify-center gap-3 h-14 bg-orange-500 text-white font-bold rounded-2xl hover:bg-orange-600 shadow-xl shadow-orange-500/30 transition-all touch-feedback active:scale-95 group disabled:opacity-70 disabled:cursor-not-allowed">

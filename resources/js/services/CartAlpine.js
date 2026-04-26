@@ -215,12 +215,25 @@ document.addEventListener('alpine:init', () => {
         },
 
         async checkout() {
+            console.log('CartAlpine: checkout initiated', { currentVendorId: this.currentVendorId });
+            
             if (!this.currentVendorId) {
+                console.warn('CartAlpine: currentVendorId is missing, attempting recovery');
+                const allItems = await window.CartService.getAllItems();
+                if (allItems.length > 0) {
+                    this.currentVendorId = String(allItems[0].vendorId);
+                    console.log('CartAlpine: Recovered vendor ID during checkout:', this.currentVendorId);
+                }
+            }
+
+            if (!this.currentVendorId) {
+                console.error('CartAlpine: checkout failed - no vendor ID');
                 window.dispatchEvent(new CustomEvent('submit-order-failed'));
                 return;
             }
 
             // Redirect to checkout wizard
+            console.log('CartAlpine: redirecting to checkout', this.currentVendorId);
             window.location.href = `/checkout?vendor_id=${this.currentVendorId}`;
         },
 
