@@ -53,7 +53,9 @@ class Restaurant extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'owner_id',
         'vendor_id',
+        'slug',
         'name',
         'image',
         'cover_image',
