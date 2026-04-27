@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -13,10 +14,13 @@ return new class extends Migration
             DB::statement('ALTER TABLE order_status_history DROP COLUMN IF EXISTS id');
             DB::statement('ALTER TABLE order_status_history ADD COLUMN id uuid DEFAULT gen_random_uuid() PRIMARY KEY');
         } else {
-            Schema::table('order_status_history', function ($table) {
+            Schema::table('order_status_history', function (Blueprint $table) {
+                $table->bigInteger('id')->unsigned()->change();
+            });
+            Schema::table('order_status_history', function (Blueprint $table) {
                 $table->dropPrimary();
             });
-            Schema::table('order_status_history', function ($table) {
+            Schema::table('order_status_history', function (Blueprint $table) {
                 $table->uuid('id')->primary()->change();
             });
         }
@@ -28,10 +32,10 @@ return new class extends Migration
             DB::statement('ALTER TABLE order_status_history DROP COLUMN IF EXISTS id');
             DB::statement('ALTER TABLE order_status_history ADD COLUMN id bigserial PRIMARY KEY');
         } else {
-            Schema::table('order_status_history', function ($table) {
+            Schema::table('order_status_history', function (Blueprint $table) {
                 $table->dropPrimary();
             });
-            Schema::table('order_status_history', function ($table) {
+            Schema::table('order_status_history', function (Blueprint $table) {
                 $table->bigIncrements('id')->change();
             });
         }
