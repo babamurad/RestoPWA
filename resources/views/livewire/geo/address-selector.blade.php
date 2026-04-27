@@ -69,6 +69,7 @@
                             @input="search()"
                             @focus="showSuggestions = @js(!empty($suggestions))"
                             @blur="setTimeout(() => showSuggestions = false, 200)"
+                            @keydown.enter.prevent="$wire.confirmAddress()"
                             placeholder="Введите адрес доставки"
                             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-base"
                         >
@@ -125,6 +126,19 @@
                     <span>Адрес в зоне доставки</span>
                 </div>
             @endif
+
+            <div class="pt-2">
+                <button 
+                    type="button"
+                    wire:click="confirmAddress"
+                    wire:loading.attr="disabled"
+                    class="w-full py-4 bg-orange-600 text-white font-bold rounded-xl shadow-lg hover:bg-orange-700 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                    <span wire:loading wire:target="confirmAddress" class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+                    <span wire:loading.remove wire:target="confirmAddress">Подтвердить адрес</span>
+                    <span wire:loading wire:target="confirmAddress">Поиск...</span>
+                </button>
+            </div>
         </div>
     </div>
 </div>

@@ -186,6 +186,30 @@ class AddressSelector extends Component
         $this->checkDeliveryZone();
     }
 
+    public function confirmAddress(): void
+    {
+        if (empty($this->address)) {
+            $this->error = 'Введите адрес';
+            return;
+        }
+
+        $this->error = null;
+        $this->isDetectingLocation = true; // Use this as a general loading state
+
+        $result = $this->geoService->geocodeAddress($this->address);
+
+        if ($result) {
+            $this->address = $result['address'];
+            $this->lat = $result['lat'];
+            $this->lon = $result['lon'];
+            $this->checkDeliveryZone();
+        } else {
+            $this->error = 'Не удалось найти этот адрес. Пожалуйста, уточните его.';
+        }
+
+        $this->isDetectingLocation = false;
+    }
+
     private function checkDeliveryZone(): void
     {
         if (! $this->lat || ! $this->lon) {
