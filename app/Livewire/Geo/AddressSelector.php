@@ -194,7 +194,15 @@ class AddressSelector extends Component
         }
 
         $this->error = null;
-        $this->isDetectingLocation = true; // Use this as a general loading state
+
+        // Если координаты уже известны (выбрали из подсказок или через геолокацию) —
+        // повторный geocoding не нужен, сразу проверяем зону доставки
+        if ($this->lat && $this->lon) {
+            $this->checkDeliveryZone();
+            return;
+        }
+
+        $this->isDetectingLocation = true;
 
         $result = $this->geoService->geocodeAddress($this->address);
 

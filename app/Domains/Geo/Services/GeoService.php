@@ -50,7 +50,7 @@ class GeoService
     private function geocodeViaGoogle(string $address): ?array
     {
         try {
-            $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
+            $response = Http::timeout(5)->get('https://maps.googleapis.com/maps/api/geocode/json', [
                 'address' => $address,
                 'key' => $this->googleKey,
                 'language' => 'ru',
@@ -80,7 +80,7 @@ class GeoService
     private function geocodeViaYandex(string $address): ?array
     {
         try {
-            $response = Http::get('https://geocode-maps.yandex.ru/1.x/', [
+            $response = Http::timeout(5)->get('https://geocode-maps.yandex.ru/1.x/', [
                 'apikey' => $this->yandexKey,
                 'geocode' => $address,
                 'format' => 'json',

@@ -15,7 +15,7 @@
     finalTotal: @entangle('finalTotal'),
     priceChanges: @entangle('priceChanges'),
     unavailableItems: @entangle('unavailableItems'),
-    conflictsConfirmed: false,
+    conflictsConfirmed: @js(empty($priceChanges) && empty($unavailableItems)),
     isSyncing: false,
     
     async init() {
