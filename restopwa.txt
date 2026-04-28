@@ -1,3 +1,10 @@
 cd /home/u960938720/domains/tmtourism.com/public_html/restopwa
+git pull
+chmod -R 755 storage bootstrap/cache
+php artisan cache:clear 
+php artisan config:clear 
+php artisan view:clear 
+php artisan route:clear 
+
 
 rm -rf /home/u960938720/domains/tmtourism.com/public_html/weblearn/*
