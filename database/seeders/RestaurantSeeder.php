@@ -31,7 +31,7 @@ class RestaurantSeeder extends Seeder
             unset($restaurantData['menu']);
 
             $restaurantData['slug'] = Str::slug($restaurantData['name']);
-            $restaurantData['vendor_id'] = $owner->id;
+            $restaurantData['owner_id'] = $owner->id;
 
             $existing = Restaurant::withoutGlobalScopes()->where('slug', $restaurantData['slug'])->first();
             if ($existing) {

@@ -1,1 +1,3 @@
 cd /home/u960938720/domains/tmtourism.com/public_html/restopwa
+
+rm -rf /home/u960938720/domains/tmtourism.com/public_html/weblearn/*
