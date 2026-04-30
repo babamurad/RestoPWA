@@ -97,7 +97,7 @@ class AddressSelector extends Component
         $this->lon = $lon;
         $this->isDetectingLocation = false;
 
-        $result = $this->geoService->geocodeAddress("{$lat},{$lon}");
+        $result = $this->geoService->reverseGeocode($lat, $lon);
 
         if ($result) {
             $this->address = $result['address'];
@@ -127,41 +127,7 @@ class AddressSelector extends Component
         }
 
         $this->error = null;
-
-        try {
-            $apiKey = config('services.yandex_maps.key', '');
-
-            if (empty($apiKey)) {
-                return;
-            }
-
-            $response = Http::get('https://geocode-maps.yandex.ru/1.x/', [
-                'apikey' => $apiKey,
-                'geocode' => $query,
-                'format' => 'json',
-                'lang' => 'ru_RU',
-                'results' => 5,
-            ]);
-
-            if ($response->successful()) {
-                $features = $response->json('response.GeoObjectCollection.featureMember', []);
-
-                $this->suggestions = array_map(function ($item) {
-                    $geo = $item['GeoObject'];
-                    $pos = explode(' ', $geo['Point']['pos']);
-
-                    return [
-                        'address' => $geo['metaDataProperty']['GeocoderMetaData']['text'],
-                        'lat' => (float) ($pos[1] ?? 0),
-                        'lon' => (float) ($pos[0] ?? 0),
-                        'kind' => $geo['metaDataProperty']['GeocoderMetaData']['kind'] ?? '',
-                    ];
-                }, $features);
-            }
-        } catch (\Exception $e) {
-            Log::error('Address search error: '.$e->getMessage());
-            $this->suggestions = [];
-        }
+        $this->suggestions = $this->geoService->suggestAddresses($query);
     }
 
     public function selectAddress(int $index): void
@@ -220,6 +186,11 @@ class AddressSelector extends Component
 
     private function checkDeliveryZone(): void
     {
+        if (! $this->selectedVendorId) {
+            $this->error = 'Выберите ресторан для проверки зоны доставки';
+            return;
+        }
+
         if (! $this->lat || ! $this->lon) {
             return;
         }
