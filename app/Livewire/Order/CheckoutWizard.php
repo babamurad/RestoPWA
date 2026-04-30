@@ -9,10 +9,10 @@ use App\Domains\Order\Models\Order;
 use App\Domains\Order\Services\OrderService;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Support\PIIMasker;
+use App\Support\PhoneNormalizer;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
-use Livewire\Attributes\Rule;
 use Livewire\Component;
 
 class CheckoutWizard extends Component
@@ -25,13 +25,14 @@ class CheckoutWizard extends Component
             'lat' => $lat,
             'lon' => $lon,
         ];
-        
+
         if ($this->restaurant) {
             $this->deliveryFee = (float) ($this->restaurant->delivery_fee ?? 0);
         }
-        
+
         $this->calculateTotals();
     }
+
     public int $currentStep = 1;
     public string $traceId = '';
 
@@ -48,12 +49,14 @@ class CheckoutWizard extends Component
     public string $paymentMethod = 'card';
 
     public ?string $comment = '';
+
     public string $name = '';
-    #[Rule(['required', 'regex:/^\+993\d{8}$/'], message: [
-        'required' => 'Введите номер телефона',
-        'regex' => 'Формат телефона: +993XXXXXXXX',
-    ])]
+
     public string $phone = '';
+
+    public string $phoneError = '';
+
+    public string $nameError = '';
 
     public array $cartItems = [];
 
@@ -70,10 +73,15 @@ class CheckoutWizard extends Component
     public ?object $createdOrder = null;
 
     public ?string $error = null;
-    
+
     public array $priceChanges = [];
 
     public array $unavailableItems = [];
+
+    // Shared between frontend and blade
+    public string $phoneMode = '';
+    public string $phoneExample = '';
+    public string $phoneHelperText = '';
 
     private OrderService $orderService;
 
@@ -87,12 +95,16 @@ class CheckoutWizard extends Component
 
     public function mount(): void
     {
-        // Use trace from cart checkout flow if provided, otherwise generate new one
         $this->traceId = (string) (request()->query('trace_id') ?? str()->uuid());
         \Illuminate\Support\Facades\Log::info('[Checkout] Wizard mounted', [
             'trace_id' => $this->traceId,
             'user_id' => Auth::id(),
         ]);
+
+        // Load phone validation policy info for frontend
+        $this->phoneMode = PhoneNormalizer::getMode();
+        $this->phoneExample = PhoneNormalizer::getExample();
+        $this->phoneHelperText = PhoneNormalizer::getHelperText();
 
         $savedAddress = session('current_address');
         if ($savedAddress) {
@@ -100,7 +112,7 @@ class CheckoutWizard extends Component
         }
 
         $vendorId = session('current_vendor_id') ?? request()->query('vendor_id');
-        
+
         if (empty($vendorId)) {
             \Illuminate\Support\Facades\Log::warning('[Checkout] No vendorId in session or request', ['trace_id' => $this->traceId]);
             session()->flash('error', 'Ресторан не выбран. Пожалуйста, вернитесь в меню.');
@@ -114,7 +126,7 @@ class CheckoutWizard extends Component
         if (! $this->restaurant) {
             \Illuminate\Support\Facades\Log::error('[Checkout] Restaurant not found', [
                 'trace_id' => $this->traceId,
-                'vendor_id' => $this->vendorId
+                'vendor_id' => $this->vendorId,
             ]);
             session()->flash('error', 'Ресторан не найден.');
             $this->redirect('/', navigate: true);
@@ -134,7 +146,6 @@ class CheckoutWizard extends Component
         $this->calculateTotals();
     }
 
-
     public function updatedIsAsap(bool $value): void
     {
         if ($value) {
@@ -142,33 +153,100 @@ class CheckoutWizard extends Component
         }
     }
 
+    /**
+     * Live validation/normalization on phone input change.
+     * Uses the shared PhoneNormalizer policy.
+     */
     public function updatedPhone($value): void
     {
-        $this->phone = preg_replace('/\D/', '', $value);
-        if (! str_starts_with($this->phone, '993')) {
-            $this->phone = '993' . ltrim($this->phone, '0');
+        $this->phoneError = '';
+
+        if (empty($value)) {
+            $this->phone = '';
+            return;
         }
-        $this->phone = '+' . $this->phone;
+
+        // Normalize but don show error until submit
+        $normalized = PhoneNormalizer::normalize($value);
+        $this->phone = $normalized;
+    }
+
+    /**
+     * Validate name field.
+     */
+    private function validateName(): bool
+    {
+        if (config('checkout.phone.require_name', true) && empty(trim($this->name))) {
+            $this->nameError = __('checkout.validation.name.required');
+            return false;
+        }
+
+        $this->nameError = '';
+        return true;
+    }
+
+    /**
+     * Validate phone field using shared policy.
+     */
+    private function validatePhone(): bool
+    {
+        if (empty($this->phone)) {
+            $this->phoneError = __('checkout.validation.phone.required');
+            return false;
+        }
+
+        $result = PhoneNormalizer::validate($this->phone);
+
+        if (! $result['valid']) {
+            $this->phoneError = $result['message'];
+
+            \Illuminate\Support\Facades\Log::warning('[Checkout] Phone validation failed', [
+                'trace_id' => $this->traceId,
+                'reason' => $result['reason'],
+                'phone_masked' => PIIMasker::maskPhone($this->phone),
+            ]);
+
+            return false;
+        }
+
+        $this->phoneError = '';
+        return true;
+    }
+
+    /**
+     * Validate comment length.
+     */
+    private function validateComment(): bool
+    {
+        $max = PhoneNormalizer::maxCommentLength();
+
+        if ($this->comment && mb_strlen($this->comment) > $max) {
+            $this->error = __('checkout.validation.comment.too_long', ['max' => $max]);
+            return false;
+        }
+
+        return true;
     }
 
     private function validateContacts(): bool
     {
-        try {
-            $this->validate();
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            $this->error = $e->getMessage();
+        $this->error = null;
+        $this->phoneError = '';
+        $this->nameError = '';
 
+        $nameOk = $this->validateName();
+        $phoneOk = $this->validatePhone();
+
+        if (! $nameOk || ! $phoneOk) {
             return false;
         }
 
-        if (empty($this->name)) {
-            $this->error = 'Введите имя';
-
+        if (! $this->validateComment()) {
             return false;
         }
 
-        // Save contacts to address for OrderService/OrderModel to find them
-        $this->address['name'] = $this->name;
+        // Save contacts to address for OrderService/OrderModel
+        $this->address['name'] = trim($this->name);
         $this->address['phone'] = $this->phone;
 
         return true;
@@ -182,7 +260,7 @@ class CheckoutWizard extends Component
             1 => $this->validateAddress(),
             2 => $this->validateTime(),
             3 => $this->validateContacts(),
-            4 => true, // Conflicts are confirmed in button logic
+            4 => true,
             default => true,
         };
     }
@@ -191,13 +269,11 @@ class CheckoutWizard extends Component
     {
         if (empty($this->address['address'] ?? '')) {
             $this->error = 'Выберите адрес доставки';
-
             return false;
         }
 
         if (empty($this->address['lat'] ?? '') || empty($this->address['lon'] ?? '')) {
             $this->error = 'Координаты адреса не определены';
-
             return false;
         }
 
@@ -210,7 +286,6 @@ class CheckoutWizard extends Component
 
             if (! $isInZone) {
                 $this->error = 'Адрес находится за пределами зоны доставки';
-
                 return false;
             }
         }
@@ -222,7 +297,6 @@ class CheckoutWizard extends Component
     {
         if (! $this->isAsap && empty($this->deliveryTime)) {
             $this->error = 'Выберите время доставки';
-
             return false;
         }
 
@@ -230,7 +304,6 @@ class CheckoutWizard extends Component
             $scheduledTime = Carbon::parse($this->deliveryTime);
             if (! $this->orderService->isWithinWorkingHours($this->restaurant, $scheduledTime)) {
                 $this->error = 'Ресторан не работает в выбранное время';
-
                 return false;
             }
         }
@@ -240,9 +313,8 @@ class CheckoutWizard extends Component
 
     private function validatePayment(): bool
     {
-        if (! in_array($this->paymentMethod, ['card', 'cash', 'sbp'])) {
+        if (! in_array($this->paymentMethod, ['card', 'cash', 'sbp'], true)) {
             $this->error = 'Выберите способ оплаты';
-
             return false;
         }
 
@@ -257,13 +329,15 @@ class CheckoutWizard extends Component
             \Illuminate\Support\Facades\Log::info('[Checkout] Step advanced', [
                 'trace_id' => $this->traceId,
                 'from' => $oldStep,
-                'to' => $this->currentStep
+                'to' => $this->currentStep,
             ]);
         } else {
             \Illuminate\Support\Facades\Log::warning('[Checkout] Step validation failed', [
                 'trace_id' => $this->traceId,
                 'step' => $oldStep,
-                'error' => $this->error
+                'error' => $this->error,
+                'phone_error' => $this->phoneError,
+                'name_error' => $this->nameError,
             ]);
         }
     }
@@ -273,6 +347,8 @@ class CheckoutWizard extends Component
         if ($this->currentStep > 1) {
             $this->currentStep--;
             $this->error = null;
+            $this->phoneError = '';
+            $this->nameError = '';
         }
     }
 
@@ -292,6 +368,8 @@ class CheckoutWizard extends Component
 
         $this->currentStep = $step;
         $this->error = null;
+        $this->phoneError = '';
+        $this->nameError = '';
     }
 
     public function submitOrder(): void
@@ -409,10 +487,10 @@ class CheckoutWizard extends Component
 
     private function handleOfflineOrder(array $orderData): void
     {
-        $orderData['id'] = 'OFFLINE-'.time();
+        $orderData['id'] = 'OFFLINE-' . time();
         $orderData['status'] = 'pending';
         $this->createdOrder = (object) $orderData;
-        
+
         $pendingOrders = session('pending_orders', []);
         $pendingOrders[] = $orderData;
         session(['pending_orders' => $pendingOrders]);
@@ -436,12 +514,11 @@ class CheckoutWizard extends Component
     private function processPayment(): void
     {
         // Placeholder for payment gateway integration
-        // In real implementation, this would call PaymentGateway::process()
     }
 
     private function clearCart(): void
     {
-        session()->forget('cart_'.$this->vendorId);
+        session()->forget('cart_' . $this->vendorId);
         session()->forget('current_address');
         $this->cartItems = [];
         $this->cartTotal = 0;

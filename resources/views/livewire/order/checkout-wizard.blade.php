@@ -261,32 +261,44 @@
                             <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             </div>
-                            <h3 class="text-lg font-bold text-gray-900">Ваши контакты</h3>
+                            <h3 class="text-lg font-bold text-gray-900">{{ __('checkout.summary.contacts') }}</h3>
                         </div>
 
                         <div class="space-y-4">
+                            {{-- Name field with inline error --}}
                             <div class="space-y-2">
-                                <label class="text-sm font-bold text-gray-700">Как вас зовут?</label>
-                                <input type="text" wire:model="name" name="name" placeholder="Иван Иванов"
-                                    class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-orange-500/20 focus:bg-white transition-all">
+                                <label class="text-sm font-bold text-gray-700">{{ __('checkout.summary.name_label') }}</label>
+                                <input type="text" wire:model.live="name" name="name" placeholder="Иван Иванов"
+                                    class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-orange-500/20 focus:bg-white transition-all {{ $nameError ? 'ring-2 ring-red-300 bg-red-50' : '' }}">
+                                @if($nameError)
+                                    <p class="text-xs text-red-500 font-medium px-2">{{ $nameError }}</p>
+                                @endif
                             </div>
 
+                            {{-- Phone field with inline error and dynamic helper --}}
                             <div class="space-y-2">
-                                <label class="text-sm font-bold text-gray-700">Номер телефона</label>
+                                <label class="text-sm font-bold text-gray-700">{{ __('checkout.summary.phone_label') }}</label>
                                 <input type="tel" wire:model.live="phone"
-                                    x-mask="+\9\9399999999"
-                                    placeholder="+99312345678"
-                                    class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-orange-500/20 focus:bg-white transition-all">
-                                <p class="text-[10px] text-gray-400 font-medium px-2">Нужен для связи курьера с вами</p>
+                                    @if($phoneMode === 'strict_region') x-mask="+\9\9399999999" @endif
+                                    placeholder="{{ $phoneExample }}"
+                                    class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-orange-500/20 focus:bg-white transition-all {{ $phoneError ? 'ring-2 ring-red-300 bg-red-50' : '' }}">
+                                @if($phoneError)
+                                    <p class="text-xs text-red-500 font-medium px-2">{{ $phoneError }}</p>
+                                @else
+                                    <p class="text-[10px] text-gray-400 font-medium px-2">{{ $phoneHelperText }}. {{ __('checkout.summary.comment_placeholder') }}</p>
+                                @endif
                             </div>
                         </div>
 
                         <div class="pt-4">
-                            <label class="block text-sm font-bold text-gray-900 mb-2">Комментарий к заказу</label>
-                            <textarea wire:model="comment" 
-                                placeholder="Напр: не звоните, ребенок спит" 
+                            <label class="block text-sm font-bold text-gray-900 mb-2">{{ __('checkout.summary.comment_label') }}</label>
+                            <textarea wire:model.live="comment"
+                                x-on:input="$wire.set('comment', $event.target.value)"
+                                placeholder="{{ __('checkout.summary.comment_placeholder') }}"
                                 class="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-medium focus:ring-2 focus:ring-orange-500/20 focus:bg-white transition-all"
-                                rows="3"></textarea>
+                                rows="3"
+                                maxlength="{{ \App\Support\PhoneNormalizer::maxCommentLength() }}"></textarea>
+                            <p class="text-[10px] text-gray-400 font-medium px-2 mt-1" x-text="'{{ __('checkout.validation.comment.too_long', ['max' => \App\Support\PhoneNormalizer::maxCommentLength()]) }}'"></p>
                         </div>
                     </section>
                     @break

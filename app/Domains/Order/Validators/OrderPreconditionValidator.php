@@ -8,6 +8,8 @@ use App\Domains\Geo\Services\GeoService;
 use App\Domains\Order\Models\Order;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Enums\OrderRejectReason;
+use App\Support\PhoneNormalizer;
+use Illuminate\Support\Facades\Log;
 
 final readonly class OrderPreconditionValidator
 {
@@ -166,10 +168,23 @@ final readonly class OrderPreconditionValidator
             return OrderRejectReason::INVALID_PHONE;
         }
 
-        $phone = (string) $address['phone'];
-        if (! preg_match('/^\+\d{8,15}$/', $phone)) {
+        // Normalize phone using shared policy
+        $phone = PhoneNormalizer::normalize((string) $address['phone']);
+
+        // Validate phone using shared policy (same as CheckoutWizard)
+        $result = PhoneNormalizer::validate($phone);
+
+        if (! $result['valid']) {
+            Log::warning('[API Order] Phone validation failed via shared policy', [
+                'trace_id' => $data['trace_id'] ?? 'unknown',
+                'reason' => $result['reason'],
+            ]);
+
             return OrderRejectReason::INVALID_PHONE;
         }
+
+        // Update the phone with normalized version for storage
+        $data['address']['phone'] = $phone;
 
         return null;
     }

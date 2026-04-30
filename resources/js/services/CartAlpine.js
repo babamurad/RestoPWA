@@ -289,9 +289,31 @@ document.addEventListener('alpine:init', () => {
 
             let synced = 0;
             let failed = 0;
+            let needsUserAction = 0;
 
             for (const order of pendingOrders) {
                 if (order.retries >= 5) {
+                    failed++;
+                    continue;
+                }
+
+                if (order.status === 'needs_user_action') {
+                    needsUserAction++;
+                    console.log('[CartAlpine] Skipping order with needs_user_action status', order.id, 'trace:', traceId);
+                    continue;
+                }
+
+                // P1-6: Validate contacts before sync
+                const contactValidation = this.validateOrderContacts(order.payload);
+                if (!contactValidation.valid) {
+                    console.warn('[CartAlpine] Order has invalid contacts, marking needs_user_action', {
+                        orderId: order.id,
+                        reason: contactValidation.reason,
+                        traceId,
+                    });
+
+                    await window.CartService.updatePendingOrderStatus(order.id, 'needs_user_action');
+                    needsUserAction++;
                     failed++;
                     continue;
                 }
@@ -361,7 +383,37 @@ document.addEventListener('alpine:init', () => {
                 }));
             }
 
+            if (needsUserAction > 0) {
+                window.dispatchEvent(new CustomEvent('orders-needs-action', {
+                    detail: { count: needsUserAction }
+                }));
+            }
+
             await this.broadcastState();
+        },
+
+        validateOrderContacts(payload) {
+            const address = payload.address || {};
+
+            if (!address.name || address.name.trim() === '') {
+                return { valid: false, reason: 'missing_name' };
+            }
+
+            if (!address.phone || address.phone.trim() === '') {
+                return { valid: false, reason: 'missing_phone' };
+            }
+
+            const phone = address.phone.trim();
+            if (!phone.startsWith('+')) {
+                return { valid: false, reason: 'invalid_phone_format' };
+            }
+
+            const digits = phone.replace(/\D/g, '');
+            if (digits.length < 8 || digits.length > 15) {
+                return { valid: false, reason: 'invalid_phone_length' };
+            }
+
+            return { valid: true };
         },
 
         async handleAuthError(context = 'order') {

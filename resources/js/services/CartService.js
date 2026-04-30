@@ -248,6 +248,16 @@ const CartService = {
     },
 
     /**
+     * Update the status of a pending order.
+     * @param {number} id
+     * @param {string} status - 'pending', 'needs_user_action', 'synced', 'failed'
+     * @returns {Promise<void>}
+     */
+    async updatePendingOrderStatus(id, status) {
+        await db.pendingOrders.update(id, { status });
+    },
+
+    /**
      * @returns {Promise<CartItem[]>}
      */
     async getAllItems() {
