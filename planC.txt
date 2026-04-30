@@ -1,0 +1,203 @@
+Phase C — Contacts, Localization & Validation Hardening Implementation Plan
+Цель
+Сделать оформление заказа устойчивым для разных регионов и сценариев ввода контактов: убрать жёсткую привязку к +993, синхронизировать frontend/backend валидацию телефона, улучшить UX ошибок и снизить ложные отказы оформления.
+
+User Review Required
+IMPORTANT
+В Phase C поведение меняется: вместо принудительной нормализации к +993... ввод телефона станет конфигурируемым по региону (или универсальным E.164), и часть “автоматических исправлений” будет заменена на явные подсказки пользователю.
+Это может изменить привычный flow для текущих пользователей TM, но уменьшит число неочевидных ошибок и отклонений заказа.
+
+Proposed Changes
+[Backend] Validation Contract & Region Config
+[MODIFY] config/services.php (или отдельный config/checkout.php)
+Добавить конфиг контактов:
+
+checkout.phone.mode:
+
+strict_region (например, TM-only),
+
+e164 (универсальный международный формат).
+
+checkout.phone.default_country (например, TM, RU, ...).
+
+checkout.phone.allowed_countries (опционально whitelist).
+
+checkout.phone.require_name (bool).
+
+checkout.contacts.max_comment_length.
+
+[MODIFY] app/Livewire/Order/CheckoutWizard.php
+Убрать жёсткое форсирование 993 в updatedPhone().
+
+Перевести проверку контактов на конфигурируемый режим:
+
+strict_region: текущий regex по региону;
+
+e164: валидация по ^\+[1-9]\d{7,14}$.
+
+Выделить нормализацию в отдельный приватный метод:
+
+trim,
+
+замена “00” → “+”,
+
+удаление незначащих символов.
+
+Ошибки делать явными и короткими:
+
+“Укажите телефон в международном формате, например +993xxxxxxxx”.
+
+Логировать причину отказа валидации контактов (без PII), используя существующий traceId.
+
+[MODIFY] app/Domains/Order/Http/Controllers/Api/OrderController.php
+Дублировать серверную валидацию телефона/имени в store (не доверять только Livewire).
+
+Добавить стандартизированную причину reject в лог:
+
+invalid_phone_format,
+
+missing_name,
+
+invalid_comment_length.
+
+Возвращать согласованные 4xx-ошибки с user-friendly message + машинным code (если принят API-формат codes).
+
+[Frontend] Form UX & Input Behavior
+[MODIFY] resources/views/livewire/order/checkout-wizard.blade.php
+Обновить placeholder и helper text для телефона в зависимости от режима:
+
+strict region: пример локального формата;
+
+e164: “+<код страны><номер>”.
+
+Убрать/ослабить маску, если она ломает международный ввод.
+
+Добавить inline validation hint до submit:
+
+поле подсвечивается + короткий текст под полем.
+
+Ошибки контактов отображать рядом с полем и в общем error-block (без дублирования длинного текста).
+
+На финальном шаге показывать summary контактов в безопасном формате (частично маскированный телефон, напр. +993*****678).
+
+[MODIFY] resources/js/services/CartAlpine.js (минимально)
+Если из оффлайн очереди отправляются payload с контактами:
+
+Проверять наличие address.name / address.phone перед sync.
+
+При отсутствии — не отправлять “слепо”, а ставить статус needs_user_action и показывать toast “Нужно обновить контактные данные”.
+
+[Domain/Model Layer] Data Consistency
+[MODIFY] app/Domains/Order/Services/OrderService.php (или boundary перед createOrder)
+Добавить pre-save safeguard:
+
+если address.phone/address.name невалидны по текущему policy — не сохранять заказ.
+
+Гарантировать единый формат хранения телефона (нормализованный E.164 в БД, даже если UI локализован).
+
+[OPTIONAL] Migration/Backfill Script
+Для старых заказов:
+
+пометить “сомнительные” телефоны флагом contact_needs_review (если планируется аналитика/поддержка).
+
+[Observability] Telemetry & Metrics
+[MODIFY] CheckoutWizard + OrderController logs
+Добавить счётчики событий (через логи/метрики):
+
+checkout_contact_validation_failed_total{reason=...}
+
+checkout_contact_validation_passed_total
+
+order_api_reject_total{reason=invalid_phone_format|...}
+
+[ADD] Operational Dashboard (если есть стек мониторинга)
+Доля отказов по контактам.
+
+Топ причин reject.
+
+Разрез по платформе (web/pwa), онлайн/офлайн.
+
+[Localization] Copy & i18n
+[MODIFY] Тексты в blade/livewire
+Вынести строки ошибок/подсказок в i18n-файлы (если уже есть инфраструктура локалей).
+
+Поддержать минимум RU + fallback EN (или текущие project locales).
+
+Убедиться, что сообщения короткие и action-oriented.
+
+Rollout Strategy
+Stage 1 (Safe Mode)
+Включить e164 только для staging.
+
+Собрать метрики отказов и сравнить с baseline.
+
+Stage 2 (Gradual Prod)
+Прод: 10% трафика на новый режим (если есть фича-флаги).
+
+Мониторить conversion шага “Контакты” и drop-off.
+
+Stage 3 (Full)
+Переключить весь трафик после стабилизации.
+
+Risks & Mitigations
+Риск: пользователи с привычным локальным форматом путаются.
+Mitigation: понятные примеры/placeholder + автонормализация безопасных кейсов.
+
+Риск: расхождение Livewire/API валидации.
+Mitigation: единый validation policy (shared rule builder или дублирование по одному конфигу).
+
+Риск: оффлайн-заказы с устаревшими контактами не синкаются.
+Mitigation: explicit needs_user_action и UX-подсказка.
+
+Риск: слишком подробные логи с PII.
+Mitigation: маскирование телефона/имени в логах, хранить только reason/codes.
+
+Verification Plan
+Automated Tests
+Backend
+CheckoutWizard contact validation:
+
+valid strict-region phone -> pass;
+
+invalid strict-region phone -> fail (reason logged).
+
+OrderController@store:
+
+missing phone/name -> 4xx + reason code;
+
+invalid e164 -> 4xx;
+
+valid e164 -> success path.
+
+Policy-switch tests:
+
+strict_region vs e164.
+
+Frontend (unit/e2e)
+Ввод +993... и +7... в разных режимах.
+
+Проверка inline ошибок без submit.
+
+Regression: успешный checkout при валидных контактах.
+
+Manual Verification
+Strict mode: номер вне региона блокируется корректным сообщением.
+
+E.164 mode: международные номера принимаются.
+
+Offline queued order: при невалидных контактах не синкается молча, отображается требование действия.
+
+Telemetry: в логах есть traceId + reason, без утечки полного телефона.
+
+Definition of Done (DoD)
+ Контактная валидация работает одинаково в Livewire и API.
+
+ Жёсткая привязка к +993 убрана/сделана конфигурируемой.
+
+ UX ошибок понятен и локализован.
+
+ В логах есть причины отказа и trace correlation.
+
+ Есть автоматические тесты на policy modes и reject reasons.
+
+ Нет утечки PII в логи.

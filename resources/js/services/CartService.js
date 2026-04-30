@@ -158,6 +158,14 @@ const CartService = {
     },
 
     /**
+     * Clear all carts from all vendors.
+     * @returns {Promise<void>}
+     */
+    async clearAllCarts() {
+        await db.cart.clear();
+    },
+
+    /**
      * @param {string} [vendorId] - optional vendor filter
      * @returns {Promise<CartTotals>}
      */
@@ -275,6 +283,7 @@ const CartService = {
      */
     async syncWithServer(vendorId, items) {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const traceId = crypto.randomUUID ? crypto.randomUUID() : 'trace-' + Date.now();
         
         try {
             const response = await fetch('/api/v1/cart/sync', {
@@ -283,7 +292,8 @@ const CartService = {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
-                    'X-Vendor-ID': vendorId
+                    'X-Vendor-ID': vendorId,
+                    'X-Trace-Id': traceId,
                 },
                 body: JSON.stringify({
                     vendor_id: vendorId,

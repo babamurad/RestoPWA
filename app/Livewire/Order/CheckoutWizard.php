@@ -8,6 +8,7 @@ use App\Domains\Geo\Services\GeoService;
 use App\Domains\Order\Models\Order;
 use App\Domains\Order\Services\OrderService;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Support\PIIMasker;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
@@ -32,6 +33,7 @@ class CheckoutWizard extends Component
         $this->calculateTotals();
     }
     public int $currentStep = 1;
+    public string $traceId = '';
 
     public string $vendorId = '';
 
@@ -85,6 +87,13 @@ class CheckoutWizard extends Component
 
     public function mount(): void
     {
+        // Use trace from cart checkout flow if provided, otherwise generate new one
+        $this->traceId = (string) (request()->query('trace_id') ?? str()->uuid());
+        \Illuminate\Support\Facades\Log::info('[Checkout] Wizard mounted', [
+            'trace_id' => $this->traceId,
+            'user_id' => Auth::id(),
+        ]);
+
         $savedAddress = session('current_address');
         if ($savedAddress) {
             $this->address = $savedAddress;
@@ -93,6 +102,7 @@ class CheckoutWizard extends Component
         $vendorId = session('current_vendor_id') ?? request()->query('vendor_id');
         
         if (empty($vendorId)) {
+            \Illuminate\Support\Facades\Log::warning('[Checkout] No vendorId in session or request', ['trace_id' => $this->traceId]);
             session()->flash('error', 'Ресторан не выбран. Пожалуйста, вернитесь в меню.');
             $this->redirect('/', navigate: true);
             return;
@@ -102,6 +112,10 @@ class CheckoutWizard extends Component
         $this->restaurant = Restaurant::find($this->vendorId);
 
         if (! $this->restaurant) {
+            \Illuminate\Support\Facades\Log::error('[Checkout] Restaurant not found', [
+                'trace_id' => $this->traceId,
+                'vendor_id' => $this->vendorId
+            ]);
             session()->flash('error', 'Ресторан не найден.');
             $this->redirect('/', navigate: true);
             return;
@@ -119,6 +133,7 @@ class CheckoutWizard extends Component
 
         $this->calculateTotals();
     }
+
 
     public function updatedIsAsap(bool $value): void
     {
@@ -236,8 +251,20 @@ class CheckoutWizard extends Component
 
     public function nextStep(): void
     {
+        $oldStep = $this->currentStep;
         if ($this->validateStep()) {
             $this->currentStep++;
+            \Illuminate\Support\Facades\Log::info('[Checkout] Step advanced', [
+                'trace_id' => $this->traceId,
+                'from' => $oldStep,
+                'to' => $this->currentStep
+            ]);
+        } else {
+            \Illuminate\Support\Facades\Log::warning('[Checkout] Step validation failed', [
+                'trace_id' => $this->traceId,
+                'step' => $oldStep,
+                'error' => $this->error
+            ]);
         }
     }
 
@@ -269,27 +296,44 @@ class CheckoutWizard extends Component
 
     public function submitOrder(): void
     {
+        \Illuminate\Support\Facades\Log::info('[Checkout] Submit order initiated', [
+            'trace_id' => $this->traceId,
+            'vendor_id' => $this->vendorId,
+            'step' => $this->currentStep,
+            'is_offline' => $this->isOffline,
+        ]);
+
         if (empty($this->vendorId)) {
-            session()->flash('error', 'Ресторан не выбран. Пожалуйста, вернитесь в меню.');
-            $this->redirect('/', navigate: true);
+            $this->error = 'Ресторан не выбран';
+            \Illuminate\Support\Facades\Log::warning('[Checkout] Submit failed: no vendorId', ['trace_id' => $this->traceId]);
             return;
         }
 
         if (! $this->validateStep()) {
+            \Illuminate\Support\Facades\Log::warning('[Checkout] Submit failed: step validation', [
+                'trace_id' => $this->traceId,
+                'error' => $this->error,
+            ]);
             return;
         }
 
         if (empty($this->cartItems)) {
             $this->error = 'Корзина пуста';
+            \Illuminate\Support\Facades\Log::warning('[Checkout] Submit failed: empty cart', ['trace_id' => $this->traceId]);
             return;
         }
 
         if (empty($this->address['lat']) || empty($this->address['lon'])) {
             $this->error = 'Не указаны координаты доставки';
+            \Illuminate\Support\Facades\Log::warning('[Checkout] Submit failed: no coordinates', ['trace_id' => $this->traceId]);
             return;
         }
 
         if (! $this->validatePayment()) {
+            \Illuminate\Support\Facades\Log::warning('[Checkout] Submit failed: payment validation', [
+                'trace_id' => $this->traceId,
+                'error' => $this->error,
+            ]);
             return;
         }
 
@@ -311,7 +355,22 @@ class CheckoutWizard extends Component
                 'comment' => $this->comment,
                 'created_via' => 'web',
                 'is_offline' => $this->isOffline,
+                'trace_id' => $this->traceId,
             ];
+
+            // PII-safe log of payload summary
+            \Illuminate\Support\Facades\Log::info('[Checkout] Order payload summary (PII-masked)', [
+                'trace_id' => $this->traceId,
+                'payload_summary' => PIIMasker::maskOrderPayload([
+                    'vendor_id' => $orderData['vendor_id'],
+                    'item_count' => count($orderData['items']),
+                    'total' => $orderData['total'],
+                    'name' => $orderData['address']['name'] ?? '',
+                    'phone' => $orderData['address']['phone'] ?? '',
+                    'address' => $orderData['address']['address'] ?? '',
+                    'comment' => $orderData['comment'] ?? '',
+                ]),
+            ]);
 
             if ($this->isOffline) {
                 $this->handleOfflineOrder($orderData);
@@ -319,8 +378,18 @@ class CheckoutWizard extends Component
                 $this->handleOnlineOrder($orderData);
             }
 
+            \Illuminate\Support\Facades\Log::info('[Checkout] Submit order successful', [
+                'trace_id' => $this->traceId,
+                'order_id' => $this->createdOrder->id ?? 'unknown',
+            ]);
+
         } catch (\Exception $e) {
-            $this->error = 'Ошибка при создании заказа: '.$e->getMessage();
+            $this->error = 'Ошибка при создании заказа. Попробуйте ещё раз.';
+            \Illuminate\Support\Facades\Log::error('[Checkout] Submit order exception', [
+                'trace_id' => $this->traceId,
+                'exception' => $e->getMessage(),
+                'stack' => $e->getTraceAsString(),
+            ]);
         } finally {
             $this->isProcessing = false;
         }

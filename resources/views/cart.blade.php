@@ -10,6 +10,7 @@
                 isLoading: true,
                 isClearing: false,
                 isSubmitting: false,
+                hasMultiVendorConflict: false,
 
                 async init() {
                     this.refresh();
@@ -26,15 +27,33 @@
                         this.items = [...e.detail.items];
                         this.totalPrice = e.detail.totalPrice;
                         this.totalQuantity = e.detail.totalQuantity;
+                        this.hasMultiVendorConflict = e.detail.hasMultiVendorConflict || false;
                         this.isLoading = false;
                         this.isClearing = false;
                         this.isSubmitting = false;
                     });
 
-                    window.addEventListener('submit-order-failed', () => {
+                    window.addEventListener('submit-order-failed', (e) => {
                         this.isSubmitting = false;
                         if (this._submitTimeout) clearTimeout(this._submitTimeout);
+
+                        if (e.detail?.reason === 'multi_vendor') {
+                            Swal.fire({
+                                title: 'Смешанная корзина',
+                                text: 'В корзине товары из разных ресторанов. Пожалуйста, очистите корзину или оставьте товары только одного заведения.',
+                                icon: 'warning',
+                                confirmButtonText: 'Понятно',
+                                confirmButtonColor: '#f97316',
+                                customClass: { popup: 'rounded-2xl' },
+                            });
+                        }
                     });
+                },
+
+                get checkoutError() {
+                    if (this.items.length === 0) return 'Корзина пуста';
+                    if (this.hasMultiVendorConflict) return 'Разные рестораны';
+                    return null;
                 },
 
                 _submitTimeout: null,
@@ -220,7 +239,7 @@
                                     this._submitTimeout = setTimeout(() => { isSubmitting = false; }, 10000);
                                     window.dispatchEvent(new CustomEvent('cart-checkout'))" 
                             dusk="cart-checkout-button" 
-                            :disabled="isLoading || isSubmitting || items.length === 0"
+                            :disabled="isLoading || isSubmitting || items.length === 0 || hasMultiVendorConflict"
                             class="w-full flex items-center justify-center gap-3 h-14 bg-orange-500 text-white font-bold rounded-2xl hover:bg-orange-600 shadow-xl shadow-orange-500/30 transition-all touch-feedback active:scale-95 group disabled:opacity-70 disabled:cursor-not-allowed">
                         
                         <svg x-show="isSubmitting" class="animate-spin w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -228,8 +247,8 @@
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                         </svg>
 
-                        <span x-text="isSubmitting ? 'Обработка...' : 'Оформить заказ'" class="uppercase tracking-widest text-sm"></span>
-                        <svg x-show="!isSubmitting" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                        <span x-text="checkoutError || (isSubmitting ? 'Обработка...' : 'Оформить заказ')" class="uppercase tracking-widest text-sm"></span>
+                        <svg x-show="!isSubmitting && !checkoutError" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                     </button>
                 </div>
             </div>

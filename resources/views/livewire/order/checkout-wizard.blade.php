@@ -17,9 +17,10 @@
     unavailableItems: @entangle('unavailableItems'),
     conflictsConfirmed: @js(empty($priceChanges) && empty($unavailableItems)),
     isSyncing: false,
+    multiVendorConflict: false,
+    multiVendorIds: [],
     
     async init() {
-        // Fetch cart data from Dexie if not already loaded
         if (this.cartItems.length === 0) {
             const vendorId = '{{ $vendorId }}';
             const items = await window.CartService.getCartByVendor(vendorId);
@@ -28,9 +29,50 @@
             this.$wire.calculateTotals();
         }
 
+        this.checkMultiVendorConflict();
+
         window.addEventListener('connectivity-changed', (e) => {
             this.isOffline = e.detail.isOffline;
         });
+
+        window.addEventListener('submit-order-failed', (e) => {
+            const detail = e.detail || {};
+            const reason = detail.reason || 'validation';
+            const messages = {
+                multi_vendor: 'В корзине товары из разных ресторанов. Очистите корзину или перейдите к выбору ресторана.',
+                empty_cart: 'Корзина пуста. Добавьте товары для оформления заказа.',
+                no_vendor: 'Ресторан не выбран. Вернитесь в меню и выберите ресторан.',
+                network: 'Проблема с подключением. Проверьте интернет и повторите.',
+                validation: detail.message || 'Проверьте правильность заполнения полей.',
+            };
+            this.error = messages[reason] || detail.message || 'Произошла ошибка. Попробуйте ещё раз.';
+            console.warn('[CheckoutWizard] submit-order-failed:', reason, detail);
+        });
+    },
+
+    async checkMultiVendorConflict() {
+        const allItems = await window.CartService.getAllItems();
+        const vendorIds = [...new Set(allItems.map(item => String(item.vendorId)))];
+        if (vendorIds.length > 1) {
+            this.multiVendorConflict = true;
+            this.multiVendorIds = vendorIds;
+        } else {
+            this.multiVendorConflict = false;
+            this.multiVendorIds = [];
+        }
+    },
+
+    async handleClearCartAndContinue() {
+        if (confirm('Очистить корзину и продолжить с текущим рестораном?')) {
+            await window.CartService.clearAllCarts();
+            this.multiVendorConflict = false;
+            this.error = null;
+            window.location.reload();
+        }
+    },
+
+    handleGoToRestaurantSelection() {
+        window.location.href = '{{ route('restaurants.index') }}';
     },
 
     async handleNext() {
@@ -43,12 +85,10 @@
                 if (syncData) {
                     this.$wire.setConflicts(syncData.price_changes, syncData.unavailable_items);
                     
-                    // Update current cart items in Livewire to reflect server state (names, prices)
                     const updatedItems = await window.CartService.getCartByVendor(vendorId);
                     this.cartItems = updatedItems;
                     this.$wire.updateCartData(updatedItems, syncData.subtotal);
                     
-                    // Reset confirmation if there are new conflicts
                     if (syncData.price_changes.length > 0 || syncData.unavailable_items.length > 0) {
                         this.conflictsConfirmed = false;
                     } else {
@@ -115,6 +155,29 @@
         </header>
 
         <main class="px-4 py-6 space-y-6 pb-32">
+            {{-- Multi-Vendor Recovery Banner --}}
+            <template x-if="multiVendorConflict">
+                <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-3 animate-shake">
+                    <div class="flex items-start gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0 text-amber-600 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-amber-800">В корзине товары из разных ресторанов</p>
+                            <p class="text-xs text-amber-600 mt-1">Оформить заказ можно только из одного ресторана за раз.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button @click="handleClearCartAndContinue()"
+                            class="flex-1 py-2.5 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 transition-all">
+                            Очистить и продолжить
+                        </button>
+                        <button @click="handleGoToRestaurantSelection()"
+                            class="flex-1 py-2.5 bg-white text-amber-700 text-sm font-bold rounded-xl border border-amber-200 hover:bg-amber-50 transition-all">
+                            Выбрать ресторан
+                        </button>
+                    </div>
+                </div>
+            </template>
+
             @if($error)
                 <div class="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm font-medium flex items-center gap-3 animate-shake">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -410,28 +473,38 @@
 
         {{-- Footer Actions --}}
         <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 pb-screen-safe">
-            <div class="max-w-lg mx-auto flex gap-3">
-                @if($currentStep > 1)
-                    <button wire:click="prevStep" 
-                        class="px-6 py-4 bg-gray-50 text-gray-400 font-bold rounded-2xl hover:bg-gray-100 transition-all btn-press">
-                        Назад
-                    </button>
-                @endif
-                
-                @if($currentStep < 5)
-                    <button @click="handleNext()" :disabled="isSyncing || (currentStep === 4 && !conflictsConfirmed)"
-                        class="flex-1 px-6 py-4 bg-orange-500 text-white font-bold rounded-2xl shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all btn-press flex items-center justify-center gap-3 disabled:opacity-50">
-                        <span x-show="!isSyncing" x-text="currentStep === 4 ? 'К оплате' : 'Продолжить'"></span>
-                        <div x-show="isSyncing" class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                    </button>
-                @else
-                    <button wire:click="submitOrder" wire:loading.attr="disabled" :disabled="!conflictsConfirmed"
-                        dusk="checkout-submit-button"
-                        class="flex-1 px-6 py-4 bg-orange-500 text-white font-bold rounded-2xl shadow-xl shadow-orange-200 hover:bg-orange-600 transition-all btn-press flex items-center justify-center gap-3 disabled:opacity-50">
-                        <span wire:loading.remove>Подтвердить заказ</span>
-                        <div wire:loading class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                    </button>
-                @endif
+            <div class="max-w-lg mx-auto space-y-3">
+                {{-- Error Banner (below button, never inside) --}}
+                <template x-if="error && currentStep === 5">
+                    <div class="p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-xs font-medium flex items-start gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span x-text="error"></span>
+                    </div>
+                </template>
+
+                <div class="flex gap-3">
+                    @if($currentStep > 1)
+                        <button wire:click="prevStep" 
+                            class="px-6 py-4 bg-gray-50 text-gray-400 font-bold rounded-2xl hover:bg-gray-100 transition-all btn-press">
+                            Назад
+                        </button>
+                    @endif
+                    
+                    @if($currentStep < 5)
+                        <button @click="handleNext()" :disabled="isSyncing || (currentStep === 4 && !conflictsConfirmed)"
+                            class="flex-1 px-6 py-4 bg-orange-500 text-white font-bold rounded-2xl shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all btn-press flex items-center justify-center gap-3 disabled:opacity-50">
+                            <span x-show="!isSyncing" x-text="currentStep === 4 ? 'К оплате' : 'Продолжить'"></span>
+                            <div x-show="isSyncing" class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                        </button>
+                    @else
+                        <button wire:click="submitOrder" wire:loading.attr="disabled" :disabled="!conflictsConfirmed || isProcessing"
+                            dusk="checkout-submit-button"
+                            class="flex-1 px-6 py-4 bg-orange-500 text-white font-bold rounded-2xl shadow-xl shadow-orange-200 hover:bg-orange-600 transition-all btn-press flex items-center justify-center gap-3 disabled:opacity-50">
+                            <span wire:loading.remove>Подтвердить заказ</span>
+                            <div wire:loading class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                        </button>
+                    @endif
+                </div>
             </div>
         </div>
     @endif
