@@ -1,0 +1,7 @@
+cd /home/u960938720/tmtourism.com/public/restopwa
+git pull
+chmod -R 755 storage bootstrap/cache
+php artisan cache:clear 
+php artisan config:clear 
+php artisan view:clear 
+php artisan route:clear 
