@@ -5,6 +5,7 @@ use App\Domains\Order\Models\Order;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\OrderSuccessController;
 use App\Http\Controllers\RestaurantController;
+use App\Http\Controllers\Vendor\KanbanController;
 use App\Domains\Order\Http\Controllers\Api\OrderController as ApiOrderController;
 use App\Http\Middleware\SetTenantContext;
 use Illuminate\Support\Facades\Auth;
@@ -112,5 +113,9 @@ Route::middleware([SetTenantContext::class, 'auth'])->group(function () {
     Route::post('/api/v1/orders', [ApiOrderController::class, 'store'])->name('api.orders.store');
 });
 
+
+// Vendor orders kanban board
+Route::get('/vendor/orders/kanban', [KanbanController::class, 'index'])
+    ->name('vendor.orders.kanban')->middleware('auth');
 
 // Vendor panel is now handled by Filament at /vendor

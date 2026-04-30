@@ -123,6 +123,17 @@ document.addEventListener('alpine:init', () => {
 
         async broadcastState() {
             let vendorId = this.currentVendorId;
+            
+            // If vendorId is missing, try to recover it from the first item in the cart
+            if (!vendorId) {
+                const allItems = await window.CartService.getAllItems();
+                if (allItems.length > 0) {
+                    vendorId = String(allItems[0].vendorId);
+                    this.currentVendorId = vendorId;
+                    console.log('CartAlpine: Recovered vendorId from items', vendorId);
+                }
+            }
+
             console.log('CartAlpine: Broadcasting state for vendor', vendorId || 'unknown');
 
             let items = [];
@@ -131,22 +142,14 @@ document.addEventListener('alpine:init', () => {
             try {
                 if (vendorId) {
                     items = await window.CartService.getCartByVendor(String(vendorId));
+                } else {
+                    // Fallback to all items if no vendor identified yet
+                    items = await window.CartService.getAllItems();
                 }
 
-                // Final safety check: if we have NO items for this vendor, but DB is NOT empty,
-                // recover vendor from existing items
-                if (items.length === 0) {
-                    const allItems = await window.CartService.getAllItems();
-                    if (allItems.length > 0) {
-                        console.warn('CartAlpine: Filtered items empty but DB has items. Recovering vendor.');
-                        this.currentVendorId = String(allItems[0].vendorId);
-                        vendorId = this.currentVendorId;
-                        items = await window.CartService.getCartByVendor(vendorId);
-                    }
-                }
-
-                // Always compute totals from vendor-specific items only
-                totals = await window.CartService.getTotals(vendorId);
+                // If we still have no items but totals are computed, compute totals from all items
+                // This ensures consistency on pages like /cart that might show everything
+                totals = await window.CartService.getTotals(vendorId || undefined);
 
                 console.log('CartAlpine: State totals', totals);
 

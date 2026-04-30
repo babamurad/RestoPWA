@@ -18,30 +18,51 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use App\Enums\UserRole;
 
-#[Fillable(['name', 'email', 'password', 'phone', 'is_admin'])]
+#[Fillable(['name', 'email', 'password', 'phone', 'role'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser, HasTenants
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasUuids, Notifiable;
 
+    protected $attributes = [
+        'role' => 'client',
+    ];
+
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => UserRole::class,
         ];
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === UserRole::ADMIN;
+    }
+
+    public function isRestaurateur(): bool
+    {
+        return $this->role === UserRole::RESTAURATEUR;
+    }
+
+    public function isClient(): bool
+    {
+        return $this->role === UserRole::CLIENT;
     }
 
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'admin') {
-            return (bool) $this->is_admin;
+            return $this->isAdmin();
         }
 
         if ($panel->getId() === 'vendor') {
-            return $this->is_admin || Restaurant::where('vendor_id', $this->id)->exists();
+            return $this->isAdmin() || $this->isRestaurateur();
         }
 
         return true;
@@ -49,20 +70,22 @@ class User extends Authenticatable implements FilamentUser, HasTenants
 
     public function getTenants(Panel $panel): Collection
     {
-        if ($this->is_admin) {
+        if ($this->isAdmin()) {
             return Restaurant::all();
         }
 
-        return Restaurant::where('vendor_id', $this->id)->get();
+        return Restaurant::where('vendor_id', $this->id)
+            ->orWhere('owner_id', $this->id)
+            ->get();
     }
 
     public function canAccessTenant(Model $tenant): bool
     {
-        if ($this->is_admin) {
+        if ($this->isAdmin()) {
             return true;
         }
 
-        return $tenant->vendor_id === $this->id;
+        return $tenant->vendor_id === $this->id || $tenant->owner_id === $this->id;
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Domains\Menu\Models\Product;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Domains\Vendor\Services\TenantContext;
 use App\Models\User;
+use App\Enums\UserRole;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -21,6 +22,7 @@ class RestaurantSeeder extends Seeder
             [
                 'name' => 'Restaurant Owner',
                 'password' => 'password',
+                'role' => UserRole::RESTAURATEUR,
             ]
         );
 

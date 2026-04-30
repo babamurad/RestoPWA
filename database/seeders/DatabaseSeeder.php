@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Enums\UserRole;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -23,13 +24,14 @@ class DatabaseSeeder extends Seeder
             'name' => 'Admin User',
             'email' => 'admin@restopwa.local',
             'password' => 'password',
-            'is_admin' => true,
+            'role' => UserRole::ADMIN,
         ]);
 
         User::factory()->create([
             'name' => 'Test Client',
             'email' => 'test@example.com',
             'password' => 'password',
+            'role' => UserRole::CLIENT,
         ]);
     }
 }

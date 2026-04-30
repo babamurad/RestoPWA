@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Enums\UserRole;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 
@@ -24,7 +25,7 @@ class CreateAdminUser extends Command
             $user->update([
                 'name' => $name,
                 'password' => Hash::make($password),
-                'is_admin' => true,
+                'role' => UserRole::ADMIN,
             ]);
             $this->info("Admin user '{$email}' updated successfully.");
         } else {
@@ -32,7 +33,7 @@ class CreateAdminUser extends Command
                 'name' => $name,
                 'email' => $email,
                 'password' => Hash::make($password),
-                'is_admin' => true,
+                'role' => UserRole::ADMIN,
             ]);
             $this->info("Admin user '{$email}' created successfully.");
         }
