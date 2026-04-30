@@ -91,13 +91,24 @@ class CheckoutWizard extends Component
         }
 
         $vendorId = session('current_vendor_id') ?? request()->query('vendor_id');
-        if ($vendorId) {
-            $this->vendorId = (string) $vendorId;
-            $this->restaurant = Restaurant::find($this->vendorId);
+        
+        if (empty($vendorId)) {
+            session()->flash('error', 'Ресторан не выбран. Пожалуйста, вернитесь в меню.');
+            $this->redirect('/', navigate: true);
+            return;
+        }
 
-            if ($this->restaurant && $this->address) {
-                $this->deliveryFee = (float) ($this->restaurant->delivery_fee ?? 0);
-            }
+        $this->vendorId = (string) $vendorId;
+        $this->restaurant = Restaurant::find($this->vendorId);
+
+        if (! $this->restaurant) {
+            session()->flash('error', 'Ресторан не найден.');
+            $this->redirect('/', navigate: true);
+            return;
+        }
+
+        if ($this->address) {
+            $this->deliveryFee = (float) ($this->restaurant->delivery_fee ?? 0);
         }
 
         if (Auth::check()) {
@@ -258,7 +269,27 @@ class CheckoutWizard extends Component
 
     public function submitOrder(): void
     {
+        if (empty($this->vendorId)) {
+            session()->flash('error', 'Ресторан не выбран. Пожалуйста, вернитесь в меню.');
+            $this->redirect('/', navigate: true);
+            return;
+        }
+
         if (! $this->validateStep()) {
+            return;
+        }
+
+        if (empty($this->cartItems)) {
+            $this->error = 'Корзина пуста';
+            return;
+        }
+
+        if (empty($this->address['lat']) || empty($this->address['lon'])) {
+            $this->error = 'Не указаны координаты доставки';
+            return;
+        }
+
+        if (! $this->validatePayment()) {
             return;
         }
 
