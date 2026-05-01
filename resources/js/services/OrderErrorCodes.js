@@ -1,0 +1,51 @@
+export const OrderRejectReason = Object.freeze({
+    EMPTY_CART: 'empty_cart',
+    NO_VENDOR: 'no_vendor',
+    MULTI_VENDOR: 'multi_vendor',
+    INVALID_VENDOR: 'invalid_vendor',
+    VENDOR_NOT_FOUND: 'vendor_not_found',
+    INVALID_ITEMS: 'invalid_items',
+    ITEM_NOT_FOUND: 'item_not_found',
+    ITEM_UNAVAILABLE: 'item_unavailable',
+    INVALID_PRICE: 'invalid_price',
+    INVALID_TOTAL: 'invalid_total',
+    MISSING_ADDRESS: 'missing_address',
+    INVALID_COORDINATES: 'invalid_coordinates',
+    OUTSIDE_DELIVERY_ZONE: 'outside_delivery_zone',
+    INVALID_PHONE: 'invalid_phone',
+    MISSING_NAME: 'missing_name',
+    INVALID_PAYMENT_METHOD: 'invalid_payment_method',
+    UNAUTHORIZED: 'unauthorized',
+    NETWORK: 'network',
+    VALIDATION: 'validation',
+    SERVER_ERROR: 'server_error',
+    BELOW_MIN_ORDER: 'below_min_order',
+});
+
+export const UserFacingMessages = {
+    [OrderRejectReason.EMPTY_CART]: 'Корзина пуста. Добавьте товары для оформления заказа.',
+    [OrderRejectReason.NO_VENDOR]: 'Ресторан не выбран. Вернитесь в меню и выберите ресторан.',
+    [OrderRejectReason.MULTI_VENDOR]: 'В корзине товары из разных ресторанов. Выберите один ресторан.',
+    [OrderRejectReason.INVALID_VENDOR]: 'Выбранный ресторан недоступен.',
+    [OrderRejectReason.VENDOR_NOT_FOUND]: 'Ресторан не найден.',
+    [OrderRejectReason.INVALID_ITEMS]: 'Состав заказа некорректен.',
+    [OrderRejectReason.ITEM_NOT_FOUND]: 'Некоторые товары не найдены.',
+    [OrderRejectReason.ITEM_UNAVAILABLE]: 'Некоторые товары временно недоступны.',
+    [OrderRejectReason.INVALID_PRICE]: 'Указана неверная цена товара.',
+    [OrderRejectReason.INVALID_TOTAL]: 'Неверно рассчитана общая сумма заказа.',
+    [OrderRejectReason.MISSING_ADDRESS]: 'Не указан адрес доставки.',
+    [OrderRejectReason.INVALID_COORDINATES]: 'Не удалось определить координаты адреса.',
+    [OrderRejectReason.OUTSIDE_DELIVERY_ZONE]: 'Адрес находится за пределами зоны доставки.',
+    [OrderRejectReason.INVALID_PHONE]: 'Укажите корректный номер телефона.',
+    [OrderRejectReason.MISSING_NAME]: 'Укажите ваше имя.',
+    [OrderRejectReason.INVALID_PAYMENT_METHOD]: 'Выберите способ оплаты.',
+    [OrderRejectReason.UNAUTHORIZED]: 'Войдите в профиль для оформления заказа.',
+    [OrderRejectReason.NETWORK]: 'Проблема с подключением. Проверьте интернет и повторите.',
+    [OrderRejectReason.VALIDATION]: 'Проверьте правильность заполнения полей.',
+    [OrderRejectReason.SERVER_ERROR]: 'Произошла ошибка на сервере. Попробуйте позже.',
+    [OrderRejectReason.BELOW_MIN_ORDER]: 'Сумма заказа ниже минимальной.',
+};
+
+export function getErrorMessage(reason) {
+    return UserFacingMessages[reason] || 'Произошла неизвестная ошибка. Попробуйте ещё раз.';
+}

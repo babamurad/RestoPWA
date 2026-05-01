@@ -11,6 +11,7 @@ use App\Http\Traits\ApiResponses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class CartController extends Controller
 {
@@ -20,13 +21,21 @@ class CartController extends Controller
      */
     public function sync(Request $request): JsonResponse
     {
+        $traceId = (string) ($request->header('X-Trace-Id') ?? str()->uuid());
+
         $validated = $request->validate([
             'vendor_id' => 'required|uuid|exists:restaurants,id',
             'items' => 'required|array',
             'items.*.product_id' => 'required|uuid|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
-            'items.*.price' => 'nullable|numeric', // Adding price validation to compare with server
+            'items.*.price' => 'nullable|numeric',
             'items.*.modifiers' => 'nullable|array',
+        ]);
+
+        Log::info('[Cart Sync] Started', [
+            'trace_id' => $traceId,
+            'vendor_id' => $validated['vendor_id'],
+            'item_count' => count($validated['items']),
         ]);
 
         $vendorId = $validated['vendor_id'];
@@ -111,12 +120,19 @@ class CartController extends Controller
         $deliveryFee = $restaurant->delivery_fee;
         $total = $subtotal + $deliveryFee;
 
-        // Maintain backward compatibility for now by including original fields alongside requested ones
+        Log::info('[Cart Sync] Completed', [
+            'trace_id' => $traceId,
+            'valid_items' => count($validatedItems),
+            'price_changes' => count($priceChanges),
+            'unavailable' => count($unavailableItems),
+            'subtotal' => $subtotal,
+        ]);
+
         return $this->success([
             'validated_items' => $validatedItems,
             'price_changes' => $priceChanges,
             'unavailable_items' => $unavailableItems,
-            'items' => $validatedItems, // backward compatibility
+            'items' => $validatedItems,
             'subtotal' => $subtotal,
             'delivery_fee' => (float) $deliveryFee,
             'total' => (float) $total,

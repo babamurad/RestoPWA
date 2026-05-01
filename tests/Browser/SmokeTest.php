@@ -151,5 +151,74 @@ class SmokeTest extends DuskTestCase
                     ->waitForText('Корзина пуста', 15);
         });
     }
+
+    /**
+     * SMK-06: Multi-vendor conflict shows recovery CTA
+     */
+    #[Group('smoke')]
+    #[Group('merge-gate')]
+    public function test_multi_vendor_shows_recovery_cta(): void
+    {
+        $secondRestaurant = RestaurantFactory::new()->create([
+            'slug' => 'test-vendor-2',
+            'is_active' => true,
+        ]);
+
+        $secondCategory = CategoryFactory::new()->create([
+            'vendor_id' => $secondRestaurant->id,
+            'name' => 'Second Menu',
+            'is_active' => true,
+        ]);
+
+        $secondProduct = ProductFactory::new()->create([
+            'vendor_id' => $secondRestaurant->id,
+            'category_id' => $secondCategory->id,
+            'is_available' => true,
+            'price' => 300.00,
+            'name' => 'Burger'
+        ]);
+
+        $this->browse(function (Browser $browser) use ($secondRestaurant, $secondProduct) {
+            // Add item from first restaurant
+            $browser->visit('/restaurants/' . $this->restaurant->slug)
+                    ->waitForText($this->product->name, 20)
+                    ->click('@add-to-cart-'.$this->product->id)
+                    ->pause(1500);
+
+            // Add item from second restaurant (should trigger multi-vendor)
+            $browser->visit('/restaurants/' . $secondRestaurant->slug)
+                    ->waitForText($secondProduct->name, 20)
+                    ->click('@add-to-cart-'.$secondProduct->id)
+                    ->pause(1500);
+
+            // Go to checkout with first restaurant
+            $browser->visit('/checkout?vendor_id=' . $this->restaurant->id)
+                    ->waitForText('Адрес доставки', 20);
+
+            // Should see multi-vendor warning banner
+            $browser->assertSee('разных ресторанов');
+            $browser->assertSee('Очистить и продолжить');
+            $browser->assertSee('Выбрать ресторан');
+        });
+    }
+
+    /**
+     * SMK-07: Error banner appears on failed submit (not inside button)
+     */
+    #[Group('smoke')]
+    public function test_error_banner_applies_on_submit_failure(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/checkout?vendor_id=' . $this->restaurant->slug)
+                    ->waitForText('Адрес доставки', 20);
+
+            // Skip to step 5 without filling required fields
+            $browser->script("window.dispatchEvent(new CustomEvent('submit-order-failed', { detail: { reason: 'empty_cart' } }));");
+            $browser->pause(1000);
+
+            // Error should be visible as banner, not inside button
+            $browser->assertSee('Корзина пуста');
+        });
+    }
 }
 
