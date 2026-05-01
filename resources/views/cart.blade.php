@@ -33,7 +33,6 @@
 
                     window.addEventListener('submit-order-failed', () => {
                         this.isSubmitting = false;
-                        if (this._submitTimeout) clearTimeout(this._submitTimeout);
                     });
                 },
 
@@ -217,8 +216,8 @@
                         </div>
                     </div>
                     <button @click="isSubmitting = true; 
-                                    this._submitTimeout = setTimeout(() => { isSubmitting = false; }, 10000);
-                                    window.dispatchEvent(new CustomEvent('cart-checkout'))" 
+                                    setTimeout(() => { isSubmitting = false; }, 10000);
+                                    $dispatch('cart-checkout');" 
                             dusk="cart-checkout-button" 
                             :disabled="isLoading || isSubmitting || items.length === 0"
                             class="w-full flex items-center justify-center gap-3 h-14 bg-orange-500 text-white font-bold rounded-2xl hover:bg-orange-600 shadow-xl shadow-orange-500/30 transition-all touch-feedback active:scale-95 group disabled:opacity-70 disabled:cursor-not-allowed">
