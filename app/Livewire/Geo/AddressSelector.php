@@ -65,6 +65,10 @@ class AddressSelector extends Component
                     $this->selectedVendorId
                 );
             }
+        } else {
+            // По умолчанию - Туркменабат
+            $this->lat = 39.0886;
+            $this->lon = 63.5593;
         }
     }
 

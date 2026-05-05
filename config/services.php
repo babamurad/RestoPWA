@@ -41,6 +41,7 @@ return [
 
     'yandex_maps' => [
         'key' => env('YANDEX_MAPS_API_KEY'),
+        'js_key' => env('YANDEX_MAPS_JS_KEY', env('YANDEX_MAPS_API_KEY')), // fallback на основной
     ],
 
     'push' => [

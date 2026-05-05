@@ -17,8 +17,14 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    {{-- Yandex Maps JS API v2.1 --}}
+    @if(config('services.yandex_maps.js_key'))
+    <script src="https://api-maps.yandex.ru/2.1/?apikey={{ config('services.yandex_maps.js_key') }}&lang=ru_RU" type="text/javascript"></script>
+    @endif
+
     <style>
         [x-cloak] { display: none !important; }
+        .ymaps3x0--map { border-radius: 0; }
     </style>
 
     @livewireStyles

@@ -156,6 +156,9 @@ class GeoService
                 'apikey' => $this->yandexKey,
                 'format' => 'json',
                 'lang' => 'ru_RU',
+                'll' => '63.5593,39.0886', // Центр Туркменабата
+                'spn' => '0.2,0.2',      // Область поиска
+                'rspn' => 0,              // Искать везде, но отдавать приоритет этой области
             ], $params));
 
             if ($response->successful()) {
@@ -192,9 +195,11 @@ class GeoService
         try {
             $response = Http::timeout(5)->get('https://geocode-maps.yandex.ru/1.x/', [
                 'apikey' => $this->yandexKey,
-                'geocode' => $query,
+                'geocode' => str_contains($query, 'Туркменабат') ? $query : 'Туркменабат, ' . $query,
                 'format' => 'json',
                 'lang' => 'ru_RU',
+                'll' => '63.5593,39.0886',
+                'spn' => '0.15,0.15',
                 'results' => 5,
             ]);
 
