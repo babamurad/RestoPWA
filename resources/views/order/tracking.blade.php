@@ -93,7 +93,38 @@
                             </div>
                             <h3 class="font-bold text-gray-900">Доставка</h3>
                         </div>
-                        <p class="text-sm font-medium text-gray-600 leading-relaxed">{{ $order->address['address'] ?? 'Адрес не указан' }}</p>
+                        @php
+                            $addr = $order->address ?? [];
+                        @endphp
+                        @if(!empty($addr['address']))
+                            <p class="text-sm font-medium text-gray-600 leading-relaxed">{{ $addr['address'] }}</p>
+                        @endif
+                        @if(!empty($addr['manual_address']))
+                            <p class="text-sm font-medium text-gray-600 leading-relaxed">{{ $addr['manual_address'] }}</p>
+                        @endif
+                        @if(!empty($addr['landmark']) || !empty($addr['entrance']) || !empty($addr['floor']) || !empty($addr['apartment']))
+                            <div class="flex flex-wrap gap-1.5 mt-2">
+                                @if(!empty($addr['landmark']))<span class="inline-flex items-center px-2 py-0.5 bg-orange-50 rounded-lg text-xs font-medium text-orange-700 border border-orange-100">📍 {{ $addr['landmark'] }}</span>@endif
+                                @if(!empty($addr['entrance']))<span class="inline-flex items-center px-2 py-0.5 bg-gray-50 rounded-lg text-xs font-medium text-gray-600">п. {{ $addr['entrance'] }}</span>@endif
+                                @if(!empty($addr['floor']))<span class="inline-flex items-center px-2 py-0.5 bg-gray-50 rounded-lg text-xs font-medium text-gray-600">эт. {{ $addr['floor'] }}</span>@endif
+                                @if(!empty($addr['apartment']))<span class="inline-flex items-center px-2 py-0.5 bg-gray-50 rounded-lg text-xs font-medium text-gray-600">кв. {{ $addr['apartment'] }}</span>@endif
+                            </div>
+                        @endif
+                        @if(!empty($addr['courier_comment']))
+                            <p class="text-xs text-gray-400 italic mt-2">«{{ $addr['courier_comment'] }}»</p>
+                        @endif
+                        @if(!empty($addr['lat']) && !empty($addr['lon']))
+                            <div class="flex gap-2 mt-3 pt-3 border-t border-gray-50">
+                                <a href="https://www.google.com/maps?q={{ $addr['lat'] }},{{ $addr['lon'] }}" target="_blank" rel="noopener noreferrer" class="flex-1 py-2 bg-gray-50 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-100 transition-all text-center flex items-center justify-center gap-1.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 1-6 6"/><path d="M18 8a6 6 0 0 0-6-6"/><path d="M18 8H6"/><path d="M6 8a6 6 0 0 0 6 6"/><path d="M6 8a6 6 0 0 1 6-6"/><path d="M12 2v12"/></svg>
+                                    Открыть в карте
+                                </a>
+                                <button onclick="navigator.clipboard.writeText('{{ $addr['lat'] }}, {{ $addr['lon'] }}')" class="flex-1 py-2 bg-gray-50 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-100 transition-all text-center flex items-center justify-center gap-1.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                    Координаты
+                                </button>
+                            </div>
+                        @endif
                     </div>
 
                     {{-- Order Content --}}

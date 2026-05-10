@@ -147,6 +147,24 @@
                 <div>
                     <dt class="text-sm text-gray-500">Адрес доставки</dt>
                     <dd>{{ $order->customer_address }}</dd>
+                    @php $addr = $order->address ?? []; @endphp
+                    @if(!empty($addr['landmark']) || !empty($addr['entrance']) || !empty($addr['floor']) || !empty($addr['apartment']))
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            @if(!empty($addr['landmark']))<span class="text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded">ор. {{ $addr['landmark'] }}</span>@endif
+                            @if(!empty($addr['entrance']))<span class="text-xs bg-gray-50 text-gray-600 px-2 py-0.5 rounded">п. {{ $addr['entrance'] }}</span>@endif
+                            @if(!empty($addr['floor']))<span class="text-xs bg-gray-50 text-gray-600 px-2 py-0.5 rounded">эт. {{ $addr['floor'] }}</span>@endif
+                            @if(!empty($addr['apartment']))<span class="text-xs bg-gray-50 text-gray-600 px-2 py-0.5 rounded">кв. {{ $addr['apartment'] }}</span>@endif
+                        </div>
+                    @endif
+                    @if(!empty($addr['courier_comment']))
+                        <p class="text-xs text-gray-400 italic mt-1">«{{ $addr['courier_comment'] }}»</p>
+                    @endif
+                    @if(!empty($addr['lat']) && !empty($addr['lon']))
+                        <div class="flex gap-2 mt-2">
+                            <a href="https://www.google.com/maps?q={{ $addr['lat'] }},{{ $addr['lon'] }}" target="_blank" rel="noopener" class="text-xs text-blue-600 hover:underline">Открыть в карте</a>
+                            <button onclick="navigator.clipboard.writeText('{{ $addr['lat'] }}, {{ $addr['lon'] }}')" class="text-xs text-gray-500 hover:text-gray-700">Копировать координаты</button>
+                        </div>
+                    @endif
                 </div>
                 @endif
                 @if($order->user)

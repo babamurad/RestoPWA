@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Livewire\Geo;
 
 use App\Domains\Geo\Services\GeoService;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Livewire\Attributes\On;
@@ -31,8 +30,26 @@ class AddressSelector extends Component
 
     public ?string $error = null;
 
+    public string $source = '';
+
+    public ?string $provider = null;
+
+    public string $manualAddress = '';
+
+    public string $landmark = '';
+
+    public string $entrance = '';
+
+    public string $floor = '';
+
+    public string $apartment = '';
+
+    public string $courierComment = '';
+
+    public bool $showRefinement = false;
+
     private GeoService $geoService;
-    
+
     public function mount(): void
     {
         $this->isAddressModalOpen = false;
@@ -58,6 +75,14 @@ class AddressSelector extends Component
             $this->address = $savedAddress['address'] ?? '';
             $this->lat = $savedAddress['lat'] ?? 0;
             $this->lon = $savedAddress['lon'] ?? 0;
+            $this->source = $savedAddress['source'] ?? '';
+            $this->provider = $savedAddress['provider'] ?? null;
+            $this->manualAddress = $savedAddress['manual_address'] ?? '';
+            $this->landmark = $savedAddress['landmark'] ?? '';
+            $this->entrance = $savedAddress['entrance'] ?? '';
+            $this->floor = $savedAddress['floor'] ?? '';
+            $this->apartment = $savedAddress['apartment'] ?? '';
+            $this->courierComment = $savedAddress['courier_comment'] ?? '';
             if ($this->lat && $this->lon && $this->selectedVendorId) {
                 $this->isInDeliveryZone = $this->geoService->isPointInDeliveryZone(
                     $this->lat,
@@ -66,7 +91,6 @@ class AddressSelector extends Component
                 );
             }
         } else {
-            // По умолчанию - Туркменабат
             $this->lat = 39.0886;
             $this->lon = 63.5593;
         }
@@ -81,34 +105,58 @@ class AddressSelector extends Component
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
-                        $wire.setLocation(position.coords.latitude, position.coords.longitude);
+                        $wire.setLocation(
+                            position.coords.latitude,
+                            position.coords.longitude,
+                            'gps'
+                        );
                     },
                     (error) => {
-                        $wire.setError('Не удалось определить местоположение: ' + error.message);
-                        $wire.setIsDetectingLocation(false);
-                    }
+                        let msg = 'Не удалось определить местоположение';
+                        if (error.code === 1) {
+                            msg = 'Доступ к геолокации запрещён. Поставьте точку на карте вручную.';
+                        } else if (error.code === 2) {
+                            msg = 'Не удалось получить координаты. Попробуйте ещё раз или поставьте точку на карте.';
+                        } else if (error.code === 3) {
+                            msg = 'Время ожидания геолокации истекло. Поставьте точку на карте вручную.';
+                        }
+                        $wire.gpsError(msg);
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
                 );
             } else {
-                $wire.setError('Геолокация не поддерживается браузером');
-                $wire.setIsDetectingLocation(false);
+                $wire.gpsError('Геолокация не поддерживается вашим браузером. Поставьте точку на карте вручную.');
             }
         JS);
     }
 
-    public function setLocation(float $lat, float $lon): void
+    public function gpsError(string $message): void
+    {
+        $this->error = $message;
+        $this->isDetectingLocation = false;
+        Log::info('[AddressSelector] GPS error', ['message' => $message]);
+    }
+
+    public function setLocation(float $lat, float $lon, string $source = 'map_pin'): void
     {
         $this->lat = $lat;
         $this->lon = $lon;
+        $this->source = $source;
         $this->isDetectingLocation = false;
+        $this->error = null;
 
         $result = $this->geoService->reverseGeocode($lat, $lon);
 
         if ($result) {
             $this->address = $result['address'];
-            $this->checkDeliveryZone();
+            $this->provider = $result['provider'] ?? null;
         } else {
-            $this->error = 'Не удалось определить адрес по координатам';
+            $this->address = '';
+            $this->provider = null;
         }
+
+        $this->showRefinement = true;
+        $this->checkDeliveryZone();
     }
 
     public function setError(string $error): void
@@ -144,8 +192,11 @@ class AddressSelector extends Component
         $this->address = $selected['address'];
         $this->lat = $selected['lat'];
         $this->lon = $selected['lon'];
+        $this->source = $selected['source'] ?? 'suggestion';
+        $this->provider = $selected['source'] ?? null;
         $this->suggestions = [];
         $this->error = null;
+        $this->showRefinement = true;
 
         if (! $this->selectedVendorId) {
             $this->error = 'Выберите ресторан для проверки зоны доставки';
@@ -158,34 +209,77 @@ class AddressSelector extends Component
 
     public function confirmAddress(): void
     {
-        if (empty($this->address)) {
-            $this->error = 'Введите адрес';
+        $hasCoords = $this->lat && $this->lon;
+        $hasText = ! empty($this->address) || ! empty($this->manualAddress) || ! empty($this->landmark) || ! empty($this->courierComment);
+
+        if (! $hasCoords) {
+            if (empty($this->address)) {
+                $this->error = 'Введите адрес или поставьте точку на карте';
+                return;
+            }
+
+            $this->isDetectingLocation = true;
+            $result = $this->geoService->geocodeAddress($this->address);
+
+            if ($result) {
+                $this->address = $result['address'];
+                $this->lat = $result['lat'];
+                $this->lon = $result['lon'];
+                $this->source = 'manual_geocoded';
+                $this->provider = $result['provider'] ?? null;
+                $this->showRefinement = true;
+                $this->checkDeliveryZone();
+            } else {
+                $this->error = 'Адрес не найден. Поставьте точку на карте и добавьте ориентир для курьера.';
+                $this->isDetectingLocation = false;
+                return;
+            }
+            $this->isDetectingLocation = false;
+        }
+
+        if (! $this->selectedVendorId) {
+            $this->error = 'Выберите ресторан для проверки зоны доставки';
             return;
         }
 
+        if ($hasCoords && ! $this->isInDeliveryZone) {
+            $this->isInDeliveryZone = $this->geoService->isPointInDeliveryZone(
+                $this->lat,
+                $this->lon,
+                $this->selectedVendorId
+            );
+        }
+
+        if (! $this->isInDeliveryZone && $this->lat && $this->lon) {
+            $this->error = 'Эта точка находится за пределами зоны доставки ресторана';
+            return;
+        }
+
+        $addressData = [
+            'address' => $this->address,
+            'lat' => $this->lat,
+            'lon' => $this->lon,
+            'source' => $this->source,
+            'provider' => $this->provider,
+            'manual_address' => $this->manualAddress,
+            'landmark' => $this->landmark,
+            'entrance' => $this->entrance,
+            'floor' => $this->floor,
+            'apartment' => $this->apartment,
+            'courier_comment' => $this->courierComment,
+        ];
+
+        session(['current_address' => $addressData]);
+
+        $this->dispatch('address-selected', ...$addressData);
+
+        $this->isAddressModalOpen = false;
+    }
+
+    public function backToMap(): void
+    {
+        $this->showRefinement = false;
         $this->error = null;
-
-        // Если координаты уже известны (выбрали из подсказок или через геолокацию) —
-        // повторный geocoding не нужен, сразу проверяем зону доставки
-        if ($this->lat && $this->lon) {
-            $this->checkDeliveryZone();
-            return;
-        }
-
-        $this->isDetectingLocation = true;
-
-        $result = $this->geoService->geocodeAddress($this->address);
-
-        if ($result) {
-            $this->address = $result['address'];
-            $this->lat = $result['lat'];
-            $this->lon = $result['lon'];
-            $this->checkDeliveryZone();
-        } else {
-            $this->error = 'Не удалось найти этот адрес. Пожалуйста, уточните его.';
-        }
-
-        $this->isDetectingLocation = false;
     }
 
     private function checkDeliveryZone(): void
@@ -205,27 +299,9 @@ class AddressSelector extends Component
             $this->selectedVendorId
         );
 
-        if (! $this->isInDeliveryZone) {
-            $this->error = 'Этот адрес находится за пределами зоны доставки выбранного ресторана';
-
-            return;
+        if ($this->isInDeliveryZone) {
+            $this->error = null;
         }
-
-        session([
-            'current_address' => [
-                'address' => $this->address,
-                'lat' => $this->lat,
-                'lon' => $this->lon,
-            ],
-        ]);
-
-        $this->dispatch('address-selected', 
-            address: $this->address,
-            lat: $this->lat,
-            lon: $this->lon
-        );
-
-        $this->isAddressModalOpen = false;
     }
 
     public function updatedAddress(string $value): void

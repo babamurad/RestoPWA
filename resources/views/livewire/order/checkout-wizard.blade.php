@@ -194,15 +194,33 @@
                             <button wire:click="$dispatch('open-address-selector')" class="text-sm font-bold text-orange-500 hover:text-orange-600">Изменить</button>
                         </div>
                         
-                        @if(!empty($address['address']))
-                            <div class="p-4 bg-orange-50 rounded-2xl border border-orange-100 flex items-start gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-orange-500 shadow-sm">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="font-bold text-gray-900 truncate">{{ $address['address'] }}</p>
-                                    <p class="text-xs text-orange-400 font-medium mt-0.5">Ваш основной адрес</p>
-                                </div>
+                        @if(!empty($address['address']) || !empty($address['lat']))
+                            <div class="p-4 bg-orange-50 rounded-2xl border border-orange-100 space-y-2">
+                                @if(!empty($address['address']))
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-orange-500 shadow-sm shrink-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="font-bold text-gray-900 truncate">{{ $address['address'] }}</p>
+                                            <p class="text-xs text-orange-400 font-medium mt-0.5">Адрес доставки</p>
+                                        </div>
+                                    </div>
+                                @endif
+                                @if(!empty($address['manual_address']))
+                                    <p class="text-sm text-gray-700 ml-[52px]">{{ $address['manual_address'] }}</p>
+                                @endif
+                                @if(!empty($address['landmark']) || !empty($address['entrance']) || !empty($address['floor']) || !empty($address['apartment']))
+                                    <div class="flex flex-wrap gap-2 ml-[52px]">
+                                        @if(!empty($address['landmark']))<span class="inline-flex items-center px-2.5 py-1 bg-white rounded-lg text-xs font-medium text-gray-700 border border-orange-100"><svg class="w-3 h-3 mr-1 text-orange-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>{{ $address['landmark'] }}</span>@endif
+                                        @if(!empty($address['entrance']))<span class="inline-flex items-center px-2.5 py-1 bg-white rounded-lg text-xs font-medium text-gray-700 border border-orange-100">п. {{ $address['entrance'] }}</span>@endif
+                                        @if(!empty($address['floor']))<span class="inline-flex items-center px-2.5 py-1 bg-white rounded-lg text-xs font-medium text-gray-700 border border-orange-100">эт. {{ $address['floor'] }}</span>@endif
+                                        @if(!empty($address['apartment']))<span class="inline-flex items-center px-2.5 py-1 bg-white rounded-lg text-xs font-medium text-gray-700 border border-orange-100">кв. {{ $address['apartment'] }}</span>@endif
+                                    </div>
+                                @endif
+                                @if(!empty($address['courier_comment']))
+                                    <p class="text-xs text-gray-500 italic ml-[52px]">«{{ $address['courier_comment'] }}»</p>
+                                @endif
                             </div>
                         @else
                             <button wire:click="$dispatch('open-address-selector')" 

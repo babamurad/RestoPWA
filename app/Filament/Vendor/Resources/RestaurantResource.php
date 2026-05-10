@@ -58,6 +58,35 @@ class RestaurantResource extends Resource
                             ->numeric()
                             ->prefix('₽'),
                     ])->columns(3),
+
+                Forms\Components\Section::make('Зона доставки')
+                    ->description('Настройте полигон доставки в формате GeoJSON')
+                    ->schema([
+                        Forms\Components\Textarea::make('delivery_zones')
+                            ->label('GeoJSON MULTIPOLYGON')
+                            ->placeholder('{"type":"MultiPolygon","coordinates":[[[[lon,lat],[lon,lat],[lon,lat],[lon,lat],[lon,lat]]]]}')
+                            ->rows(6)
+                            ->formatStateUsing(function ($state) {
+                                if (is_array($state) || is_object($state)) {
+                                    return json_encode($state, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                                }
+                                return $state;
+                            })
+                            ->dehydrateStateUsing(function ($state) {
+                                $decoded = json_decode($state, true);
+                                return json_decode($state) ? $decoded : $state;
+                            })
+                            ->helperText('Используйте http://geojson.io для создания полигона. Координаты в формате [lon, lat]. Сохраните изменения после редактирования.')
+                            ->columnSpanFull(),
+                        Forms\Components\Placeholder::make('delivery_zone_status')
+                            ->label('Статус зоны')
+                            ->content(function ($record) {
+                                if (! $record) return 'Сохраните, чтобы проверить.';
+                                $zones = $record->deliveryZones();
+                                if (empty($zones)) return '⚠️ Зона не настроена. Заказы не будут приниматься.';
+                                return '✅ Зона настроена ('.count($zones).' полигонов).';
+                            }),
+                    ]),
             ]);
     }
 
@@ -79,6 +108,14 @@ class RestaurantResource extends Resource
                 Tables\Columns\TextColumn::make('delivery_fee')
                     ->label('Доставка')
                     ->money('RUB'),
+                Tables\Columns\TextColumn::make('delivery_zones_summary')
+                    ->label('Зона')
+                    ->getStateUsing(function ($record) {
+                        $zones = $record->deliveryZones();
+                        return empty($zones) ? 'Не настроена' : 'Готова';
+                    })
+                    ->badge()
+                    ->color(fn (string $state): string => $state === 'Готова' ? 'success' : 'danger'),
             ])
             ->filters([
                 //

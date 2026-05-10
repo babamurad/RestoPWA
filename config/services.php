@@ -51,4 +51,20 @@ return [
 
     'geo_driver' => env('GEO_DRIVER', 'google'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Geocoding Provider Fallback Order
+    |--------------------------------------------------------------------------
+    |
+    | The order in which geocoding providers are tried.
+    | 'local' refers to the local_places table (Stage 4).
+    |
+    */
+    'geo_providers' => [
+        'local',
+        env('GEO_FALLBACK_FIRST', 'yandex'),
+        'nominatim',
+        'google',
+    ],
+
 ];

@@ -180,16 +180,33 @@ class Order extends Model
 
     public function getCustomerAddressAttribute(): ?string
     {
-        if (! isset($this->address['address'])) {
-            return null;
-        }
         $parts = array_filter([
             $this->address['address'] ?? null,
-            $this->address['house'] ?? null,
+            $this->address['manual_address'] ?? null,
+        ]);
+
+        $addressStr = ! empty($parts) ? implode(', ', $parts) : null;
+
+        $details = array_filter([
+            $this->address['landmark'] ? 'ор. '.$this->address['landmark'] : null,
+            $this->address['entrance'] ? 'п. '.$this->address['entrance'] : null,
+            $this->address['floor'] ? 'эт. '.$this->address['floor'] : null,
             $this->address['apartment'] ? 'кв. '.$this->address['apartment'] : null,
         ]);
 
-        return implode(', ', $parts);
+        if ($addressStr && ! empty($details)) {
+            return $addressStr.' ('.implode(', ', $details).')';
+        }
+
+        if ($addressStr) {
+            return $addressStr;
+        }
+
+        if (! empty($details)) {
+            return implode(', ', $details);
+        }
+
+        return null;
     }
 
     public function getOrderNumberAttribute(): string

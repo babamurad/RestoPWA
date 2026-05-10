@@ -119,6 +119,16 @@ final readonly class OrderPreconditionValidator
             return OrderRejectReason::INVALID_COORDINATES;
         }
 
+        // At least one text field must be present for the courier
+        $hasText = ! empty($address['address'])
+            || ! empty($address['manual_address'])
+            || ! empty($address['landmark'])
+            || ! empty($address['courier_comment']);
+
+        if (! $hasText) {
+            return OrderRejectReason::MISSING_ADDRESS;
+        }
+
         $restaurant = Restaurant::find($data['vendor_id']);
         if ($restaurant) {
             $isInZone = $this->geoService->isPointInDeliveryZone(

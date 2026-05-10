@@ -18,12 +18,31 @@ use Livewire\Component;
 class CheckoutWizard extends Component
 {
     #[On('address-selected')]
-    public function handleAddressSelected(string $address, float $lat, float $lon): void
-    {
+    public function handleAddressSelected(
+        string $address,
+        float $lat,
+        float $lon,
+        string $source = 'map_pin',
+        ?string $provider = null,
+        string $manual_address = '',
+        string $landmark = '',
+        string $entrance = '',
+        string $floor = '',
+        string $apartment = '',
+        string $courier_comment = '',
+    ): void {
         $this->address = [
             'address' => $address,
             'lat' => $lat,
             'lon' => $lon,
+            'source' => $source,
+            'provider' => $provider,
+            'manual_address' => $manual_address,
+            'landmark' => $landmark,
+            'entrance' => $entrance,
+            'floor' => $floor,
+            'apartment' => $apartment,
+            'courier_comment' => $courier_comment,
         ];
 
         if ($this->restaurant) {
@@ -267,13 +286,18 @@ class CheckoutWizard extends Component
 
     private function validateAddress(): bool
     {
-        if (empty($this->address['address'] ?? '')) {
-            $this->error = 'Выберите адрес доставки';
+        if (empty($this->address['lat'] ?? '') || empty($this->address['lon'] ?? '')) {
+            $this->error = 'Выберите адрес на карте';
             return false;
         }
 
-        if (empty($this->address['lat'] ?? '') || empty($this->address['lon'] ?? '')) {
-            $this->error = 'Координаты адреса не определены';
+        $hasText = ! empty($this->address['address'] ?? '')
+            || ! empty($this->address['manual_address'] ?? '')
+            || ! empty($this->address['landmark'] ?? '')
+            || ! empty($this->address['courier_comment'] ?? '');
+
+        if (! $hasText) {
+            $this->error = 'Добавьте ориентир или адрес для курьера';
             return false;
         }
 

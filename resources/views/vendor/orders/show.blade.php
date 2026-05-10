@@ -85,13 +85,31 @@
         
         @if($order->address)
             @if(is_array($order->address))
-                <p>{{ $order->address['street'] ?? '' }}, {{ $order->address['house'] ?? '' }}
-                @if(!empty($order->address['apartment']))
-                    , кв. {{ $order->address['apartment'] }}
-                @endif
+                @php $addr = $order->address; @endphp
+                <p>
+                    {{ $addr['address'] ?? $addr['street'] ?? '' }}
+                    {{ !empty($addr['manual_address']) ? '('.$addr['manual_address'].')' : '' }}
                 </p>
-                @if(!empty($order->address['comment']))
-                    <p class="text-gray-600 mt-2">Комментарий: {{ $order->address['comment'] }}</p>
+                @if(!empty($addr['landmark']))
+                    <p class="text-gray-600 mt-1"><strong>Ориентир:</strong> {{ $addr['landmark'] }}</p>
+                @endif
+                <div class="flex gap-2 mt-2 text-sm">
+                    @if(!empty($addr['entrance']))<span>Подъезд: {{ $addr['entrance'] }}</span>@endif
+                    @if(!empty($addr['floor']))<span>Этаж: {{ $addr['floor'] }}</span>@endif
+                    @if(!empty($addr['apartment']))<span>Кв./офис: {{ $addr['apartment'] }}</span>@endif
+                </div>
+                @if(!empty($addr['courier_comment']))
+                    <p class="text-gray-600 mt-2">Комментарий курьеру: «{{ $addr['courier_comment'] }}»</p>
+                @endif
+                @if(!empty($addr['lat']) && !empty($addr['lon']))
+                    <div class="flex gap-2 mt-3">
+                        <a href="https://www.google.com/maps?q={{ $addr['lat'] }},{{ $addr['lon'] }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 bg-blue-50 text-blue-600 px-3 py-1 rounded text-xs font-bold hover:bg-blue-100">
+                            Открыть в карте
+                        </a>
+                        <button onclick="navigator.clipboard.writeText('{{ $addr['lat'] }}, {{ $addr['lon'] }}')" class="inline-flex items-center gap-1 bg-gray-100 text-gray-600 px-3 py-1 rounded text-xs font-bold hover:bg-gray-200">
+                            Копировать координаты
+                        </button>
+                    </div>
                 @endif
             @else
                 <p>{{ $order->address }}</p>

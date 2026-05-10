@@ -37,7 +37,10 @@
 
                             @if(!empty($order['address']))
                                 <div class="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-                                    {{ $order['address']['address'] ?? $order['address']['street'] ?? 'Адрес не указан' }}
+                                    {{ $order['address']['address'] ?? $order['address']['manual_address'] ?? $order['address']['street'] ?? 'Адрес не указан' }}
+                                    @if(!empty($order['address']['landmark']))
+                                        <span class="text-xs text-orange-500">ор. {{ $order['address']['landmark'] }}</span>
+                                    @endif
                                 </div>
                             @endif
 
