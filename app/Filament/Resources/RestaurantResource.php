@@ -74,24 +74,36 @@ class RestaurantResource extends Resource
                             ->prefix('₽'),
                     ])->columns(2),
                 Section::make('Зона доставки')
-                    ->description('Координаты полигона доставки в формате GeoJSON MULTIPOLYGON. Можно скопировать из любого онлайн-редактора.')
+                    ->description('Нарисуйте область доставки на карте. Координаты будут сохранены автоматически.')
                     ->schema([
-                        Forms\Components\Textarea::make('delivery_zones')
-                            ->label('GeoJSON MULTIPOLYGON')
-                            ->placeholder('{"type":"MultiPolygon","coordinates":[[[[63.55,39.08],[63.56,39.08],[63.56,39.09],[63.55,39.09],[63.55,39.08]]]]}')
-                            ->rows(6)
-                            ->formatStateUsing(function ($state) {
-                                if (is_array($state) || is_object($state)) {
-                                    return json_encode($state, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-                                }
-                                return $state;
-                            })
-                            ->dehydrateStateUsing(function ($state) {
-                                $decoded = json_decode($state, true);
-                                return json_decode($state) ? $decoded : $state;
-                            })
-                            ->helperText('Используйте http://geojson.io для создания полигона. Формат: {"type":"MultiPolygon","coordinates":[[[[lon,lat],[lon,lat],...]]]}')
+                        Forms\Components\ViewField::make('delivery_zones')
+                            ->label('Карта зоны доставки')
+                            ->view('filament.forms.components.delivery-zone-map')
                             ->columnSpanFull(),
+
+                        Forms\Components\Section::make('Экспертный режим (GeoJSON)')
+                            ->collapsed()
+                            ->compact()
+                            ->schema([
+                                Forms\Components\Textarea::make('delivery_zones')
+                                    ->label('GeoJSON MULTIPOLYGON')
+                                    ->placeholder('{"type":"MultiPolygon","coordinates":[[[[63.55,39.08],[63.56,39.08],[63.56,39.09],[63.55,39.09],[63.55,39.08]]]]}')
+                                    ->rows(6)
+                                    ->formatStateUsing(function ($state) {
+                                        if (is_array($state) || is_object($state)) {
+                                            return json_encode($state, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                                        }
+                                        return $state;
+                                    })
+                                    ->dehydrateStateUsing(function ($state) {
+                                        if (empty($state)) return null;
+                                        $decoded = json_decode($state, true);
+                                        return json_decode($state) ? $decoded : $state;
+                                    })
+                                    ->helperText('Используйте http://geojson.io для создания полигона. Формат: {"type":"MultiPolygon","coordinates":[[[[lon,lat],[lon,lat],...]]]}')
+                                    ->columnSpanFull(),
+                            ]),
+
                         Forms\Components\Placeholder::make('delivery_zone_status')
                             ->label('Статус зоны доставки')
                             ->content(function ($record) {
