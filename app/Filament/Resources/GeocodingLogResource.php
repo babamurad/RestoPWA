@@ -22,7 +22,7 @@ class GeocodingLogResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Логи геокодинга';
 
-    protected static ?string $navigationGroup = 'Гео';
+    protected static string | UnitEnum | null $navigationGroup = 'Гео';
 
     public static function table(Table $table): Table
     {
