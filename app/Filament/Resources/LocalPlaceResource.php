@@ -6,8 +6,9 @@ namespace App\Filament\Resources;
 
 use App\Domains\Geo\Models\LocalPlace;
 use App\Filament\Resources\LocalPlaceResource\Pages;
+use BackedEnum;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -16,7 +17,7 @@ class LocalPlaceResource extends Resource
 {
     protected static ?string $model = LocalPlace::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-map-pin';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-map-pin';
 
     protected static ?string $navigationLabel = 'Локальные адреса';
 
@@ -24,10 +25,10 @@ class LocalPlaceResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Локальные адреса';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Forms\Components\Section::make('Основная информация')
                     ->schema([
                         Forms\Components\TextInput::make('name')
