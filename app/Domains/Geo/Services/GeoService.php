@@ -164,23 +164,56 @@ class GeoService
             return $localResults;
         }
 
-        // 2. External providers
-        $externalResults = match ($this->driver) {
+        // 2. Try primary driver
+        $results = match ($this->driver) {
             'yandex' => $this->suggestAddressesViaYandex($query),
             'nominatim' => $this->suggestAddressesViaNominatim($query),
-            default => $this->suggestAddressesViaGoogle($query),
+            'google' => $this->suggestAddressesViaGoogle($query),
+            default => [],
         };
 
-        // 3. Merge: local first, then external
-        $merged = array_values(array_merge($localResults, $externalResults));
+        // 3. Fallback to other providers if primary returns too few results
+        if (count($results) < 3) {
+            foreach ($this->providerOrder as $provider) {
+                if ($provider === 'local' || $provider === $this->driver) {
+                    continue;
+                }
 
-        if (empty($merged)) {
+                $fallbackResults = match ($provider) {
+                    'yandex' => $this->suggestAddressesViaYandex($query),
+                    'nominatim' => $this->suggestAddressesViaNominatim($query),
+                    'google' => $this->suggestAddressesViaGoogle($query),
+                    default => [],
+                };
+
+                if (! empty($fallbackResults)) {
+                    $results = array_merge($results, $fallbackResults);
+                    if (count($results) >= 5) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 4. Merge with local results and deduplicate by address
+        $merged = array_merge($localResults, $results);
+        $unique = [];
+        foreach ($merged as $item) {
+            $key = md5(mb_strtolower($item['address']));
+            if (! isset($unique[$key])) {
+                $unique[$key] = $item;
+            }
+        }
+
+        $final = array_values(array_slice($unique, 0, 8));
+
+        if (empty($final)) {
             $this->logGeocodingEvent('suggest_empty', $this->driver, $query);
         } else {
             $this->logGeocodingEvent('suggest_results', $this->driver, $query);
         }
 
-        return $merged;
+        return $final;
     }
 
     /**
@@ -624,13 +657,21 @@ class GeoService
         }
 
         try {
+            // ST_Intersects is better for boundaries than ST_Contains
             $result = DB::selectOne('
-                SELECT ST_Contains(delivery_zones, ST_SetSRID(ST_MakePoint(?, ?), 4326)) as is_inside
+                SELECT ST_Intersects(delivery_zones, ST_SetSRID(ST_MakePoint(?, ?), 4326)) as is_inside
                 FROM restaurants 
                 WHERE id = ?
             ', [$lon, $lat, $vendorId]);
 
             $isInside = (bool) ($result?->is_inside ?? false);
+
+            Log::info("[GeoService] Delivery zone check", [
+                'vendor_id' => $vendorId,
+                'lat' => $lat,
+                'lon' => $lon,
+                'is_inside' => $isInside,
+            ]);
 
             $this->logGeocodingEvent(
                 $isInside ? 'in_zone' : 'outside_zone',
@@ -646,7 +687,8 @@ class GeoService
                 Log::warning('PostGIS is not enabled. Bypassing delivery zone check.');
                 return true;
             }
-            throw $e;
+            Log::error("[GeoService] Delivery zone check failed: " . $e->getMessage());
+            return false;
         }
     }
 

@@ -34,6 +34,20 @@ class RestaurantSeeder extends Seeder
 
             $restaurantData['slug'] = Str::slug($restaurantData['name']);
             $restaurantData['owner_id'] = $owner->id;
+            $restaurantData['delivery_zones'] = [
+                'type' => 'MultiPolygon',
+                'coordinates' => [
+                    [
+                        [
+                            [63.4, 39.0],
+                            [63.7, 39.0],
+                            [63.7, 39.2],
+                            [63.4, 39.2],
+                            [63.4, 39.0]
+                        ]
+                    ]
+                ]
+            ];
 
             $existing = Restaurant::withoutGlobalScopes()->where('slug', $restaurantData['slug'])->first();
             if ($existing) {

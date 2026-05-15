@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @property string $id
@@ -85,18 +87,59 @@ class Restaurant extends Model
     }
 
     /**
-     * Возвращает geometry как array координат.
-     *
-     * @return array<mixed>
+     * @return Attribute<array<mixed>|null, string|array<mixed>|null>
      */
-    public function deliveryZones(): array
+    protected function deliveryZones(): Attribute
     {
-        // Если поле `delivery_zones` содержит сырой GeoJSON (или spatial data)
-        $zones = $this->getAttribute('delivery_zones');
+        return Attribute::make(
+            get: function ($value) {
+                if (empty($value)) {
+                    return null;
+                }
+
+                if (is_array($value)) {
+                    return $value;
+                }
+
+                // If it's already GeoJSON string
+                if (is_string($value) && (str_contains($value, '"type"') || str_contains($value, '"coordinates"'))) {
+                    return json_decode($value, true);
+                }
+
+                // Fallback for PostGIS binary if not automatically converted by DB driver
+                try {
+                    $geojson = DB::selectOne("SELECT ST_AsGeoJSON(?) as geo", [$value])?->geo;
+                    return $geojson ? json_decode($geojson, true) : null;
+                } catch (\Exception $e) {
+                    return is_string($value) ? json_decode($value, true) : null;
+                }
+            },
+            set: function ($value) {
+                if (empty($value)) {
+                    return null;
+                }
+
+                $json = is_array($value) ? json_encode($value) : $value;
+
+                if (DB::getDriverName() === 'sqlite') {
+                    return $json;
+                }
+
+                // Wrap in ST_Multi if it's a MultiPolygon to be safe
+                return DB::raw("ST_GeomFromGeoJSON('$json')");
+            }
+        );
+    }
+
+    /**
+     * Helper to get zones as array.
+     */
+    public function getZonesArray(): array
+    {
+        $zones = $this->delivery_zones;
 
         if (is_string($zones)) {
             $decoded = json_decode($zones, true);
-
             return is_array($decoded) ? $decoded : [];
         }
 

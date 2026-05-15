@@ -81,27 +81,16 @@ class RestaurantResource extends Resource
                             ->view('filament.forms.components.delivery-zone-map')
                             ->columnSpanFull(),
 
-                        Forms\Components\Section::make('Экспертный режим (GeoJSON)')
+                        Forms\Components\Section::make('Просмотр координат (GeoJSON)')
                             ->collapsed()
                             ->compact()
                             ->schema([
-                                Forms\Components\Textarea::make('delivery_zones')
-                                    ->label('GeoJSON MULTIPOLYGON')
-                                    ->placeholder('{"type":"MultiPolygon","coordinates":[[[[63.55,39.08],[63.56,39.08],[63.56,39.09],[63.55,39.09],[63.55,39.08]]]]}')
-                                    ->rows(6)
-                                    ->formatStateUsing(function ($state) {
-                                        if (is_array($state) || is_object($state)) {
-                                            return json_encode($state, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-                                        }
-                                        return $state;
+                                Forms\Components\Placeholder::make('delivery_zones_json')
+                                    ->label('Текущий GeoJSON')
+                                    ->content(function ($record) {
+                                        if (!$record || !$record->delivery_zones) return 'Пусто';
+                                        return json_encode($record->delivery_zones, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                                     })
-                                    ->dehydrateStateUsing(function ($state) {
-                                        if (empty($state)) return null;
-                                        $decoded = json_decode($state, true);
-                                        return json_decode($state) ? $decoded : $state;
-                                    })
-                                    ->helperText('Используйте http://geojson.io для создания полигона. Формат: {"type":"MultiPolygon","coordinates":[[[[lon,lat],[lon,lat],...]]]}')
-                                    ->columnSpanFull(),
                             ]),
 
                         Forms\Components\Placeholder::make('delivery_zone_status')
@@ -110,11 +99,11 @@ class RestaurantResource extends Resource
                                 if (! $record) {
                                     return 'Сохраните ресторан, чтобы проверить зону доставки.';
                                 }
-                                $zones = $record->deliveryZones();
+                                $zones = $record->delivery_zones;
                                 if (empty($zones)) {
                                     return '⚠️ Зона доставки не настроена. Все точки будут считаться вне зоны.';
                                 }
-                                return '✅ Зона доставки настроена ('.count($zones).' полигон(ов)).';
+                                return '✅ Зона доставки настроена.';
                             }),
                     ]),
             ]);

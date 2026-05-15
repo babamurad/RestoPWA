@@ -48,6 +48,8 @@ class AddressSelector extends Component
 
     public bool $showRefinement = false;
 
+    public bool $hasSelectedPoint = false;
+
     private GeoService $geoService;
 
     public function mount(): void
@@ -84,16 +86,21 @@ class AddressSelector extends Component
             $this->floor = $savedAddress['floor'] ?? '';
             $this->apartment = $savedAddress['apartment'] ?? '';
             $this->courierComment = $savedAddress['courier_comment'] ?? '';
-            if ($this->lat && $this->lon && $this->selectedVendorId) {
-                $this->isInDeliveryZone = $this->geoService->isPointInDeliveryZone(
-                    $this->lat,
-                    $this->lon,
-                    $this->selectedVendorId
-                );
+            if ($this->lat && $this->lon) {
+                $this->hasSelectedPoint = true;
+                if ($this->selectedVendorId) {
+                    $this->isInDeliveryZone = $this->geoService->isPointInDeliveryZone(
+                        $this->lat,
+                        $this->lon,
+                        $this->selectedVendorId
+                    );
+                }
             }
         } else {
+            // Default center for map, but NOT a selected point
             $this->lat = 39.0886;
             $this->lon = 63.5593;
+            $this->hasSelectedPoint = false;
         }
     }
 
@@ -145,6 +152,7 @@ class AddressSelector extends Component
         $this->source = $source;
         $this->isDetectingLocation = false;
         $this->error = null;
+        $this->hasSelectedPoint = true;
 
         $result = $this->geoService->reverseGeocode($lat, $lon);
 
@@ -152,7 +160,10 @@ class AddressSelector extends Component
             $this->address = $result['address'];
             $this->provider = $result['provider'] ?? null;
         } else {
-            $this->address = '';
+            // Don't clear address if we have it manually, but if it was from geocoding, maybe clear
+            if ($this->source === 'map_pin' || $this->source === 'gps') {
+                $this->address = '';
+            }
             $this->provider = null;
         }
 
@@ -210,17 +221,17 @@ class AddressSelector extends Component
 
     public function confirmAddress(): void
     {
-        $hasCoords = $this->lat && $this->lon;
-        $hasText = ! empty($this->address) || ! empty($this->manualAddress) || ! empty($this->landmark) || ! empty($this->courierComment);
-
+        $hasCoords = $this->hasSelectedPoint && $this->lat && $this->lon;
+        
         if (! $hasCoords) {
             if (empty($this->address)) {
-                $this->error = 'Введите адрес или поставьте точку на карте';
+                $this->error = 'Выберите точку на карте или введите адрес';
                 return;
             }
 
             $this->isDetectingLocation = true;
-            $result = $this->geoService->geocodeAddress($this->address);
+            // Use fallback geocoding for better reliability
+            $result = $this->geoService->geocodeWithFallback($this->address);
 
             if ($result) {
                 $this->address = $result['address'];
@@ -228,10 +239,11 @@ class AddressSelector extends Component
                 $this->lon = $result['lon'];
                 $this->source = 'manual_geocoded';
                 $this->provider = $result['provider'] ?? null;
+                $this->hasSelectedPoint = true;
                 $this->showRefinement = true;
                 $this->checkDeliveryZone();
             } else {
-                $this->error = 'Адрес не найден. Поставьте точку на карте и добавьте ориентир для курьера.';
+                $this->error = 'Адрес не найден. Пожалуйста, укажите точку на карте вручную.';
                 $this->isDetectingLocation = false;
                 return;
             }
