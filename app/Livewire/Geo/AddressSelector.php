@@ -58,6 +58,7 @@ class AddressSelector extends Component
     #[On('open-address-selector')]
     public function openModal(): void
     {
+        $this->selectedVendorId = session('current_vendor_id', '');
         $this->isAddressModalOpen = true;
     }
 

@@ -140,6 +140,8 @@ class CheckoutWizard extends Component
         }
 
         $this->vendorId = (string) $vendorId;
+        session(['current_vendor_id' => $this->vendorId]);
+        
         $this->restaurant = Restaurant::find($this->vendorId);
 
         if (! $this->restaurant) {

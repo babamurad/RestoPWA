@@ -1,5 +1,5 @@
 <div x-data="{
-        isLocalModalOpen: false,
+        isLocalModalOpen: @entangle('isAddressModalOpen'),
         searchQuery: @entangle('address'),
         showSuggestions: false,
         debounceTimer: null,
@@ -71,7 +71,9 @@
 
                             this.markerInstance.events.add('dragend', () => {
                                 const coords = this.markerInstance.geometry.getCoordinates();
-                                $wire.setLocation(coords[0], coords[1], 'map_pin');
+                                if (coords && coords.length >= 2) {
+                                    $wire.setLocation(coords[0], coords[1], 'map_pin');
+                                }
                             });
 
                             this.mapInstance.geoObjects.add(this.markerInstance);

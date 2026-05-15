@@ -73,6 +73,8 @@ class RestaurantController extends Controller
             }]);
         }]);
 
+        session(['current_vendor_id' => $restaurant->id]);
+        
         return view('restaurants.show', compact('restaurant'));
     }
 }
