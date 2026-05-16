@@ -147,6 +147,7 @@ class AddressSelector extends Component
 
     public function setLocation(float $lat, float $lon, string $source = 'map_pin'): void
     {
+        Log::info('[AddressSelector] setLocation called', ['lat' => $lat, 'lon' => $lon, 'source' => $source]);
         $this->lat = $lat;
         $this->lon = $lon;
         $this->source = $source;
@@ -201,6 +202,7 @@ class AddressSelector extends Component
         }
 
         $selected = $this->suggestions[$index];
+        Log::info('[AddressSelector] selectAddress called', ['index' => $index, 'address' => $selected['address']]);
         $this->address = $selected['address'];
         $this->lat = $selected['lat'];
         $this->lon = $selected['lon'];
@@ -221,19 +223,30 @@ class AddressSelector extends Component
 
     public function confirmAddress(): void
     {
+        Log::info('[AddressSelector] confirmAddress called', [
+            'hasSelectedPoint' => $this->hasSelectedPoint,
+            'lat' => $this->lat,
+            'lon' => $this->lon,
+            'address' => $this->address,
+            'vendor_id' => $this->selectedVendorId,
+        ]);
+
         $hasCoords = $this->hasSelectedPoint && $this->lat && $this->lon;
         
         if (! $hasCoords) {
             if (empty($this->address)) {
+                Log::info('[AddressSelector] confirmAddress: No coords and empty address');
                 $this->error = 'Выберите точку на карте или введите адрес';
                 return;
             }
 
+            Log::info('[AddressSelector] confirmAddress: Attempting geocoding for address', ['address' => $this->address]);
             $this->isDetectingLocation = true;
             // Use fallback geocoding for better reliability
             $result = $this->geoService->geocodeWithFallback($this->address);
 
             if ($result) {
+                Log::info('[AddressSelector] confirmAddress: Geocoding successful', $result);
                 $this->address = $result['address'];
                 $this->lat = $result['lat'];
                 $this->lon = $result['lon'];
@@ -243,6 +256,7 @@ class AddressSelector extends Component
                 $this->showRefinement = true;
                 $this->checkDeliveryZone();
             } else {
+                Log::warning('[AddressSelector] confirmAddress: Geocoding failed', ['address' => $this->address]);
                 $this->error = 'Адрес не найден. Пожалуйста, укажите точку на карте вручную.';
                 $this->isDetectingLocation = false;
                 return;

@@ -1,4 +1,4 @@
-<div x-data="{
+<div    x-data="{
         isLocalModalOpen: @entangle('isAddressModalOpen'),
         searchQuery: @entangle('address'),
         showSuggestions: false,
@@ -7,12 +7,27 @@
         markerInstance: null,
         mapInitialized: false,
         isMapLoading: true,
+        isDragging: false,
         showRefinement: @entangle('showRefinement'),
         
         init() {
             this.$watch('isLocalModalOpen', value => {
                 if (value === true) {
                     setTimeout(() => this.initMap(), 600);
+                }
+            });
+
+            // Watch for coordinate changes from Livewire (e.g. from search)
+            this.$watch(() => $wire.lat + ',' + $wire.lon, (val) => {
+                if (!this.mapInitialized || !this.markerInstance || this.isDragging) return;
+                
+                const [nLat, nLon] = val.split(',').map(parseFloat);
+                if (!nLat || !nLon) return;
+
+                const currentCoords = this.markerInstance.geometry.getCoordinates();
+                if (!currentCoords || Math.abs(currentCoords[0] - nLat) > 0.0001 || Math.abs(currentCoords[1] - nLon) > 0.0001) {
+                    this.markerInstance.geometry.setCoordinates([nLat, nLon]);
+                    this.mapInstance.setCenter([nLat, nLon], 16, { checkZoomRange: true });
                 }
             });
         },
@@ -33,8 +48,8 @@
 
                 if (this.mapInitialized && this.mapInstance) {
                     this.mapInstance.container.fitToViewport();
-                    const lat = parseFloat(@js($lat)) || 39.0886;
-                    const lon = parseFloat(@js($lon)) || 63.5593;
+                    const lat = parseFloat($wire.lat) || 39.0886;
+                    const lon = parseFloat($wire.lon) || 63.5593;
                     this.mapInstance.setCenter([lat, lon], 16);
                     if (this.markerInstance) {
                         this.markerInstance.geometry.setCoordinates([lat, lon]);
@@ -44,20 +59,22 @@
                 }
 
                 try {
-                    const lat = parseFloat(@js($lat)) || 39.0886;
-                    const lon = parseFloat(@js($lon)) || 63.5593;
+                    const lat = parseFloat($wire.lat) || 39.0886;
+                    const lon = parseFloat($wire.lon) || 63.5593;
 
                     this.mapInstance = new ymaps.Map(mapEl, {
                         center: [lat, lon],
                         zoom: 16,
                         controls: [],
                         behaviors: ['drag', 'multiTouch']
+                    }, {
+                        suppressMapOpenBlock: true
                     });
 
-                    this.mapInitialized = true;
-                    this.isMapLoading = false;
-
                     this.mapInstance.events.once('boundschange', () => {
+                        this.mapInitialized = true;
+                        this.isMapLoading = false;
+
                         try {
                             this.mapInstance.controls.add('zoomControl');
                             this.mapInstance.controls.add('geolocationControl');
@@ -73,7 +90,12 @@
                                 draggable: true
                             });
 
+                            this.markerInstance.events.add('dragstart', () => {
+                                this.isDragging = true;
+                            });
+
                             this.markerInstance.events.add('dragend', () => {
+                                this.isDragging = false;
                                 const coords = this.markerInstance.geometry.getCoordinates();
                                 if (coords && coords.length >= 2) {
                                     $wire.setLocation(coords[0], coords[1], 'map_pin');
@@ -88,6 +110,7 @@
                         // Add click listener for map
                         try {
                             this.mapInstance.events.add('click', (e) => {
+                                if (this.isDragging) return;
                                 const coords = e.get('coords');
                                 if (coords) {
                                     this.markerInstance.geometry.setCoordinates(coords);
@@ -97,14 +120,6 @@
                         } catch (e) {
                             console.warn('Map click listener error:', e);
                         }
-
-                        this.$watch(() => $wire.lat + ',' + $wire.lon, (val) => {
-                            const [nLat, nLon] = val.split(',').map(parseFloat);
-                            if (nLat && nLon && this.markerInstance && this.mapInstance) {
-                                this.markerInstance.geometry.setCoordinates([nLat, nLon]);
-                                this.mapInstance.setCenter([nLat, nLon], 16, { checkZoomRange: true });
-                            }
-                        });
                     });
 
                 } catch (e) {
