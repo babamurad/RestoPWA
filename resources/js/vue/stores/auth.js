@@ -11,10 +11,14 @@ export const useAuthStore = defineStore('auth', {
         async fetchUser() {
             this.isLoading = true;
             try {
-                // Предполагается, что на бэкенде есть маршрут /api/user для получения текущего пользователя
                 const response = await apiClient.get('/user');
-                this.user = response.data;
-                this.isAuthenticated = !!this.user;
+                if (response.data.success && response.data.user) {
+                    this.user = response.data.user;
+                    this.isAuthenticated = true;
+                } else {
+                    this.user = null;
+                    this.isAuthenticated = false;
+                }
             } catch (error) {
                 this.user = null;
                 this.isAuthenticated = false;
@@ -23,14 +27,28 @@ export const useAuthStore = defineStore('auth', {
             }
         },
         async login(credentials) {
-            await apiClient.get('/sanctum/csrf-cookie');
-            await apiClient.post('/login', credentials);
-            await this.fetchUser();
+            this.isLoading = true;
+            try {
+                const response = await apiClient.post('/login', credentials);
+                if (response.data && response.data.success) {
+                    this.user = response.data.user;
+                    this.isAuthenticated = true;
+                } else {
+                    throw new Error(response.data?.message || 'Неверные учетные данные');
+                }
+            } finally {
+                this.isLoading = false;
+            }
         },
         async logout() {
-            await apiClient.post('/logout');
-            this.user = null;
-            this.isAuthenticated = false;
+            this.isLoading = true;
+            try {
+                await apiClient.post('/logout');
+            } finally {
+                this.user = null;
+                this.isAuthenticated = false;
+                this.isLoading = false;
+            }
         }
     }
 });

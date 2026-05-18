@@ -3,6 +3,7 @@ import HomePage from '../pages/HomePage.vue';
 import CartPage from '../pages/CartPage.vue';
 import ProfilePage from '../pages/ProfilePage.vue';
 import RestaurantMenuPage from '../pages/RestaurantMenuPage.vue';
+import { useAuthStore } from '../stores/auth';
 
 const routes = [
     {
@@ -30,10 +31,22 @@ const routes = [
         meta: { title: 'Оформление заказа' }
     },
     {
+        path: '/login',
+        name: 'login',
+        component: () => import('../pages/LoginPage.vue'),
+        meta: { title: 'Вход | RestoPWA', guestOnly: true }
+    },
+    {
+        path: '/register',
+        name: 'register',
+        component: () => import('../pages/RegisterPage.vue'),
+        meta: { title: 'Регистрация | RestoPWA', guestOnly: true }
+    },
+    {
         path: '/profile',
         name: 'profile',
         component: ProfilePage,
-        meta: { title: 'Профиль' }
+        meta: { title: 'Профиль', requiresAuth: true }
     },
     // Redirect all other unmatched routes to home
     {
@@ -54,11 +67,26 @@ const router = createRouter({
     }
 });
 
-// Update page title dynamically
-router.beforeEach((to, from, next) => {
+// Auth and Title Guard
+router.beforeEach(async (to, from, next) => {
+    const authStore = useAuthStore();
+    
+    // Set dynamic page title
     const title = to.meta.title ? `${to.meta.title} | RestoPWA` : 'RestoPWA';
     document.title = title;
-    next();
+
+    // Check if user is already loaded/authenticated
+    if (!authStore.isAuthenticated && authStore.user === null) {
+        await authStore.fetchUser();
+    }
+
+    if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+        next({ name: 'login' });
+    } else if (to.meta.guestOnly && authStore.isAuthenticated) {
+        next({ name: 'profile' });
+    } else {
+        next();
+    }
 });
 
 export default router;

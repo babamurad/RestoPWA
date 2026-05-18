@@ -8,6 +8,7 @@ use App\Domains\Vendor\Models\Restaurant;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\PushController;
+use App\Http\Controllers\Auth\AuthController;
 use App\Http\Middleware\SetTenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -31,12 +32,16 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->gro
 
     Route::post('cart/sync', [CartController::class, 'sync'])->name('api.cart.sync');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::post('login', [AuthController::class, 'login'])->name('api.login');
+    Route::post('register', [AuthController::class, 'register'])->name('api.register');
+    Route::post('logout', [AuthController::class, 'logout'])->name('api.logout');
+
+    Route::middleware('auth')->group(function () {
+        Route::get('user', [AuthController::class, 'user'])->name('api.user');
         Route::post('orders', [DomainOrderController::class, 'store'])->name('api.orders.store');
         Route::get('orders', [OrderController::class, 'index'])->name('api.v1.orders.index');
         Route::get('orders/{id}', [OrderController::class, 'show'])->name('api.v1.orders.show');
+        Route::post('push/subscribe', [PushController::class, 'subscribe'])->name('api.push.subscribe');
+        Route::post('push/unsubscribe', [PushController::class, 'unsubscribe'])->name('api.push.unsubscribe');
     });
-
-    Route::post('push/subscribe', [PushController::class, 'subscribe'])->middleware('auth:sanctum')->name('api.push.subscribe');
-    Route::post('push/unsubscribe', [PushController::class, 'unsubscribe'])->middleware('auth:sanctum')->name('api.push.unsubscribe');
 });
