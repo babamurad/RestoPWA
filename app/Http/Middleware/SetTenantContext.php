@@ -31,13 +31,32 @@ class SetTenantContext
                 $vendorId = $matches[1];
             } elseif ($host === 'restopwa') {
                 // Фоллбек для локальной разработки: берем из сессии или заголовка
-                $vendorId = $request->session()->get('vendor_id');
+                if ($request->hasSession()) {
+                    $vendorId = $request->session()->get('vendor_id');
+                }
             }
         }
 
-        // Fallback to request body for API sync/order requests
-        if (! $vendorId && ($request->is('api/v1/cart/sync') || $request->is('api/v1/orders'))) {
-            $vendorId = $request->input('vendor_id');
+        // Fallback to route parameters, URL segments, or request body
+        if (! $vendorId) {
+            $vendorParam = $request->route('vendor');
+            if ($vendorParam) {
+                $vendorId = is_object($vendorParam) ? ($vendorParam->id ?? $vendorParam->vendor_id) : $vendorParam;
+            } elseif ($request->is('api/v1/menu/product/*')) {
+                $productId = $request->segment(5);
+                $vendorId = \Illuminate\Support\Facades\DB::table('products')
+                    ->where('id', $productId)
+                    ->value('vendor_id');
+            } elseif ($request->is('api/v1/menu/*')) {
+                $segment4 = $request->segment(4);
+                if ($segment4 !== 'product') {
+                    $vendorId = $segment4;
+                }
+            } elseif ($request->is('api/v1/restaurants/*')) {
+                $vendorId = $request->segment(4);
+            } elseif ($request->is('api/v1/cart/sync') || $request->is('api/v1/orders')) {
+                $vendorId = $request->input('vendor_id');
+            }
         }
 
         if ($vendorId) {
@@ -49,11 +68,15 @@ class SetTenantContext
                     ->first();
                 if ($resolved) {
                     $vendorId = $resolved->id;
+                } else {
+                    $vendorId = null;
                 }
             }
-            $this->tenantContext->setCurrentVendor((string) $vendorId);
-        } elseif ($request->is('api/ping') || $request->is('api/order/*/track*') || $request->is('api/push/*')) {
-            // Allow health check, guest tracking, and push endpoints without tenant header
+            if ($vendorId) {
+                $this->tenantContext->setCurrentVendor((string) $vendorId);
+            }
+        } elseif ($request->is('api/ping') || $request->is('api/order/*/track*') || $request->is('api/push/*') || $request->is('api/v1/restaurants*')) {
+            // Allow health check, guest tracking, push endpoints, and global restaurants list without tenant header
             return $next($request);
         } elseif ($request->is('api/*')) {
             return response()->json([

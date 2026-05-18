@@ -125,7 +125,7 @@
           <!-- Thumbnail Image container -->
           <div class="relative w-full h-44 rounded-2xl overflow-hidden mb-4 bg-slate-900 border border-slate-800/60 shadow-inner">
             <img 
-              :src="restaurant.image ? ('/storage/' + restaurant.image) : 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=600&auto=format&fit=crop&q=80'" 
+              :src="restaurant.image ? (restaurant.image.startsWith('http') ? restaurant.image : '/storage/' + restaurant.image) : 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=600&auto=format&fit=crop&q=80'" 
               :alt="restaurant.name"
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               @error="handleImageError"

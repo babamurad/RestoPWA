@@ -29,7 +29,7 @@
         <!-- Thumbnail -->
         <div class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden bg-slate-900 border border-slate-850 flex-shrink-0 shadow-md">
           <img 
-            :src="store.currentRestaurant.image ? ('/storage/' + store.currentRestaurant.image) : 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=600&auto=format&fit=crop&q=80'" 
+            :src="store.currentRestaurant.image ? (store.currentRestaurant.image.startsWith('http') ? store.currentRestaurant.image : '/storage/' + store.currentRestaurant.image) : 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=600&auto=format&fit=crop&q=80'" 
             :alt="store.currentRestaurant.name"
             class="w-full h-full object-cover"
             @error="handleImageError"

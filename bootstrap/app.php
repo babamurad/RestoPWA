@@ -20,6 +20,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->appendToGroup('api', [
+            \Illuminate\Cookie\Middleware\EncryptCookies::class,
+            \Illuminate\Session\Middleware\StartSession::class,
             SetTenantContext::class,
         ]);
 

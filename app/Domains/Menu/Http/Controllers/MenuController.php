@@ -61,7 +61,7 @@ class MenuController
             'price' => (int) $product->price,
             'description' => $product->description,
             'modifiers' => $product->modifiers ?? collect(),
-            'image_url' => $product->image ? asset('storage/'.$product->image) : null,
+            'image_url' => $product->image ? (str_starts_with($product->image, 'http') ? $product->image : asset('storage/'.$product->image)) : null,
             'is_available' => $product->is_available,
             'weight_g' => $product->weight_g,
             'category' => $product->category ? [

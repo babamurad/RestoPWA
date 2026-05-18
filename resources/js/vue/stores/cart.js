@@ -60,7 +60,7 @@ export const useCartStore = defineStore('cart', {
           name: product.name,
           price: product.price,
           quantity: quantity,
-          image: product.image_url || ('/storage/' + product.image),
+          image: product.image_url || (product.image && product.image.startsWith('http') ? product.image : '/storage/' + product.image),
           weight: product.weight_g || null,
           modifiers: [] // Can support chosen modifier IDs
         });
