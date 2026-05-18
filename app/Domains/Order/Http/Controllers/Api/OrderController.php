@@ -30,6 +30,115 @@ class OrderController
     {
         $traceId = (string) ($request->header('X-Trace-Id') ?? str()->uuid());
 
+        // --- PREPROCESSING LAYER START ---
+        // 1. Structure address
+        $addressInput = $request->input('address');
+        if (is_string($addressInput)) {
+            $addressData = [
+                'address' => $addressInput,
+                'manual_address' => $addressInput,
+                'name' => $request->input('name') ?? $request->user()?->name ?? 'Покупатель',
+                'phone' => $request->input('phone') ?? $request->user()?->phone ?? '',
+                'entrance' => $request->input('entrance'),
+                'floor' => $request->input('floor'),
+                'apartment' => $request->input('apartment'),
+                'courier_comment' => $request->input('comment'),
+            ];
+            $request->merge(['address' => $addressData]);
+            $addressInput = $addressData;
+        }
+
+        // 2. Fallback coordinates & geocoding if missing lat/lon
+        if (is_array($addressInput)) {
+            if (empty($addressInput['lat']) || empty($addressInput['lon'])) {
+                $lat = 39.0886; // Default latitude for Turkmenabat
+                $lon = 63.5593; // Default longitude for Turkmenabat
+                
+                $addressString = $addressInput['address'] ?? $addressInput['manual_address'] ?? '';
+                if (!empty($addressString)) {
+                    try {
+                        $geoService = app(\App\Domains\Geo\Services\GeoService::class);
+                        $geoResult = $geoService->geocodeWithFallback($addressString);
+                        if ($geoResult && !empty($geoResult['lat']) && !empty($geoResult['lon'])) {
+                            $lat = $geoResult['lat'];
+                            $lon = $geoResult['lon'];
+                        }
+                    } catch (\Throwable $e) {
+                        Log::warning('[API Order] Geocoding fallback failed', [
+                            'exception' => $e->getMessage()
+                        ]);
+                    }
+                }
+                
+                $addressInput['lat'] = $lat;
+                $addressInput['lon'] = $lon;
+            }
+
+            if (empty($addressInput['name'])) {
+                $addressInput['name'] = $request->user()?->name ?? 'Покупатель';
+            }
+
+            if (empty($addressInput['phone'])) {
+                $addressInput['phone'] = $request->user()?->phone ?? '';
+            }
+
+            $request->merge(['address' => $addressInput]);
+        }
+
+        // 3. Structure items
+        $itemsInput = $request->input('items');
+        if (is_array($itemsInput)) {
+            $updatedItems = [];
+            foreach ($itemsInput as $item) {
+                if (is_array($item) && isset($item['product_id'])) {
+                    $productId = $item['product_id'];
+                    $product = \App\Domains\Menu\Models\Product::find($productId);
+                    
+                    $productName = $item['product_name'] ?? $item['name'] ?? ($product ? $product->name : 'Блюдо');
+                    $unitPrice = $item['unit_price'] ?? $item['price'] ?? ($product ? (int)round($product->price * 100) : 0);
+                    $quantity = (int)($item['quantity'] ?? 1);
+                    $totalPrice = $item['total_price'] ?? ($unitPrice * $quantity);
+                    
+                    $item['product_name'] = $productName;
+                    $item['unit_price'] = (int)$unitPrice;
+                    $item['total_price'] = (int)$totalPrice;
+                    $item['modifiers'] = $item['modifiers'] ?? [];
+                    $item['image'] = $item['image'] ?? ($product ? $product->image : null);
+                }
+                $updatedItems[] = $item;
+            }
+            $request->merge(['items' => $updatedItems]);
+        }
+
+        // 4. Calculate total & delivery_fee if missing or zero
+        if ((!$request->has('total') || (int)$request->input('total') === 0) && is_array($request->input('items'))) {
+            $itemsTotal = 0;
+            foreach ($request->input('items') as $item) {
+                $itemsTotal += (int)($item['total_price'] ?? 0);
+            }
+            
+            $deliveryFee = 0;
+            $vendorId = $request->input('vendor_id');
+            if ($vendorId && is_array($request->input('address'))) {
+                try {
+                    $geoService = app(\App\Domains\Geo\Services\GeoService::class);
+                    $lat = (float)$request->input('address.lat');
+                    $lon = (float)$request->input('address.lon');
+                    $deliveryFee = (int)round($geoService->calculateDeliveryFee($lat, $lon, $vendorId) * 100);
+                } catch (\Throwable $e) {
+                    Log::warning('[API Order] Delivery fee calculation failed', [
+                        'exception' => $e->getMessage()
+                    ]);
+                }
+            }
+            
+            $request->merge([
+                'delivery_fee' => $deliveryFee,
+                'total' => $itemsTotal + $deliveryFee
+            ]);
+        }
+        // --- PREPROCESSING LAYER END ---
+
         try {
             $validated = $request->validate([
                 'vendor_id' => 'required|string',

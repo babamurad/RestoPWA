@@ -1,5 +1,8 @@
 <template>
-  <div class="px-4 py-6 max-w-lg mx-auto md:max-w-4xl lg:max-w-6xl pb-24 font-inter">
+  <div 
+    class="px-4 py-6 max-w-lg mx-auto md:max-w-4xl lg:max-w-6xl font-inter transition-all duration-300"
+    :class="[showFloatingCartBar ? 'pb-48 md:pb-32' : 'pb-24']"
+  >
     <!-- Back Navigation Bar -->
     <div class="flex items-center gap-3 mb-6">
       <router-link to="/" class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700/50 flex items-center justify-center text-slate-300 hover:text-orange-400 hover:border-orange-500/30 transition-all active:scale-95">

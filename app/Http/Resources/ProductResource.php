@@ -14,7 +14,7 @@ class ProductResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'price' => (int) $this->price,
+            'price' => (float) $this->price,
             'description' => $this->whenHas('description', fn () => $this->description),
             'modifiers' => $this->modifiers ?? collect(),
             'image_url' => $this->whenHas('image', fn () => str_starts_with((string) $this->image, 'http') ? $this->image : asset('storage/'.$this->image)),

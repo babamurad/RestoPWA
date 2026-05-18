@@ -142,7 +142,7 @@ export const useCartStore = defineStore('cart', {
         const response = await apiClient.post('/cart/sync', payload);
         const data = response.data;
 
-        if (data && data.status === 'success' && data.data) {
+        if (data && data.success && data.data) {
           const syncData = data.data;
 
           // Merge any price changes in local items state

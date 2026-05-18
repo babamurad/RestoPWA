@@ -56,6 +56,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCartStore } from '../stores/cart';
 import { useOrdersStore } from '../stores/orders';
+import { useAuthStore } from '../stores/auth';
 
 import CheckoutAddressStep from '../components/checkout/CheckoutAddressStep.vue';
 import CheckoutPaymentStep from '../components/checkout/CheckoutPaymentStep.vue';
@@ -64,6 +65,7 @@ import CheckoutConfirmStep from '../components/checkout/CheckoutConfirmStep.vue'
 const router = useRouter();
 const cartStore = useCartStore();
 const ordersStore = useOrdersStore();
+const authStore = useAuthStore();
 
 const currentStep = ref(0);
 
@@ -87,9 +89,17 @@ const orderData = ref({
   payment_method: 'cash',
 });
 
-onMounted(() => {
+onMounted(async () => {
   if (cartStore.isEmpty) {
     router.replace('/cart');
+    return;
+  }
+  // Prefill phone from authenticated user if available
+  if (!authStore.user) {
+    await authStore.fetchUser();
+  }
+  if (authStore.user && authStore.user.phone) {
+    orderData.value.phone = authStore.user.phone;
   }
 });
 
@@ -114,21 +124,45 @@ const nextStep = () => {
 const submitOrder = async () => {
   if (cartStore.isEmpty) return;
 
+  // Normalize phone to format '+993...' if possible
+  let rawPhone = orderData.value.phone || '';
+  let cleanPhone = rawPhone.replace(/\D/g, '');
+  if (cleanPhone.length === 8 && !cleanPhone.startsWith('993')) {
+    cleanPhone = '993' + cleanPhone;
+  }
+  if (cleanPhone.length > 0 && !cleanPhone.startsWith('+')) {
+    cleanPhone = '+' + cleanPhone;
+  }
+
   const payload = {
     vendor_id: cartStore.vendorId,
     delivery_type: orderData.value.delivery_type,
-    address: orderData.value.address,
-    entrance: orderData.value.entrance,
-    floor: orderData.value.floor,
-    apartment: orderData.value.apartment,
-    phone: orderData.value.phone,
-    comment: orderData.value.comment,
+    address: {
+      lat: 39.0886, // Default latitude for Turkmenabat
+      lon: 63.5593, // Default longitude for Turkmenabat
+      address: orderData.value.address || 'Самовывоз',
+      name: authStore.user?.name || 'Покупатель',
+      phone: cleanPhone,
+      entrance: orderData.value.entrance || null,
+      floor: orderData.value.floor || null,
+      apartment: orderData.value.apartment || null,
+      manual_address: orderData.value.address || null,
+      landmark: null,
+      courier_comment: orderData.value.comment || null
+    },
+    total: Math.round(cartStore.total * 100),
+    delivery_fee: Math.round(cartStore.deliveryFee * 100),
+    delivery_time: 'asap',
     payment_method: orderData.value.payment_method,
+    comment: orderData.value.comment,
     items: cartStore.items.map(item => ({
       product_id: item.id,
+      product_name: item.name,
       quantity: item.quantity,
-      price: Math.round(item.price * 100),
-      modifiers: item.modifiers || []
+      unit_price: Math.round(item.price * 100),
+      total_price: Math.round(item.price * item.quantity * 100),
+      modifiers: item.modifiers || [],
+      image: item.image_url || null
     })),
     idempotency_key: self.crypto.randomUUID()
   };

@@ -25,6 +25,13 @@ class MenuController
         $cacheTags = ['menu', "vendor:{$vendorId}"];
         $cacheKey = "menu.{$vendorId}.category.".($categoryId ?? 'all');
         $cacheTime = 3600;
+
+        // Force clear cache to apply new price formatting
+        try {
+            Cache::tags($cacheTags)->flush();
+        } catch (\Throwable $e) {
+            Cache::forget($cacheKey);
+        }
         
         $fetchData = function () use ($vendorId, $categoryId) {
             $categories = $this->getCategories($vendorId);
@@ -58,7 +65,7 @@ class MenuController
         return response()->json([
             'id' => $product->id,
             'name' => $product->name,
-            'price' => (int) $product->price,
+            'price' => (float) $product->price,
             'description' => $product->description,
             'modifiers' => $product->modifiers ?? collect(),
             'image_url' => $product->image ? (str_starts_with($product->image, 'http') ? $product->image : asset('storage/'.$product->image)) : null,
