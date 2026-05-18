@@ -269,31 +269,85 @@ const togglePush = () => {
 const repeatOrder = (order) => {
   if (!order.items || !Array.isArray(order.items)) return;
   
-  if (confirm(`Добавить все блюда из этого заказа в корзину?`)) {
-    // Clear and set vendor ID for the cart
-    cartStore.clear();
-    cartStore.setVendorId(order.vendor_id);
-    
-    // Add all products to the cart store
-    order.items.forEach(item => {
-      cartStore.addItem({
-        id: item.product_id || item.id,
-        name: item.name,
-        price: Number(item.price),
-        weight_g: item.weight_g || item.weight || null,
-        image_url: item.image_url || null
-      }, item.quantity);
+  if (window.Swal) {
+    window.Swal.fire({
+      title: 'Повторить заказ?',
+      text: 'Текущая корзина будет очищена, и все блюда из этого заказа будут добавлены.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Повторить',
+      cancelButtonText: 'Отмена',
+      confirmButtonColor: '#f97316',
+      cancelButtonColor: '#334155',
+      background: '#0f172a',
+      color: '#f8fafc',
+      reverseButtons: true,
+      customClass: { popup: 'rounded-3xl border border-slate-850 shadow-2xl' }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        cartStore.clear();
+        cartStore.setVendorId(order.vendor_id);
+        
+        order.items.forEach(item => {
+          cartStore.addItem({
+            id: item.product_id || item.id,
+            name: item.name,
+            price: Number(item.price),
+            weight_g: item.weight_g || item.weight || null,
+            image_url: item.image_url || null
+          }, item.quantity);
+        });
+        
+        router.push('/cart');
+      }
     });
-    
-    router.push('/cart');
+  } else {
+    if (confirm(`Добавить все блюда из этого заказа в корзину?`)) {
+      cartStore.clear();
+      cartStore.setVendorId(order.vendor_id);
+      
+      order.items.forEach(item => {
+        cartStore.addItem({
+          id: item.product_id || item.id,
+          name: item.name,
+          price: Number(item.price),
+          weight_g: item.weight_g || item.weight || null,
+          image_url: item.image_url || null
+        }, item.quantity);
+      });
+      
+      router.push('/cart');
+    }
   }
 };
 
 // Handle account logout
 const handleLogout = async () => {
-  if (confirm('Вы уверены, что хотите выйти из профиля?')) {
-    await authStore.logout();
-    router.push('/login');
+  if (window.Swal) {
+    window.Swal.fire({
+      title: 'Выйти из профиля?',
+      text: 'Вам потребуется повторный вход для оформления заказов.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Выйти',
+      cancelButtonText: 'Отмена',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#334155',
+      background: '#0f172a',
+      color: '#f8fafc',
+      reverseButtons: true,
+      customClass: { popup: 'rounded-3xl border border-slate-850 shadow-2xl' }
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        await authStore.logout();
+        router.push('/login');
+      }
+    });
+  } else {
+    if (confirm('Вы уверены, что хотите выйти из профиля?')) {
+      await authStore.logout();
+      router.push('/login');
+    }
   }
 };
 </script>

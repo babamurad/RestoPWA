@@ -11,50 +11,19 @@ use App\Http\Middleware\SetTenantContext;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::get('/', fn () => view('app'))->name('home');
+Route::get('/login', fn () => view('app'))->name('login');
 Route::post('/login', [AuthController::class, 'login']);
-Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+Route::get('/register', fn () => view('app'))->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::get('/', [RestaurantController::class, 'home'])->name('home');
-
-Route::get('/restaurants', [RestaurantController::class, 'index'])->name('restaurants.index');
-
-Route::get('/restaurants/{restaurant:slug}', [RestaurantController::class, 'show'])->name('restaurants.show');
-
-Route::get('/cart', function () {
-    return view('cart');
-})->name('cart');
-
-use App\Livewire\Order\CheckoutWizard;
-
-Route::get('/checkout', CheckoutWizard::class)->name('checkout');
-
-Route::get('/orders', function () {
-    $user = Auth::user();
-    if (! $user) {
-        return redirect()->route('login');
-    }
-
-    \Log::info('Web /orders accessed', [
-        'user_id' => $user->id,
-        'user_name' => $user->name
-    ]);
-
-    $orders = Order::where('user_id', $user->id)->latest()->get();
-
-    return view('orders.index', compact('orders'));
-})->name('orders.index')->middleware('auth');
-
-Route::get('/profile', function () {
-    $user = Auth::user();
-    if (! $user) {
-        return redirect()->route('login');
-    }
-
-    return view('profile.edit', compact('user'));
-})->name('profile.edit')->middleware('auth');
+Route::get('/restaurants', fn () => view('app'))->name('restaurants.index');
+Route::get('/restaurants/{slug}', fn () => view('app'))->name('restaurants.show');
+Route::get('/cart', fn () => view('app'))->name('cart');
+Route::get('/checkout', fn () => view('app'))->name('checkout');
+Route::get('/orders', fn () => redirect('/profile'))->name('orders.index');
+Route::get('/profile', fn () => view('app'))->name('profile.edit');
 
 
 
@@ -99,6 +68,6 @@ Route::get('/vendor/orders/kanban', [KanbanController::class, 'index'])
 // Vendor panel is now handled by Filament at /vendor
 
 // Vue SPA entry point (Wildcard route for SPA routing)
-Route::get('/app/{any?}', function () {
+Route::get('/{any?}', function () {
     return view('app');
-})->where('any', '.*')->name('spa.entry');
+})->where('any', '^(?!admin|vendor|api|filament|storage|build|offline).*$')->name('spa.entry');

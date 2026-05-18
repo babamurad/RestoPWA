@@ -4,8 +4,6 @@ const API_CACHE = 'resto-api-v5';
 
 const STATIC_ASSETS = [
     '/',
-    '/app',
-    '/app/',
     '/manifest.json',
     '/offline',
 ];
@@ -38,7 +36,7 @@ self.addEventListener('fetch', (event) => {
                 })
                 .catch(() => {
                     return caches.match(request).then((cachedResponse) => {
-                        return cachedResponse || caches.match('/offline');
+                        return cachedResponse || caches.match('/') || caches.match('/offline');
                     });
                 })
         );

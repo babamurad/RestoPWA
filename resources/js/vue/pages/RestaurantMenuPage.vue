@@ -335,13 +335,36 @@ const handleAddToCart = (data) => {
   const result = cartStore.addItem(data.product, data.quantity, store.currentRestaurant);
 
   if (result.status === 'mismatch') {
-    const confirmClear = window.confirm(
-      `В вашей корзине уже находятся блюда из ресторана "${result.currentVendorName}". Желаете очистить корзину и начать новый заказ в "${store.currentRestaurant.name}"?`
-    );
-    if (confirmClear) {
-      cartStore.clearCart();
-      cartStore.addItem(data.product, data.quantity, store.currentRestaurant);
-      triggerToast(`${data.product.name} добавлено в корзину (${data.quantity} шт)!`);
+    if (window.Swal) {
+      window.Swal.fire({
+        title: 'Сменить ресторан?',
+        text: `В вашей корзине уже находятся блюда из заведения "${result.currentVendorName}". Хотите очистить корзину и начать новый заказ в "${store.currentRestaurant.name}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Очистить и добавить',
+        cancelButtonText: 'Отмена',
+        confirmButtonColor: '#f97316',
+        cancelButtonColor: '#334155',
+        background: '#0f172a',
+        color: '#f8fafc',
+        reverseButtons: true,
+        customClass: { popup: 'rounded-3xl border border-slate-850 shadow-2xl' }
+      }).then((swalResult) => {
+        if (swalResult.isConfirmed) {
+          cartStore.clearCart();
+          cartStore.addItem(data.product, data.quantity, store.currentRestaurant);
+          triggerToast(`${data.product.name} добавлено в корзину (${data.quantity} шт)!`);
+        }
+      });
+    } else {
+      const confirmClear = window.confirm(
+        `В вашей корзине уже находятся блюда из ресторана "${result.currentVendorName}". Желаете очистить корзину и начать новый заказ в "${store.currentRestaurant.name}"?`
+      );
+      if (confirmClear) {
+        cartStore.clearCart();
+        cartStore.addItem(data.product, data.quantity, store.currentRestaurant);
+        triggerToast(`${data.product.name} добавлено в корзину (${data.quantity} шт)!`);
+      }
     }
   } else if (result.status === 'success') {
     triggerToast(`${data.product.name} добавлено в корзину (${data.quantity} шт)!`);

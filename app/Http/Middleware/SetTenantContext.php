@@ -75,8 +75,18 @@ class SetTenantContext
             if ($vendorId) {
                 $this->tenantContext->setCurrentVendor((string) $vendorId);
             }
-        } elseif ($request->is('api/ping') || $request->is('api/order/*/track*') || $request->is('api/push/*') || $request->is('api/v1/restaurants*')) {
-            // Allow health check, guest tracking, push endpoints, and global restaurants list without tenant header
+        } elseif (
+            $request->is('api/ping') ||
+            $request->is('api/order/*/track*') ||
+            $request->is('api/push/*') ||
+            $request->is('api/v1/restaurants*') ||
+            $request->is('api/v1/categories*') ||
+            $request->is('api/v1/login') ||
+            $request->is('api/v1/register') ||
+            $request->is('api/v1/logout') ||
+            $request->is('api/v1/user')
+        ) {
+            // Allow health check, guest tracking, push endpoints, global restaurants/categories lists, and global auth endpoints without tenant header
             return $next($request);
         } elseif ($request->is('api/*')) {
             return response()->json([

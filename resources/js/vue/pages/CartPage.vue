@@ -193,8 +193,39 @@ const decreaseQty = (item) => {
 };
 
 const clearCart = () => {
-  if (confirm('Вы уверены, что хотите полностью очистить корзину?')) {
-    cartStore.clearCart();
+  if (window.Swal) {
+    window.Swal.fire({
+      title: 'Очистить корзину?',
+      text: 'Все добавленные блюда будут безвозвратно удалены.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Да, очистить',
+      cancelButtonText: 'Отмена',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#334155',
+      background: '#0f172a',
+      color: '#f8fafc',
+      reverseButtons: true,
+      customClass: { popup: 'rounded-3xl border border-slate-850 shadow-2xl' }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        cartStore.clearCart();
+        window.Swal.fire({
+          title: 'Очищено',
+          text: 'Корзина успешно очищена',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false,
+          background: '#0f172a',
+          color: '#f8fafc',
+          customClass: { popup: 'rounded-3xl border border-slate-850 shadow-2xl' }
+        });
+      }
+    });
+  } else {
+    if (confirm('Вы уверены, что хотите полностью очистить корзину?')) {
+      cartStore.clearCart();
+    }
   }
 };
 
