@@ -144,11 +144,54 @@ const submitOrder = async () => {
     } else if (result && result.data && result.data.order_id) {
       router.push(`/order/success/${result.data.order_id}`);
     } else {
-      // Fallback
-      router.push('/orders');
+      router.push('/profile');
     }
   } catch (error) {
-    // Error is handled in the store, but we can show a sweet alert here
+    // Detect network / offline error
+    const isNetworkError = !navigator.onLine || error.message === 'Network Error' || !error.response;
+    
+    if (isNetworkError && window.CartService) {
+      try {
+        // Save to IndexedDB queue
+        await window.CartService.queueOrder(payload);
+        
+        // Clear local cart
+        cartStore.clearCart();
+        
+        // Register SW background sync if possible
+        if ('serviceWorker' in navigator) {
+          try {
+            const registration = await navigator.serviceWorker.ready;
+            if (registration.sync) {
+              await registration.sync.register('order-sync');
+            }
+          } catch (syncError) {
+            console.error('Service Worker sync registration failed:', syncError);
+          }
+        }
+
+        if (window.Swal) {
+          window.Swal.fire({
+            title: 'Заказ сохранён!',
+            text: 'Соединение с интернетом отсутствует. Заказ будет отправлен автоматически, как только вы будете онлайн!',
+            icon: 'success',
+            confirmButtonText: 'Отлично',
+            confirmButtonColor: '#f97316',
+            customClass: { popup: 'rounded-2xl bg-slate-900 text-slate-100' },
+          }).then(() => {
+            router.push('/profile');
+          });
+        } else {
+          alert('Соединение потеряно. Заказ сохранён и будет отправлен при появлении сети!');
+          router.push('/profile');
+        }
+        return;
+      } catch (dbError) {
+        console.error('Failed to queue offline order:', dbError);
+      }
+    }
+
+    // Fallback: normal error handling
     if (window.Swal) {
       window.Swal.fire({
         title: 'Ошибка',

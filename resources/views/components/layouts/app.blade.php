@@ -33,19 +33,7 @@
 
 <body class="bg-gray-50 overflow-x-hidden" x-data="cartManager">
     <script>
-        // Force unregister all service workers and clear caches
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for(let registration of registrations) {
-                    registration.unregister();
-                }
-            });
-        }
-        if ('caches' in window) {
-            caches.keys().then(function(names) {
-                for (let name of names) caches.delete(name);
-            });
-        }
+
         
         window.vapidPublicKey = '{{ config('services.push.public_key') }}';
         window.apiPingUrl = '{{ route('api.ping') }}';

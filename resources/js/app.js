@@ -9,25 +9,30 @@ import Swal from 'sweetalert2'
 
 window.Swal = Swal
 
-/* 
+let swRegistration = null;
+
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
             .then((registration) => {
                 console.log('SW registered:', registration.scope);
-                // Update existing setup with registration for background sync
-                if (window.setupOrderSubmission) window.setupOrderSubmission(registration);
+                setupOrderSubmission(registration);
             })
             .catch((error) => {
                 console.error('SW registration failed:', error);
             });
     });
 }
-*/
+
 setupOrderSubmission(null);
 window.setupOrderSubmission = setupOrderSubmission;
 
 function setupOrderSubmission(registration) {
+    if (registration) {
+        swRegistration = registration;
+        return;
+    }
+
     window.addEventListener('submit-order', async (e) => {
         const payload = e.detail;
 
@@ -88,9 +93,18 @@ function setupOrderSubmission(registration) {
             console.error('Order submission error:', error);
             window.dispatchEvent(new CustomEvent('submit-order-failed'));
 
-            if (registration && registration.active) {
+            if (window.CartService) {
                 try {
-                    await registration.active.sync.register({
+                    await window.CartService.queueOrder(payload);
+                    console.log('Order queued successfully in IndexedDB');
+                } catch (dbError) {
+                    console.error('Failed to queue order in IndexedDB:', dbError);
+                }
+            }
+
+            if (swRegistration && swRegistration.active) {
+                try {
+                    await swRegistration.active.sync.register({
                         tag: 'order-sync',
                     });
                 } catch (syncError) {

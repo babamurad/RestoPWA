@@ -4,6 +4,8 @@ const API_CACHE = 'resto-api-v5';
 
 const STATIC_ASSETS = [
     '/',
+    '/app',
+    '/app/',
     '/manifest.json',
     '/offline',
 ];
