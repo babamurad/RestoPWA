@@ -84,7 +84,8 @@ class SetTenantContext
             $request->is('api/v1/login') ||
             $request->is('api/v1/register') ||
             $request->is('api/v1/logout') ||
-            $request->is('api/v1/user')
+            $request->is('api/v1/user') ||
+            $request->is('api/v1/orders*')
         ) {
             // Allow health check, guest tracking, push endpoints, global restaurants/categories lists, and global auth endpoints without tenant header
             return $next($request);

@@ -845,7 +845,6 @@ class GeoService
             return $res;
         }
     }
-    }
 
     /**
      * Check if a point is within the delivery zone of a specific vendor.
