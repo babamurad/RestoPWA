@@ -119,3 +119,8 @@ Route::get('/vendor/orders/kanban', [KanbanController::class, 'index'])
     ->name('vendor.orders.kanban')->middleware('auth');
 
 // Vendor panel is now handled by Filament at /vendor
+
+// Vue SPA entry point (Wildcard route for SPA routing)
+Route::get('/app/{any?}', function () {
+    return view('app');
+})->where('any', '.*')->name('spa.entry');

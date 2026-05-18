@@ -1,3 +1,7 @@
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import router from './vue/router';
+import App from './vue/App.vue';
 import './bootstrap';
 import './services/CartService';
 import './services/CartAlpine';
@@ -258,3 +262,13 @@ function urlBase64ToUint8Array(base64String) {
 window.askPushPermission = askPushPermission;
 window.subscribeToPush = subscribeToPush;
 window.unsubscribeFromPush = unsubscribeFromPush;
+
+// Mount Vue SPA conditionally
+const appElement = document.getElementById('app');
+if (appElement) {
+    const app = createApp(App);
+    const pinia = createPinia();
+    app.use(pinia);
+    app.use(router);
+    app.mount('#app');
+}

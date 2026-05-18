@@ -9,6 +9,7 @@
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",
+        "@vitejs/plugin-vue": "^6.0.7",
         "axios": "^1.11.0",
         "concurrently": "^9.0.1",
         "fake-indexeddb": "^6.0.0",
@@ -21,8 +22,11 @@
     "dependencies": {
         "dexie": "^4.4.2",
         "lucide-react": "^1.7.0",
+        "pinia": "^3.0.4",
         "react": "^19.2.4",
         "react-dom": "^19.2.4",
-        "sweetalert2": "^11.26.24"
+        "sweetalert2": "^11.26.24",
+        "vue": "^3.5.34",
+        "vue-router": "^5.0.7"
     }
 }
