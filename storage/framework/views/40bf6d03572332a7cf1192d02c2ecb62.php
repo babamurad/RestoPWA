@@ -7,6 +7,7 @@
     <title>Отслеживание заказа</title>
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
 </head>
 <body class="bg-slate-950 text-slate-100 antialiased">
@@ -35,6 +36,7 @@
                     
                     <div x-show="currentStatus === 'delivering' || currentStatus === 'ready'" 
                          x-transition
+                         x-cloak
                          class="bg-slate-900/60 rounded-3xl overflow-hidden shadow-xl border border-slate-800/40 h-64 md:h-96 relative">
                         <div id="map" class="w-full h-full"></div>
                         <div class="absolute top-4 left-4 z-[400] bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-slate-800/40 shadow-xl">
@@ -44,10 +46,28 @@
                     </div>
 
                     
+                    <?php
+                        $initialHistory = $order->statusHistory->map(fn ($h) => [
+                            'status' => $h->to_status === 'delivered' ? 'completed' : $h->to_status,
+                            'time' => $h->created_at->timezone(config('app.timezone', 'UTC'))->format('H:i')
+                        ])->toArray();
+
+                        $hasPending = collect($initialHistory)->contains('status', 'pending');
+                        if (!$hasPending) {
+                            array_unshift($initialHistory, [
+                                'status' => 'pending',
+                                'time' => $order->created_at->timezone(config('app.timezone', 'UTC'))->format('H:i')
+                            ]);
+                        }
+                    ?>
                     <div class="bg-slate-900/60 rounded-3xl p-6 shadow-xl border border-slate-800/40">
                         <h3 class="text-lg font-bold text-slate-100 mb-6">Статус заказа</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = ['pending', 'confirmed', 'preparing', 'ready', 'delivering', 'completed']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $status): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <?php
+                                    $historyItem = collect($initialHistory)->firstWhere('status', $status);
+                                    $statusTime = $historyItem ? $historyItem['time'] : '';
+                                ?>
                                 <div class="flex items-center gap-4 group">
                                     <div 
                                         class="w-10 h-10 rounded-2xl flex items-center justify-center text-sm transition-all duration-500"
@@ -73,8 +93,11 @@
                                                 <?php case ('completed'): ?> Доставлен <?php break; ?>
                                             <?php endswitch; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                         </p>
-                                        <p class="text-[10px] text-slate-400 font-medium truncate" x-show="statusOrder.indexOf('<?php echo e($status); ?>') <= statusOrder.indexOf(currentStatus)">
-                                            <?php echo e(now()->subMinutes(60 - $index * 10)->format('H:i')); ?>
+                                        <p class="text-[10px] text-slate-400 font-medium truncate" 
+                                           x-show="statusOrder.indexOf('<?php echo e($status); ?>') <= statusOrder.indexOf(currentStatus)"
+                                           x-text="getStatusTime('<?php echo e($status); ?>') || '<?php echo e($statusTime); ?>'"
+                                        >
+                                            <?php echo e($statusTime); ?>
 
                                         </p>
                                     </div>
@@ -139,10 +162,19 @@
                                              class="w-full h-full object-cover">
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-xs font-bold text-slate-100 truncate leading-tight"><?php echo e($item['name'] ?? 'Товар'); ?></p>
+                                        <p class="text-xs font-bold text-slate-100 truncate leading-tight"><?php echo e($item['name'] ?? $item['product_name'] ?? 'Товар'); ?></p>
                                         <p class="text-[10px] text-slate-400 font-medium">Кол-во: <?php echo e($item['quantity'] ?? 1); ?></p>
                                     </div>
-                                    <p class="text-xs font-bold text-slate-100"><?php echo e(number_format(($item['price'] ?? 0) * ($item['quantity'] ?? 1), 0, '.', ' ')); ?> ₽</p>
+                                    <?php
+                                        $itemPrice = isset($item['total_price']) 
+                                            ? $item['total_price'] / 100 
+                                            : (isset($item['unit_price']) 
+                                                ? ($item['unit_price'] / 100) * ($item['quantity'] ?? 1) 
+                                                : (isset($item['price']) 
+                                                    ? $item['price'] * ($item['quantity'] ?? 1) 
+                                                    : 0));
+                                    ?>
+                                    <p class="text-xs font-bold text-slate-100"><?php echo e(number_format($itemPrice, 0, '.', ' ')); ?> ₽</p>
                                 </div>
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                         </div>
@@ -167,7 +199,7 @@
             return {
                 orderId: orderId,
                 signedApiUrl: signedApiUrl,
-                currentStatus: '<?php echo e($order->status); ?>',
+                currentStatus: '<?php echo e($order->status); ?>' === 'delivered' ? 'completed' : '<?php echo e($order->status); ?>',
                 statusOrder: ['pending', 'confirmed', 'preparing', 'ready', 'delivering', 'completed'],
                 statusClasses: {
                     'pending': 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
@@ -176,8 +208,10 @@
                     'ready': 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
                     'delivering': 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20',
                     'completed': 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+                    'delivered': 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
                     'cancelled': 'bg-rose-500/10 text-rose-400 border border-rose-500/20',
                 },
+                statusHistory: <?php echo json_encode($initialHistory, 15, 512) ?>,
                 map: null,
                 courierMarker: null,
                 restaurantMarker: null,
@@ -201,8 +235,17 @@
                     try {
                         const response = await fetch(this.signedApiUrl);
                         const data = await response.json();
-                        if (data.status && data.status !== this.currentStatus) {
-                            this.currentStatus = data.status;
+                        if (data.status) {
+                            const normalizedStatus = data.status === 'delivered' ? 'completed' : data.status;
+                            if (normalizedStatus !== this.currentStatus) {
+                                this.currentStatus = normalizedStatus;
+                            }
+                        }
+                        if (data.status_history) {
+                            this.statusHistory = data.status_history.map(h => ({
+                                status: h.status === 'delivered' ? 'completed' : h.status,
+                                time: this.formatTime(h.timestamp)
+                            }));
                         }
                     } catch (e) {
                         console.error('Polling failed:', e);
@@ -213,8 +256,10 @@
                     if (typeof Echo !== 'undefined') {
                         Echo.private('orders.' + this.orderId)
                             .listen('order.status.updated', (event) => {
-                                this.currentStatus = event.status;
-                                this.showNotification('Статус заказа изменен', this.getStatusText(event.status));
+                                const normalizedStatus = event.status === 'delivered' ? 'completed' : event.status;
+                                this.currentStatus = normalizedStatus;
+                                this.showNotification('Статус заказа изменен', this.getStatusText(normalizedStatus));
+                                this.pollStatus();
                             });
                     }
                 },
@@ -291,9 +336,23 @@
                         'ready': 'Готов к выдаче',
                         'delivering': 'В пути',
                         'completed': 'Доставлен',
+                        'delivered': 'Доставлен',
                         'cancelled': 'Отменен'
                     };
                     return texts[status] || status;
+                },
+
+                formatTime(isoString) {
+                    if (!isoString) return '';
+                    const date = new Date(isoString);
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    return `${hours}:${minutes}`;
+                },
+
+                getStatusTime(status) {
+                    const historyItem = this.statusHistory.find(h => h.status === status);
+                    return historyItem ? historyItem.time : '';
                 },
 
                 showNotification(title, body) {
@@ -306,6 +365,7 @@
     </script>
 
     <style>
+        [x-cloak] { display: none !important; }
         .courier-marker {
             background: transparent;
             border: none;
