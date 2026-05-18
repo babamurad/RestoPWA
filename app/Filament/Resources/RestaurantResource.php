@@ -132,7 +132,7 @@ class RestaurantResource extends Resource
                 Tables\Columns\TextColumn::make('delivery_zones_summary')
                     ->label('Зона доставки')
                     ->getStateUsing(function ($record) {
-                        $zones = $record->deliveryZones();
+                        $zones = $record->getZonesArray();
                         if (empty($zones)) {
                             return 'Не настроена';
                         }

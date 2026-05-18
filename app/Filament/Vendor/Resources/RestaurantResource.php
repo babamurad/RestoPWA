@@ -82,9 +82,19 @@ class RestaurantResource extends Resource
                             ->label('Статус зоны')
                             ->content(function ($record) {
                                 if (! $record) return 'Сохраните, чтобы проверить.';
-                                $zones = $record->deliveryZones();
+                                $zones = $record->getZonesArray();
                                 if (empty($zones)) return '⚠️ Зона не настроена. Заказы не будут приниматься.';
-                                return '✅ Зона настроена ('.count($zones).' полигонов).';
+                                
+                                $polygonCount = 0;
+                                if (isset($zones['type']) && $zones['type'] === 'MultiPolygon' && isset($zones['coordinates'])) {
+                                    $polygonCount = count($zones['coordinates']);
+                                } elseif (isset($zones['type']) && $zones['type'] === 'Polygon') {
+                                    $polygonCount = 1;
+                                } else {
+                                    $polygonCount = count($zones);
+                                }
+                                
+                                return '✅ Зона настроена ('.$polygonCount.' полигонов).';
                             }),
                     ]),
             ]);
@@ -111,7 +121,7 @@ class RestaurantResource extends Resource
                 Tables\Columns\TextColumn::make('delivery_zones_summary')
                     ->label('Зона')
                     ->getStateUsing(function ($record) {
-                        $zones = $record->deliveryZones();
+                        $zones = $record->getZonesArray();
                         return empty($zones) ? 'Не настроена' : 'Готова';
                     })
                     ->badge()
