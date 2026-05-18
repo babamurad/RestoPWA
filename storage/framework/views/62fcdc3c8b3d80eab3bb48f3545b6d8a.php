@@ -1,6 +1,6 @@
 <div    x-data="{
-        isLocalModalOpen: @entangle('isAddressModalOpen'),
-        searchQuery: @entangle('address'),
+        isLocalModalOpen: <?php if ((object) ('isAddressModalOpen') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('isAddressModalOpen'->value()); ?>')<?php echo e('isAddressModalOpen'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('isAddressModalOpen'); ?>')<?php endif; ?>,
+        searchQuery: <?php if ((object) ('address') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('address'->value()); ?>')<?php echo e('address'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('address'); ?>')<?php endif; ?>,
         showSuggestions: false,
         debounceTimer: null,
         mapInstance: null,
@@ -10,7 +10,7 @@
         mapFailed: false,
         isDragging: false,
         initRetryCount: 0,
-        showRefinement: @entangle('showRefinement'),
+        showRefinement: <?php if ((object) ('showRefinement') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('showRefinement'->value()); ?>')<?php echo e('showRefinement'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('showRefinement'); ?>')<?php endif; ?>,
         
         init() {
             console.log('[AddressSelector] Component initialized');
@@ -109,8 +109,8 @@
                 this.mapInitialized = false;
             }
 
-            const serverLat = parseFloat(@js($lat));
-            const serverLon = parseFloat(@js($lon));
+            const serverLat = parseFloat(<?php echo \Illuminate\Support\Js::from($lat)->toHtml() ?>);
+            const serverLon = parseFloat(<?php echo \Illuminate\Support\Js::from($lon)->toHtml() ?>);
             const startLat = (serverLat && !isNaN(serverLat) && serverLat !== 0) ? serverLat : 39.0886;
             const startLon = (serverLon && !isNaN(serverLon) && serverLon !== 0) ? serverLon : 63.5593;
 
@@ -194,7 +194,7 @@
             $wire.backToMap();
         }
     }"
-    wire:key="address-selector-v2"
+    <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::$currentLoop['key'] = 'address-selector-v2'; ?>wire:key="address-selector-v2"
     x-show="isLocalModalOpen"
     x-cloak
     x-transition:enter="transition ease-out duration-300"
@@ -229,7 +229,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
         </div>
-        {{-- Step 1: Map + Search --}}
+        
         <div x-show="!showRefinement" style="display: none;">
             <div class="px-4 pt-3 pb-2 shrink-0">
                 <div class="flex gap-2">
@@ -237,14 +237,14 @@
                         <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                         </div>
-                        <input type="text" x-model="searchQuery" @input="search()" @focus="showSuggestions = @js(!empty($suggestions))" @blur="setTimeout(() => showSuggestions = false, 200)" @keydown.enter.prevent="$wire.confirmAddress()" placeholder="Улица, дом..." class="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-sm bg-gray-50 focus:bg-white transition-all">
-                        <div x-show="showSuggestions && @js(!empty($suggestions))" class="absolute z-20 w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto" style="display:none">
-                            @foreach($suggestions as $index => $suggestion)
-                                <button type="button" @click="select({{ $index }})" class="w-full px-3 py-2.5 text-left hover:bg-orange-50 border-b border-gray-50 last:border-b-0 transition-colors flex items-start gap-2">
+                        <input type="text" x-model="searchQuery" @input="search()" @focus="showSuggestions = <?php echo \Illuminate\Support\Js::from(!empty($suggestions))->toHtml() ?>" @blur="setTimeout(() => showSuggestions = false, 200)" @keydown.enter.prevent="$wire.confirmAddress()" placeholder="Улица, дом..." class="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-sm bg-gray-50 focus:bg-white transition-all">
+                        <div x-show="showSuggestions && <?php echo \Illuminate\Support\Js::from(!empty($suggestions))->toHtml() ?>" class="absolute z-20 w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto" style="display:none">
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $suggestions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $suggestion): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <button type="button" @click="select(<?php echo e($index); ?>)" class="w-full px-3 py-2.5 text-left hover:bg-orange-50 border-b border-gray-50 last:border-b-0 transition-colors flex items-start gap-2">
                                     <svg class="w-4 h-4 text-orange-400 shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                    <div class="min-w-0"><p class="text-sm font-medium text-gray-900 truncate">{{ $suggestion['address'] }}</p>@if($suggestion['kind'])<p class="text-xs text-gray-400">{{ $suggestion['kind'] }}</p>@endif</div>
+                                    <div class="min-w-0"><p class="text-sm font-medium text-gray-900 truncate"><?php echo e($suggestion['address']); ?></p><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($suggestion['kind']): ?><p class="text-xs text-gray-400"><?php echo e($suggestion['kind']); ?></p><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?></div>
                                 </button>
-                            @endforeach
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                         </div>
                     </div>
                     <button type="button" wire:click="detectLocation" wire:loading.attr="disabled" class="px-3.5 py-2.5 bg-orange-500 text-white rounded-xl hover:bg-orange-600 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-1.5 shrink-0 shadow-sm shadow-orange-200">
@@ -268,9 +268,9 @@
                 <div x-show="!isMapLoading && !mapFailed" class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow text-[11px] text-gray-500 font-medium whitespace-nowrap pointer-events-none z-10" style="display:none">Перетащите метку для уточнения адреса</div>
             </div>
             <div class="px-4 pb-2 shrink-0 space-y-2">
-                @if($error && !$showRefinement)<div class="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm"><svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span>{{ $error }}</span></div>@endif
-                @if($isInDeliveryZone && $address && $hasSelectedPoint && !$showRefinement)<div class="flex items-center gap-2 p-3 bg-green-50 border border-green-100 rounded-xl text-green-700 text-sm"><svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg><span>Адрес <strong>входит</strong> в зону доставки</span></div>@endif
-                @if($address && $hasSelectedPoint && !$isInDeliveryZone && !$error && !$showRefinement)<div class="flex items-center gap-2 p-3 bg-amber-50 border border-amber-100 rounded-xl text-amber-700 text-sm"><svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span>Адрес за пределами зоны доставки</span></div>@endif
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($error && !$showRefinement): ?><div class="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm"><svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span><?php echo e($error); ?></span></div><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isInDeliveryZone && $address && $hasSelectedPoint && !$showRefinement): ?><div class="flex items-center gap-2 p-3 bg-green-50 border border-green-100 rounded-xl text-green-700 text-sm"><svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg><span>Адрес <strong>входит</strong> в зону доставки</span></div><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($address && $hasSelectedPoint && !$isInDeliveryZone && !$error && !$showRefinement): ?><div class="flex items-center gap-2 p-3 bg-amber-50 border border-amber-100 rounded-xl text-amber-700 text-sm"><svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span>Адрес за пределами зоны доставки</span></div><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
             <div class="px-4 pb-4 shrink-0">
                 <button type="button" wire:click="confirmAddress" wire:loading.attr="disabled" class="w-full py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200 hover:from-orange-600 hover:to-orange-700 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2">
@@ -282,7 +282,7 @@
             </div>
         </div>
 
-        {{-- Step 2: Manual Refinement --}}
+        
         <div x-show="showRefinement" class="flex flex-col flex-1 overflow-hidden">
             <div class="px-4 pt-3 pb-2 shrink-0">
                 <button type="button" @click="resetToMap()" class="flex items-center gap-1.5 text-sm font-bold text-orange-500 hover:text-orange-600 transition-colors">
@@ -292,19 +292,19 @@
             </div>
 
             <div class="px-4 overflow-y-auto flex-1 space-y-3 pb-4">
-                @if($address)
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($address): ?>
                     <div class="p-3 bg-orange-50 border border-orange-100 rounded-xl">
                         <p class="text-xs text-orange-500 font-bold uppercase tracking-wider mb-1">Найденный адрес</p>
-                        <p class="text-sm font-semibold text-gray-900">{{ $address }}</p>
+                        <p class="text-sm font-semibold text-gray-900"><?php echo e($address); ?></p>
                     </div>
-                @endif
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-                @if(!$address)
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!$address): ?>
                     <div>
                         <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Адрес вручную</label>
                         <input type="text" wire:model.live="manualAddress" placeholder="Улица, дом (если карта не определила адрес)" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-sm bg-gray-50 focus:bg-white transition-all">
                     </div>
-                @endif
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Ориентир для курьера</label>
@@ -332,9 +332,9 @@
                 </div>
 
                 <div class="pt-1 space-y-2">
-                    @if($error && $showRefinement)<div class="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm"><svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span>{{ $error }}</span></div>@endif
-                    @if($isInDeliveryZone && $hasSelectedPoint)<div class="flex items-center gap-2 p-3 bg-green-50 border border-green-100 rounded-xl text-green-700 text-sm"><svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg><span>Точка <strong>входит</strong> в зону доставки</span></div>@endif
-                    @if($hasSelectedPoint && !$isInDeliveryZone && !$error && $showRefinement)<div class="flex items-center gap-2 p-3 bg-amber-50 border border-amber-100 rounded-xl text-amber-700 text-sm"><svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span>Точка за пределами зоны доставки</span></div>@endif
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($error && $showRefinement): ?><div class="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm"><svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span><?php echo e($error); ?></span></div><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isInDeliveryZone && $hasSelectedPoint): ?><div class="flex items-center gap-2 p-3 bg-green-50 border border-green-100 rounded-xl text-green-700 text-sm"><svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg><span>Точка <strong>входит</strong> в зону доставки</span></div><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($hasSelectedPoint && !$isInDeliveryZone && !$error && $showRefinement): ?><div class="flex items-center gap-2 p-3 bg-amber-50 border border-amber-100 rounded-xl text-amber-700 text-sm"><svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span>Точка за пределами зоны доставки</span></div><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
             </div>
 
@@ -349,3 +349,4 @@
         </div>
     </div>
 </div>
+<?php /**PATH C:\OSPanel\domains\RestoPWA\resources\views/livewire/geo/address-selector.blade.php ENDPATH**/ ?>

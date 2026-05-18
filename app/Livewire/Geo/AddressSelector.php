@@ -118,6 +118,9 @@ class AddressSelector extends Component
                             position.coords.longitude,
                             'gps'
                         );
+                        window.dispatchEvent(new CustomEvent('map-update', { 
+                            detail: { lat: position.coords.latitude, lon: position.coords.longitude } 
+                        }));
                     },
                     (error) => {
                         let msg = 'Не удалось определить местоположение';
@@ -170,6 +173,9 @@ class AddressSelector extends Component
 
         $this->showRefinement = true;
         $this->checkDeliveryZone();
+        
+        // No map-update dispatch here because setLocation is often called FROM the map itself.
+        // If we need to sync from server to map, we do it in methods that are NOT triggered by map.
     }
 
     public function setError(string $error): void
@@ -211,6 +217,8 @@ class AddressSelector extends Component
         $this->suggestions = [];
         $this->error = null;
         $this->showRefinement = true;
+        
+        $this->dispatch('map-update', lat: $this->lat, lon: $this->lon);
 
         if (! $this->selectedVendorId) {
             $this->error = 'Выберите ресторан для проверки зоны доставки';
@@ -255,6 +263,7 @@ class AddressSelector extends Component
                 $this->hasSelectedPoint = true;
                 $this->showRefinement = true;
                 $this->checkDeliveryZone();
+                $this->dispatch('map-update', lat: $this->lat, lon: $this->lon);
             } else {
                 Log::warning('[AddressSelector] confirmAddress: Geocoding failed', ['address' => $this->address]);
                 $this->error = 'Адрес не найден. Пожалуйста, укажите точку на карте вручную.';

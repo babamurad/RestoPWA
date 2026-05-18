@@ -17,14 +17,15 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    {{-- Yandex Maps JS API v2.1 --}}
+    {{-- Yandex Maps JS API v3 --}}
     @if(config('services.yandex_maps.js_key'))
-    <script src="https://api-maps.yandex.ru/2.1/?apikey={{ config('services.yandex_maps.js_key') }}&lang=ru_RU" type="text/javascript"></script>
+    <script src="https://api-maps.yandex.ru/v3/?apikey={{ config('services.yandex_maps.js_key') }}&lang=ru_RU" type="text/javascript"></script>
     @endif
 
     <style>
         [x-cloak] { display: none !important; }
-        .ymaps3x0--map { border-radius: 0; }
+        /* Yandex Maps v3 container fixes */
+        .ymaps3x0--map, [class*="ymaps3"] { border-radius: 0; }
     </style>
 
     @livewireStyles
