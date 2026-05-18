@@ -66,4 +66,6 @@ return [
         ? explode(',', env('GEO_PROVIDERS'))
         : ['local', env('GEO_FALLBACK_FIRST', 'yandex'), 'nominatim', 'google'],
 
+    'geo_postgis_error_allowed' => env('GEO_POSTGIS_ERROR_ALLOWED', true),
+
 ];

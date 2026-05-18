@@ -47,9 +47,31 @@ class Restaurant extends Model
         return RestaurantFactory::new();
     }
 
+    public ?array $tempDeliveryZones = null;
+
     protected static function booted(): void
     {
         parent::booted();
+
+        static::saving(function (Restaurant $restaurant) {
+            if ($restaurant->isDirty('delivery_zones')) {
+                if (DB::getDriverName() !== 'sqlite' && static::checkPostGis()) {
+                    $val = $restaurant->attributes['delivery_zones'] ?? null;
+                    if (!($val instanceof \Illuminate\Database\Query\Expression)) {
+                        $restaurant->tempDeliveryZones = is_string($val) ? json_decode($val, true) : $val;
+                        unset($restaurant->attributes['delivery_zones']);
+                    }
+                }
+            }
+        });
+
+        static::saved(function (Restaurant $restaurant) {
+            if ($restaurant->tempDeliveryZones !== null) {
+                $value = $restaurant->tempDeliveryZones;
+                $restaurant->tempDeliveryZones = null;
+                $restaurant->updateDeliveryZone($value);
+            }
+        });
     }
 
     /**
@@ -105,9 +127,6 @@ class Restaurant extends Model
         return self::$hasPostgis;
     }
 
-    /**
-     * @return Attribute<array<mixed>|null, string|array<mixed>|null>
-     */
     protected function deliveryZones(): Attribute
     {
         return Attribute::make(
@@ -147,15 +166,54 @@ class Restaurant extends Model
                     return null;
                 }
 
-                $json = json_encode($normalized);
-
-                if (DB::getDriverName() === 'sqlite' || !self::checkPostGis()) {
-                    return $json;
-                }
-
-                return DB::raw("ST_SetSRID(ST_GeomFromGeoJSON('$json'::text), 4326)");
+                return json_encode($normalized);
             }
         );
+    }
+
+    /**
+     * Update delivery zone with parameter binding.
+     */
+    public function updateDeliveryZone(mixed $value): void
+    {
+        if (empty($value)) {
+            $this->delivery_zones = null;
+            if (DB::getDriverName() === 'sqlite' || !self::checkPostGis()) {
+                $this->save();
+            } else {
+                DB::update('UPDATE restaurants SET delivery_zones = NULL WHERE id = ?', [$this->id]);
+                $this->refresh();
+            }
+            return;
+        }
+
+        $normalized = GeoJsonNormalizer::toMultiPolygon($value);
+        if (empty($normalized)) {
+            $this->delivery_zones = null;
+            if (DB::getDriverName() === 'sqlite' || !self::checkPostGis()) {
+                $this->save();
+            } else {
+                DB::update('UPDATE restaurants SET delivery_zones = NULL WHERE id = ?', [$this->id]);
+                $this->refresh();
+            }
+            return;
+        }
+
+        $json = json_encode($normalized);
+
+        if (DB::getDriverName() === 'sqlite' || !self::checkPostGis()) {
+            $this->delivery_zones = $json;
+            $this->save();
+            return;
+        }
+
+        // For PostgreSQL/PostGIS with parameter binding
+        DB::update(
+            'UPDATE restaurants SET delivery_zones = ST_SetSRID(ST_GeomFromGeoJSON(?), 4326), updated_at = ? WHERE id = ?',
+            [$json, now(), $this->id]
+        );
+
+        $this->refresh();
     }
 
     /**

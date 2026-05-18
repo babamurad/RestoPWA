@@ -70,4 +70,36 @@ class DeliveryZoneDiagnosticTest extends TestCase
 
         $this->assertEquals(OrderRejectReason::ZONE_NOT_CONFIGURED, $reason);
     }
+
+    public function test_postgis_zone_exists_accessor_is_not_gate(): void
+    {
+        $restaurantWithZone = Restaurant::factory()->create([
+            'is_active' => true,
+        ]);
+        
+        $geoJson = [
+            'type' => 'MultiPolygon',
+            'coordinates' => [
+                [
+                    [
+                        [63.5, 39.0],
+                        [63.6, 39.0],
+                        [63.6, 39.1],
+                        [63.5, 39.1],
+                        [63.5, 39.0]
+                    ]
+                ]
+            ]
+        ];
+
+        // Save delivery zones securely using updateDeliveryZone
+        $restaurantWithZone->updateDeliveryZone($geoJson);
+
+        // Verify that checkDeliveryZone evaluates directly and successfully (relying on SQLite fallback)
+        $geoService = app(GeoService::class);
+        $result = $geoService->checkDeliveryZone(39.05, 63.55, $restaurantWithZone->id);
+
+        $this->assertEquals('inside', $result->status);
+        $this->assertTrue($result->isAllowed());
+    }
 }

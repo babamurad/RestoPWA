@@ -137,6 +137,15 @@ final readonly class OrderPreconditionValidator
                 $restaurant->id
             );
 
+            Log::info('[OrderPreconditionValidator] Delivery zone check status', [
+                'trace_id' => $data['trace_id'] ?? 'unknown',
+                'vendor_id' => $restaurant->id,
+                'lat' => $address['lat'],
+                'lon' => $address['lon'],
+                'result_status' => $checkResult->status,
+                'allowed' => $checkResult->isAllowed(),
+            ]);
+
             if (! $checkResult->isAllowed()) {
                 return match ($checkResult->status) {
                     'zone_missing' => OrderRejectReason::ZONE_NOT_CONFIGURED,

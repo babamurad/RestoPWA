@@ -665,50 +665,95 @@ class GeoService
      */
     public function checkDeliveryZone(float $lat, float $lon, string $vendorId): DeliveryZoneCheckResult
     {
-        $restaurant = Restaurant::find($vendorId);
-
-        if (!$restaurant) {
-            return new DeliveryZoneCheckResult(
-                status: 'zone_missing',
-                allowed: false,
-                message: 'Ресторан не найден.',
-                debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
-            );
-        }
-
-        $zones = $restaurant->delivery_zones;
-
-        if (empty($zones)) {
-            return new DeliveryZoneCheckResult(
-                status: 'zone_missing',
-                allowed: false,
-                message: 'Зона доставки ресторана не настроена.',
-                debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
-            );
-        }
-
-        if (DB::getDriverName() === 'sqlite') {
-            return new DeliveryZoneCheckResult(
+        $driver = DB::getDriverName();
+        $hasPostGis = $this->checkPostGis();
+        
+        if ($driver === 'sqlite') {
+            $row = DB::selectOne('
+                SELECT id, (delivery_zones IS NULL OR delivery_zones = "") as is_zones_empty
+                FROM restaurants
+                WHERE id = ?
+            ', [$vendorId]);
+            
+            if (!$row) {
+                $result = new DeliveryZoneCheckResult(
+                    status: 'zone_missing',
+                    allowed: false,
+                    message: 'Ресторан не найден.',
+                    debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
+                );
+                $this->logGeocodingEvent('zone_missing', 'postgis', null, $lat, $lon, 'NO_RESTAURANT', 'Ресторан не найден', $vendorId);
+                return $result;
+            }
+            
+            if ($row->is_zones_empty) {
+                $result = new DeliveryZoneCheckResult(
+                    status: 'zone_missing',
+                    allowed: false,
+                    message: 'Зона доставки ресторана не настроена.',
+                    debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
+                );
+                $this->logGeocodingEvent('zone_missing', 'postgis', null, $lat, $lon, 'ZONE_UNCONFIGURED', 'Зона доставки не настроена', $vendorId);
+                return $result;
+            }
+            
+            $result = new DeliveryZoneCheckResult(
                 status: 'inside',
                 allowed: true,
                 message: 'Доставка разрешена (SQLite fallback).',
                 debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
             );
+            $this->logGeocodingEvent('inside', 'postgis', null, $lat, $lon, null, null, $vendorId);
+            return $result;
         }
-
-        try {
-            if (!$this->checkPostGis()) {
-                return new DeliveryZoneCheckResult(
-                    status: 'postgis_error',
-                    allowed: true, // Bypass check if PostGIS is unavailable
-                    message: 'Доставка разрешена (PostGIS недоступен).',
+        
+        if (!$hasPostGis) {
+            $row = DB::selectOne('
+                SELECT id, (delivery_zones IS NULL) as is_zones_empty
+                FROM restaurants
+                WHERE id = ?
+            ', [$vendorId]);
+            
+            if (!$row) {
+                $result = new DeliveryZoneCheckResult(
+                    status: 'zone_missing',
+                    allowed: false,
+                    message: 'Ресторан не найден.',
                     debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
                 );
+                $this->logGeocodingEvent('zone_missing', 'postgis', null, $lat, $lon, 'NO_RESTAURANT', 'Ресторан не найден', $vendorId);
+                return $result;
             }
-
-            // Perform ST_Covers check. ST_Covers is more robust than ST_Contains (includes borders)
+            
+            if ($row->is_zones_empty) {
+                $result = new DeliveryZoneCheckResult(
+                    status: 'zone_missing',
+                    allowed: false,
+                    message: 'Зона доставки ресторана не настроена.',
+                    debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
+                );
+                $this->logGeocodingEvent('zone_missing', 'postgis', null, $lat, $lon, 'ZONE_UNCONFIGURED', 'Зона доставки не настроена', $vendorId);
+                return $result;
+            }
+            
+            $allowed = (bool) config('services.geo_postgis_error_allowed', true);
+            $result = new DeliveryZoneCheckResult(
+                status: 'postgis_error',
+                allowed: $allowed,
+                message: $allowed 
+                    ? 'Доставка разрешена (PostGIS недоступен).' 
+                    : 'Доставка временно недоступна из-за технических проблем на сервере.',
+                debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
+            );
+            $this->logGeocodingEvent('postgis_error', 'postgis', null, $lat, $lon, 'POSTGIS_UNAVAILABLE', 'PostGIS недоступен', $vendorId);
+            return $result;
+        }
+        
+        try {
             $result = DB::selectOne('
                 SELECT 
+                    id,
+                    (delivery_zones IS NULL) as is_zones_empty,
                     ST_Covers(delivery_zones, ST_SetSRID(ST_MakePoint(?, ?), 4326)) as is_inside,
                     ST_IsValid(delivery_zones) as is_valid
                 FROM restaurants 
@@ -716,21 +761,36 @@ class GeoService
             ', [$lon, $lat, $vendorId]);
 
             if ($result === null) {
-                return new DeliveryZoneCheckResult(
+                $res = new DeliveryZoneCheckResult(
                     status: 'zone_missing',
                     allowed: false,
                     message: 'Ресторан не найден при проверке геометрии.',
                     debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
                 );
+                $this->logGeocodingEvent('zone_missing', 'postgis', null, $lat, $lon, 'NO_RESTAURANT', 'Ресторан не найден при проверке геометрии', $vendorId);
+                return $res;
+            }
+
+            if ($result->is_zones_empty) {
+                $res = new DeliveryZoneCheckResult(
+                    status: 'zone_missing',
+                    allowed: false,
+                    message: 'Зона доставки ресторана не настроена.',
+                    debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
+                );
+                $this->logGeocodingEvent('zone_missing', 'postgis', null, $lat, $lon, 'ZONE_UNCONFIGURED', 'Зона доставки не настроена', $vendorId);
+                return $res;
             }
 
             if (!$result->is_valid) {
-                return new DeliveryZoneCheckResult(
+                $res = new DeliveryZoneCheckResult(
                     status: 'invalid_geometry',
                     allowed: false,
                     message: 'Некорректная геометрия зоны доставки в базе данных.',
                     debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon, 'is_valid' => false]
                 );
+                $this->logGeocodingEvent('invalid_geometry', 'postgis', null, $lat, $lon, 'INVALID_GEOMETRY', 'Некорректная геометрия зоны доставки', $vendorId);
+                return $res;
             }
 
             $isInside = (bool) $result->is_inside;
@@ -743,7 +803,7 @@ class GeoService
             ]);
 
             $this->logGeocodingEvent(
-                $isInside ? 'in_zone' : 'outside_zone',
+                $isInside ? 'inside' : 'outside',
                 'postgis',
                 null, $lat, $lon,
                 null, null,
@@ -769,22 +829,22 @@ class GeoService
         } catch (\Illuminate\Database\QueryException $e) {
             Log::error("[GeoService] Delivery zone check failed: " . $e->getMessage());
 
-            if (str_contains(strtolower($e->getMessage()), 'st_makepoint')) {
-                return new DeliveryZoneCheckResult(
-                    status: 'postgis_error',
-                    allowed: true, // Bypass check
-                    message: 'Доставка разрешена (ошибка PostGIS функций).',
-                    debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon, 'error' => $e->getMessage()]
-                );
-            }
-
-            return new DeliveryZoneCheckResult(
+            $allowed = (bool) config('services.geo_postgis_error_allowed', true);
+            
+            $res = new DeliveryZoneCheckResult(
                 status: 'postgis_error',
-                allowed: false,
-                message: 'Произошла ошибка при проверке адреса на сервере.',
+                allowed: $allowed,
+                message: $allowed 
+                    ? 'Доставка разрешена (ошибка PostGIS функций).' 
+                    : 'Произошла ошибка при проверке адреса на сервере.',
                 debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon, 'error' => $e->getMessage()]
             );
+            
+            $this->logGeocodingEvent('postgis_error', 'postgis', null, $lat, $lon, 'QUERY_EXCEPTION', $e->getMessage(), $vendorId);
+            
+            return $res;
         }
+    }
     }
 
     /**

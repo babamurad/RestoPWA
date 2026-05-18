@@ -116,6 +116,13 @@ class GeocodingLogResource extends Resource
             ->defaultSort('created_at', 'desc');
     }
 
+    public static function getWidgets(): array
+    {
+        return [
+            GeocodingLogResource\Widgets\GeocodingStatsWidget::class,
+        ];
+    }
+
     public static function getPages(): array
     {
         return [

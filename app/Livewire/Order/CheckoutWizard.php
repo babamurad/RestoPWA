@@ -310,6 +310,15 @@ class CheckoutWizard extends Component
                 $this->restaurant->id
             );
 
+            \Illuminate\Support\Facades\Log::info('[CheckoutWizard] Delivery zone check status', [
+                'trace_id' => $this->traceId,
+                'vendor_id' => $this->restaurant->id,
+                'lat' => $this->address['lat'],
+                'lon' => $this->address['lon'],
+                'result_status' => $checkResult->status,
+                'allowed' => $checkResult->isAllowed(),
+            ]);
+
             if (! $checkResult->isAllowed()) {
                 $this->error = $checkResult->messageForUser();
                 return false;

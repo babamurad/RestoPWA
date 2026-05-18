@@ -12,10 +12,16 @@
         initRetryCount: 0,
         showRefinement: @entangle('showRefinement'),
         
+        debugLog(...args) {
+            if (@js(config('app.debug'))) {
+                console.log(...args);
+            }
+        },
+
         init() {
-            console.log('[AddressSelector] Component initialized');
+            this.debugLog('[AddressSelector] Component initialized');
             this.$watch('isLocalModalOpen', value => {
-                console.log('[AddressSelector] Modal open state changed:', value);
+                this.debugLog('[AddressSelector] Modal open state changed:', value);
                 if (value === true) {
                     this.isMapLoading = true;
                     this.mapFailed = false;
@@ -28,7 +34,7 @@
 
             this.$watch('showRefinement', value => {
                 if (value === false && this.mapInitialized && this.mapInstance) {
-                    console.log('[AddressSelector] Returning to map');
+                    this.debugLog('[AddressSelector] Returning to map');
                     setTimeout(() => {
                         try {
                             if (this.mapInstance) {
@@ -45,7 +51,7 @@
         },
 
         cleanupMap() {
-            console.log('[AddressSelector] Cleaning up map');
+            this.debugLog('[AddressSelector] Cleaning up map');
             if (this.mapInstance) {
                 try { this.mapInstance.destroy(); } catch(e) {}
             }
@@ -77,7 +83,7 @@
                 return;
             }
 
-            console.log('[AddressSelector] initMap v3 started...');
+            this.debugLog('[AddressSelector] initMap v3 started...');
             try {
                 await ymaps3.ready;
             } catch(e) {
@@ -114,7 +120,7 @@
             const startLat = (serverLat && !isNaN(serverLat) && serverLat !== 0) ? serverLat : 39.0886;
             const startLon = (serverLon && !isNaN(serverLon) && serverLon !== 0) ? serverLon : 63.5593;
 
-            console.log('[AddressSelector] Creating ymaps3.YMap', { startLat, startLon });
+            this.debugLog('[AddressSelector] Creating ymaps3.YMap', { startLat, startLon });
             try {
                 const { YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapControls, YMapZoomControl, YMapDefaultMarker, YMapListener } = ymaps3;
 
@@ -167,7 +173,7 @@
                 this.mapInstance = map;
                 this.mapInitialized = true;
                 this.isMapLoading = false;
-                console.log('[AddressSelector] YMap v3 initialized successfully');
+                this.debugLog('[AddressSelector] YMap v3 initialized successfully');
 
             } catch (e) {
                 console.error('[AddressSelector] YMap v3 creation error:', e);

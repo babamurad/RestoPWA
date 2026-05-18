@@ -10,4 +10,11 @@ use Filament\Resources\Pages\ListRecords;
 class ListGeocodingLogs extends ListRecords
 {
     protected static string $resource = GeocodingLogResource::class;
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            GeocodingLogResource\Widgets\GeocodingStatsWidget::class,
+        ];
+    }
 }
