@@ -46,16 +46,24 @@
     </div>
     
     <div class="bg-white p-6 rounded-lg shadow">
-        <h3 class="text-lg font-semibold mb-4">Зоны доставки</h3>
-        <p class="text-gray-600 mb-4">Нарисуйте полигон на карте для обозначения зоны доставки</p>
+        <h3 class="text-lg font-semibold mb-2">Зоны доставки</h3>
+        <p class="text-gray-600 text-sm mb-4">Нарисуйте область доставки на карте. Координаты будут сохранены автоматически.</p>
         
-        <div id="delivery-map" style="height: 400px; width: 100%; margin-bottom: 1rem;"></div>
+        <div id="delivery-map" style="height: 450px; width: 100%; margin-bottom: 1rem;" class="rounded-lg border border-gray-200 shadow-sm overflow-hidden flex items-center justify-center bg-gray-50 text-gray-400">
+            Загрузка карты...
+        </div>
         
-        <input type="hidden" name="delivery_zones" id="delivery_zones" value="{{ $restaurant->delivery_zones }}">
+        <input type="hidden" name="delivery_zones" id="delivery_zones" value="{{ is_array($restaurant->delivery_zones) ? json_encode($restaurant->delivery_zones) : $restaurant->delivery_zones }}">
         
-        <div class="flex gap-2">
-            <button type="button" id="clear-map" class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded">
-                Очистить карту
+        <div class="flex flex-wrap gap-2">
+            <button type="button" id="start-draw" class="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-xl transition-all shadow-sm">
+                Нарисовать зону
+            </button>
+            <button type="button" id="edit-points" class="inline-flex items-center px-4 py-2 bg-white text-gray-700 text-xs font-bold rounded-xl border border-gray-200 hover:bg-gray-50 transition-all">
+                Редактировать точки
+            </button>
+            <button type="button" id="clear-map" class="inline-flex items-center px-4 py-2 bg-white text-red-600 text-xs font-bold rounded-xl border border-red-100 hover:bg-red-50 transition-all ml-auto">
+                Очистить
             </button>
         </div>
     </div>
@@ -75,73 +83,93 @@
 </form>
 
 @push('scripts')
+<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey={{ config('services.yandex_maps.js_key') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const map = L.map('delivery-map').setView([55.7558, 37.6173], 12);
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-    
-    let drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
-    
-    const drawControl = new L.Control.Draw({
-        draw: {
-            polygon: {
-                allowIntersection: false,
-                showArea: true
-            },
-            polyline: false,
-            circle: false,
-            rectangle: true,
-            marker: false,
-            circlemarker: false
-        },
-        edit: {
-            featureGroup: drawnItems
-        }
-    });
-    map.addControl(drawControl);
-    
-    map.on(L.Draw.Event.CREATED, function(e) {
-        drawnItems.clearLayers();
-        drawnItems.addLayer(e.layer);
-        updateDeliveryZones();
-    });
-    
-    map.on(L.Draw.Event.EDITED, function(e) {
-        updateDeliveryZones();
-    });
-    
-    map.on(L.Draw.Event.DELETED, function(e) {
-        updateDeliveryZones();
-    });
-    
-    function updateDeliveryZones() {
-        const geoJson = drawnItems.toGeoJSON();
-        document.getElementById('delivery_zones').value = JSON.stringify(geoJson);
-    }
-    
-    document.getElementById('clear-map').addEventListener('click', function() {
-        drawnItems.clearLayers();
-        document.getElementById('delivery_zones').value = '';
-    });
-    
-    const existingZones = document.getElementById('delivery_zones').value;
-    if (existingZones) {
-        try {
-            const geoJson = JSON.parse(existingZones);
-            const layer = L.geoJSON(geoJson).getLayers()[0];
-            if (layer) {
-                drawnItems.addLayer(layer);
-                map.fitBounds(layer.getBounds());
+    ymaps.ready(function() {
+        const mapContainer = document.getElementById('delivery-map');
+        mapContainer.innerHTML = '';
+        
+        const map = new ymaps.Map(mapContainer, {
+            center: [39.0886, 63.5593], // Туркменабат
+            zoom: 12,
+            controls: ['zoomControl', 'fullscreenControl']
+        });
+
+        const polygon = new ymaps.Polygon([], {
+            hintContent: 'Зона доставки'
+        }, {
+            fillColor: '#FF6B3555',
+            strokeColor: '#FF6B35',
+            strokeWidth: 3,
+            editorDrawingCursor: 'crosshair'
+        });
+
+        map.geoObjects.add(polygon);
+
+        const zonesInput = document.getElementById('delivery_zones');
+        const existingZones = zonesInput.value;
+
+        if (existingZones) {
+            try {
+                const data = JSON.parse(existingZones);
+                if (data && data.type === 'MultiPolygon' && data.coordinates[0]) {
+                    const coords = data.coordinates[0][0].map(p => [p[1], p[0]]);
+                    polygon.geometry.setCoordinates([coords]);
+                } else if (data && data.type === 'Polygon') {
+                    const coords = data.coordinates[0].map(p => [p[1], p[0]]);
+                    polygon.geometry.setCoordinates([coords]);
+                }
+                
+                if (polygon.geometry.getCoordinates().length > 0) {
+                    map.setBounds(polygon.geometry.getBounds());
+                }
+            } catch (e) {
+                console.error('Failed to parse existing delivery zones:', e);
             }
-        } catch (e) {
-            console.error('Error loading delivery zones:', e);
         }
-    }
-    
+
+        polygon.events.add('geometrychange', updateState);
+
+        function updateState() {
+            const coords = polygon.geometry.getCoordinates()[0];
+            if (!coords || coords.length < 3) {
+                zonesInput.value = '';
+                return;
+            }
+
+            const geojsonCoords = coords.map(p => [p[1], p[0]]);
+            
+            if (geojsonCoords.length > 0) {
+                const first = geojsonCoords[0];
+                const last = geojsonCoords[geojsonCoords.length - 1];
+                if (first[0] !== last[0] || first[1] !== last[1]) {
+                    geojsonCoords.push([first[0], first[1]]);
+                }
+            }
+
+            zonesInput.value = JSON.stringify({
+                type: 'MultiPolygon',
+                coordinates: [[geojsonCoords]]
+            });
+        }
+
+        document.getElementById('start-draw').addEventListener('click', function() {
+            polygon.editor.startDrawing();
+        });
+
+        document.getElementById('edit-points').addEventListener('click', function() {
+            polygon.editor.startEditing();
+        });
+
+        document.getElementById('clear-map').addEventListener('click', function() {
+            if (confirm('Очистить зону доставки?')) {
+                polygon.geometry.setCoordinates([]);
+                zonesInput.value = '';
+            }
+        });
+    });
+
     document.querySelectorAll('.day-off-checkbox').forEach(function(checkbox) {
         checkbox.addEventListener('change', function() {
             const index = this.dataset.index;

@@ -648,25 +648,94 @@ class GeoService
     }
 
     /**
-     * Check if a point is within the delivery zone of a specific vendor.
+     * Helper to check if PostGIS is installed/enabled.
      */
-    public function isPointInDeliveryZone(float $lat, float $lon, string $vendorId): bool
+    private function checkPostGis(): bool
     {
+        try {
+            $result = DB::select("SELECT proname FROM pg_proc WHERE proname = 'addgeometrycolumn' LIMIT 1");
+            return ! empty($result);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check delivery zone with detailed diagnostics.
+     */
+    public function checkDeliveryZone(float $lat, float $lon, string $vendorId): DeliveryZoneCheckResult
+    {
+        $restaurant = Restaurant::find($vendorId);
+
+        if (!$restaurant) {
+            return new DeliveryZoneCheckResult(
+                status: 'zone_missing',
+                allowed: false,
+                message: 'Ресторан не найден.',
+                debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
+            );
+        }
+
+        $zones = $restaurant->delivery_zones;
+
+        if (empty($zones)) {
+            return new DeliveryZoneCheckResult(
+                status: 'zone_missing',
+                allowed: false,
+                message: 'Зона доставки ресторана не настроена.',
+                debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
+            );
+        }
+
         if (DB::getDriverName() === 'sqlite') {
-            return true;
+            return new DeliveryZoneCheckResult(
+                status: 'inside',
+                allowed: true,
+                message: 'Доставка разрешена (SQLite fallback).',
+                debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
+            );
         }
 
         try {
-            // ST_Intersects is better for boundaries than ST_Contains
+            if (!$this->checkPostGis()) {
+                return new DeliveryZoneCheckResult(
+                    status: 'postgis_error',
+                    allowed: true, // Bypass check if PostGIS is unavailable
+                    message: 'Доставка разрешена (PostGIS недоступен).',
+                    debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
+                );
+            }
+
+            // Perform ST_Covers check. ST_Covers is more robust than ST_Contains (includes borders)
             $result = DB::selectOne('
-                SELECT ST_Intersects(delivery_zones, ST_SetSRID(ST_MakePoint(?, ?), 4326)) as is_inside
+                SELECT 
+                    ST_Covers(delivery_zones, ST_SetSRID(ST_MakePoint(?, ?), 4326)) as is_inside,
+                    ST_IsValid(delivery_zones) as is_valid
                 FROM restaurants 
                 WHERE id = ?
             ', [$lon, $lat, $vendorId]);
 
-            $isInside = (bool) ($result?->is_inside ?? false);
+            if ($result === null) {
+                return new DeliveryZoneCheckResult(
+                    status: 'zone_missing',
+                    allowed: false,
+                    message: 'Ресторан не найден при проверке геометрии.',
+                    debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
+                );
+            }
 
-            Log::info("[GeoService] Delivery zone check", [
+            if (!$result->is_valid) {
+                return new DeliveryZoneCheckResult(
+                    status: 'invalid_geometry',
+                    allowed: false,
+                    message: 'Некорректная геометрия зоны доставки в базе данных.',
+                    debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon, 'is_valid' => false]
+                );
+            }
+
+            $isInside = (bool) $result->is_inside;
+
+            Log::info("[GeoService] Diagnostic delivery zone check", [
                 'vendor_id' => $vendorId,
                 'lat' => $lat,
                 'lon' => $lon,
@@ -681,15 +750,49 @@ class GeoService
                 $vendorId
             );
 
-            return $isInside;
-        } catch (\Illuminate\Database\QueryException $e) {
-            if (str_contains(strtolower($e->getMessage()), 'st_makepoint')) {
-                Log::warning('PostGIS is not enabled. Bypassing delivery zone check.');
-                return true;
+            if ($isInside) {
+                return new DeliveryZoneCheckResult(
+                    status: 'inside',
+                    allowed: true,
+                    message: 'Адрес находится в зоне доставки.',
+                    debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
+                );
             }
+
+            return new DeliveryZoneCheckResult(
+                status: 'outside',
+                allowed: false,
+                message: 'Адрес находится за пределами зоны доставки.',
+                debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
+            );
+
+        } catch (\Illuminate\Database\QueryException $e) {
             Log::error("[GeoService] Delivery zone check failed: " . $e->getMessage());
-            return false;
+
+            if (str_contains(strtolower($e->getMessage()), 'st_makepoint')) {
+                return new DeliveryZoneCheckResult(
+                    status: 'postgis_error',
+                    allowed: true, // Bypass check
+                    message: 'Доставка разрешена (ошибка PostGIS функций).',
+                    debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon, 'error' => $e->getMessage()]
+                );
+            }
+
+            return new DeliveryZoneCheckResult(
+                status: 'postgis_error',
+                allowed: false,
+                message: 'Произошла ошибка при проверке адреса на сервере.',
+                debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon, 'error' => $e->getMessage()]
+            );
         }
+    }
+
+    /**
+     * Check if a point is within the delivery zone of a specific vendor.
+     */
+    public function isPointInDeliveryZone(float $lat, float $lon, string $vendorId): bool
+    {
+        return $this->checkDeliveryZone($lat, $lon, $vendorId)->isAllowed();
     }
 
     /**

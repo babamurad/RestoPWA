@@ -304,14 +304,14 @@ class CheckoutWizard extends Component
         }
 
         if ($this->restaurant) {
-            $isInZone = $this->geoService->isPointInDeliveryZone(
+            $checkResult = $this->geoService->checkDeliveryZone(
                 (float) $this->address['lat'],
                 (float) $this->address['lon'],
                 $this->restaurant->id
             );
 
-            if (! $isInZone) {
-                $this->error = 'Адрес находится за пределами зоны доставки';
+            if (! $checkResult->isAllowed()) {
+                $this->error = $checkResult->messageForUser();
                 return false;
             }
         }

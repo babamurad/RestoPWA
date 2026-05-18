@@ -131,14 +131,18 @@ final readonly class OrderPreconditionValidator
 
         $restaurant = Restaurant::find($data['vendor_id']);
         if ($restaurant) {
-            $isInZone = $this->geoService->isPointInDeliveryZone(
+            $checkResult = $this->geoService->checkDeliveryZone(
                 (float) $address['lat'],
                 (float) $address['lon'],
                 $restaurant->id
             );
 
-            if (! $isInZone) {
-                return OrderRejectReason::OUTSIDE_DELIVERY_ZONE;
+            if (! $checkResult->isAllowed()) {
+                return match ($checkResult->status) {
+                    'zone_missing' => OrderRejectReason::ZONE_NOT_CONFIGURED,
+                    'invalid_geometry' => OrderRejectReason::INVALID_GEOMETRY,
+                    default => OrderRejectReason::OUTSIDE_DELIVERY_ZONE,
+                };
             }
         }
 

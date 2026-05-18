@@ -27,6 +27,9 @@ enum OrderRejectReason: string
     case VALIDATION = 'validation';
     case SERVER_ERROR = 'server_error';
     case BELOW_MIN_ORDER = 'below_min_order';
+    case ZONE_NOT_CONFIGURED = 'zone_not_configured';
+    case INVALID_GEOMETRY = 'invalid_geometry';
+
 
     public function userMessage(): string
     {
@@ -52,6 +55,8 @@ enum OrderRejectReason: string
             self::VALIDATION => 'Проверьте правильность заполнения полей.',
             self::SERVER_ERROR => 'Произошла ошибка на сервере. Попробуйте позже.',
             self::BELOW_MIN_ORDER => 'Сумма заказа ниже минимальной.',
+            self::ZONE_NOT_CONFIGURED => 'Зона доставки ресторана не настроена.',
+            self::INVALID_GEOMETRY => 'Некорректная геометрия зоны доставки.',
         };
     }
 
@@ -74,7 +79,9 @@ enum OrderRejectReason: string
             self::INVALID_PHONE,
             self::MISSING_NAME,
             self::INVALID_PAYMENT_METHOD,
-            self::BELOW_MIN_ORDER => 422,
+            self::BELOW_MIN_ORDER,
+            self::ZONE_NOT_CONFIGURED,
+            self::INVALID_GEOMETRY => 422,
 
             self::UNAUTHORIZED => 401,
             self::VALIDATION => 400,

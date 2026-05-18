@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\DB;
+use App\Domains\Geo\Services\GeoJsonNormalizer;
 
 /**
  * @property string $id
@@ -141,14 +142,18 @@ class Restaurant extends Model
                     return null;
                 }
 
-                $json = is_array($value) ? json_encode($value) : $value;
+                $normalized = GeoJsonNormalizer::toMultiPolygon($value);
+                if (empty($normalized)) {
+                    return null;
+                }
+
+                $json = json_encode($normalized);
 
                 if (DB::getDriverName() === 'sqlite' || !self::checkPostGis()) {
                     return $json;
                 }
 
-                // Wrap in ST_Multi if it's a MultiPolygon to be safe
-                return DB::raw("ST_GeomFromGeoJSON('$json'::text)");
+                return DB::raw("ST_SetSRID(ST_GeomFromGeoJSON('$json'::text), 4326)");
             }
         );
     }

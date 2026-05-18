@@ -217,6 +217,7 @@ class AddressSelector extends Component
         $this->suggestions = [];
         $this->error = null;
         $this->showRefinement = true;
+        $this->hasSelectedPoint = true;
         
         $this->dispatch('map-update', lat: $this->lat, lon: $this->lon);
 
@@ -279,15 +280,25 @@ class AddressSelector extends Component
         }
 
         if ($hasCoords && ! $this->isInDeliveryZone) {
-            $this->isInDeliveryZone = $this->geoService->isPointInDeliveryZone(
+            $checkResult = $this->geoService->checkDeliveryZone(
                 $this->lat,
                 $this->lon,
                 $this->selectedVendorId
             );
+            $this->isInDeliveryZone = $checkResult->isAllowed();
+            if (!$this->isInDeliveryZone) {
+                $this->error = $checkResult->messageForUser();
+                return;
+            }
         }
 
         if (! $this->isInDeliveryZone && $this->lat && $this->lon) {
-            $this->error = 'Эта точка находится за пределами зоны доставки ресторана';
+            $checkResult = $this->geoService->checkDeliveryZone(
+                $this->lat,
+                $this->lon,
+                $this->selectedVendorId
+            );
+            $this->error = $checkResult->messageForUser();
             return;
         }
 
@@ -329,14 +340,18 @@ class AddressSelector extends Component
             return;
         }
 
-        $this->isInDeliveryZone = $this->geoService->isPointInDeliveryZone(
+        $result = $this->geoService->checkDeliveryZone(
             $this->lat,
             $this->lon,
             $this->selectedVendorId
         );
 
+        $this->isInDeliveryZone = $result->isAllowed();
+
         if ($this->isInDeliveryZone) {
             $this->error = null;
+        } else {
+            $this->error = $result->messageForUser();
         }
     }
 

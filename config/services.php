@@ -49,7 +49,7 @@ return [
         'private_key' => env('VAPID_PRIVATE_KEY'),
     ],
 
-    'geo_driver' => env('GEO_DRIVER', 'google'),
+    'geo_driver' => env('GEO_DRIVER', 'yandex'),
 
     /*
     |--------------------------------------------------------------------------
@@ -59,12 +59,11 @@ return [
     | The order in which geocoding providers are tried.
     | 'local' refers to the local_places table (Stage 4).
     |
+    | If GEO_PROVIDERS is set in .env, it will be exploded into an array.
+    |
     */
-    'geo_providers' => [
-        'local',
-        env('GEO_FALLBACK_FIRST', 'yandex'),
-        'nominatim',
-        'google',
-    ],
+    'geo_providers' => env('GEO_PROVIDERS')
+        ? explode(',', env('GEO_PROVIDERS'))
+        : ['local', env('GEO_FALLBACK_FIRST', 'yandex'), 'nominatim', 'google'],
 
 ];
