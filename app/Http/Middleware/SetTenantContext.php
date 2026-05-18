@@ -41,6 +41,16 @@ class SetTenantContext
         }
 
         if ($vendorId) {
+            // Resolve raw slug or subdomain string to vendor UUID if it is not already a valid UUID
+            if (! preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', (string) $vendorId)) {
+                $resolved = \Illuminate\Support\Facades\DB::table('restaurants')
+                    ->where('slug', $vendorId)
+                    ->orWhere('id', $vendorId)
+                    ->first();
+                if ($resolved) {
+                    $vendorId = $resolved->id;
+                }
+            }
             $this->tenantContext->setCurrentVendor((string) $vendorId);
         } elseif ($request->is('api/ping') || $request->is('api/order/*/track*') || $request->is('api/push/*')) {
             // Allow health check, guest tracking, and push endpoints without tenant header

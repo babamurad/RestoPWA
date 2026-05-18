@@ -29,8 +29,8 @@
             class="px-4 py-2.5 rounded-xl border border-transparent hover:bg-slate-800/40 hover:text-slate-100 transition-all flex items-center gap-2 relative"
           >
             <span>🛒</span> Корзина
-            <span class="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] font-black flex items-center justify-center border border-slate-950 shadow-md">
-              3
+            <span v-if="cartStore.totalItemsCount > 0" class="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] font-black flex items-center justify-center border border-slate-950 shadow-md">
+              {{ cartStore.totalItemsCount }}
             </span>
           </router-link>
 
@@ -74,8 +74,8 @@
       >
         <span class="text-xl">🛒</span>
         <span class="text-[9px] font-black uppercase tracking-wider">Корзина</span>
-        <span class="absolute -top-1.5 -right-2.5 w-4 h-4 rounded-full bg-orange-500 text-white text-[9px] font-black flex items-center justify-center border border-slate-950 shadow-md">
-          3
+        <span v-if="cartStore.totalItemsCount > 0" class="absolute -top-1.5 -right-2.5 w-4 h-4 rounded-full bg-orange-500 text-white text-[9px] font-black flex items-center justify-center border border-slate-950 shadow-md">
+          {{ cartStore.totalItemsCount }}
         </span>
       </router-link>
 
@@ -112,6 +112,9 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useCartStore } from './stores/cart';
+
+const cartStore = useCartStore();
 
 const isOffline = ref(!navigator.onLine);
 
@@ -120,6 +123,7 @@ const updateOnlineStatus = () => {
 };
 
 onMounted(() => {
+  cartStore.loadFromLocalStorage();
   window.addEventListener('online', updateOnlineStatus);
   window.addEventListener('offline', updateOnlineStatus);
   // Support connectivity-changed custom event from our app.js

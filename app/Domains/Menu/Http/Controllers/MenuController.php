@@ -23,18 +23,30 @@ class MenuController
         $vendorId = $vendor->vendor_id ?? $vendor->id;
         $categoryId = $request->category_id;
         $cacheTags = ['menu', "vendor:{$vendorId}"];
+        $cacheKey = "menu.{$vendorId}.category.".($categoryId ?? 'all');
+        $cacheTime = 3600;
+        
+        $fetchData = function () use ($vendorId, $categoryId) {
+            $categories = $this->getCategories($vendorId);
+            $products = $this->getProducts($vendorId, $categoryId);
+            $filters = $this->getPriceFilters($vendorId, $categoryId);
 
-        $data = Cache::tags($cacheTags)->remember(
-            "menu.{$vendorId}.category.".($categoryId ?? 'all'),
-            3600,
-            function () use ($vendorId, $categoryId) {
-                $categories = $this->getCategories($vendorId);
-                $products = $this->getProducts($vendorId, $categoryId);
-                $filters = $this->getPriceFilters($vendorId, $categoryId);
+            return compact('categories', 'products', 'filters');
+        };
 
-                return compact('categories', 'products', 'filters');
-            }
-        );
+        // Safe fallback for cache drivers (like file, database) that do not support tags
+        $supportsTags = true;
+        try {
+            Cache::tags(['test']);
+        } catch (\BadMethodCallException $e) {
+            $supportsTags = false;
+        }
+
+        if ($supportsTags) {
+            $data = Cache::tags($cacheTags)->remember($cacheKey, $cacheTime, $fetchData);
+        } else {
+            $data = Cache::remember($cacheKey, $cacheTime, $fetchData);
+        }
 
         return response()->json($data);
     }

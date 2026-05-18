@@ -95,16 +95,23 @@
       </div>
 
       <!-- Skeleton Loaders if fetching data -->
-      <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div v-for="n in 4" :key="n" class="bg-slate-800/30 border border-slate-800 rounded-3xl p-4 animate-pulse">
-          <div class="w-full h-44 bg-slate-800 rounded-2xl mb-4"></div>
-          <div class="h-5 bg-slate-800 rounded-lg w-2/3 mb-2"></div>
-          <div class="h-4 bg-slate-800 rounded-lg w-1/3 mb-4"></div>
-          <div class="flex justify-between">
-            <div class="h-4 bg-slate-800 rounded-lg w-1/4"></div>
-            <div class="h-4 bg-slate-800 rounded-lg w-1/4"></div>
+      <div v-if="store.loading" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div v-for="n in 4" :key="n" class="bg-slate-800/30 border border-slate-800/60 rounded-3xl p-4 animate-pulse">
+          <div class="w-full h-44 bg-slate-800/60 rounded-2xl mb-4"></div>
+          <div class="h-5 bg-slate-800/60 rounded-lg w-2/3 mb-2"></div>
+          <div class="h-4 bg-slate-800/60 rounded-lg w-1/3 mb-4"></div>
+          <div class="flex justify-between mt-3 pt-3 border-t border-slate-800/40">
+            <div class="h-4 bg-slate-800/60 rounded-lg w-1/4"></div>
+            <div class="h-4 bg-slate-800/60 rounded-lg w-1/4"></div>
           </div>
         </div>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else-if="filteredRestaurants.length === 0" class="text-center py-16">
+        <span class="text-4xl mb-4 block">🔍</span>
+        <h4 class="text-lg font-bold text-slate-200 mb-1">Ничего не найдено</h4>
+        <p class="text-xs text-slate-400">Попробуйте изменить параметры фильтрации.</p>
       </div>
 
       <!-- Restaurants list -->
@@ -112,12 +119,13 @@
         <div 
           v-for="restaurant in filteredRestaurants" 
           :key="restaurant.id"
+          @click="openMenu(restaurant.slug)"
           class="bg-slate-800/40 backdrop-blur-sm border border-slate-800/80 rounded-3xl p-4 hover:border-slate-700/50 hover:bg-slate-800/60 transition-all duration-300 shadow-lg hover:shadow-orange-950/5 group cursor-pointer"
         >
           <!-- Thumbnail Image container -->
           <div class="relative w-full h-44 rounded-2xl overflow-hidden mb-4 bg-slate-900 border border-slate-800/60 shadow-inner">
             <img 
-              :src="restaurant.image || '/images/restaurant-placeholder.jpg'" 
+              :src="restaurant.image ? ('/storage/' + restaurant.image) : 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=600&auto=format&fit=crop&q=80'" 
               :alt="restaurant.name"
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               @error="handleImageError"
@@ -166,8 +174,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useRestaurantsStore } from '../stores/restaurants';
 
-const loading = ref(true);
+const router = useRouter();
+const store = useRestaurantsStore();
+
 const activeCategory = ref('all');
 const sortBy = ref('rating');
 
@@ -180,14 +192,12 @@ const categories = ref([
   { id: 'drinks', name: 'Напитки', icon: '🥤' }
 ]);
 
-const restaurants = ref([]);
-
-// Fallback high-quality mock data in case API is empty or offline
-const mockRestaurants = [
+// Fallback mock data in case API returns nothing
+const mockRestaurantsFallback = [
   {
     id: 1,
     name: 'Burger & Co',
-    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80',
+    slug: 'burger-co',
     rating: '4.8',
     delivery_time: '20-30',
     delivery_fee: '5',
@@ -198,7 +208,7 @@ const mockRestaurants = [
   {
     id: 2,
     name: 'Bella Italia',
-    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&auto=format&fit=crop&q=80',
+    slug: 'bella-italia',
     rating: '4.7',
     delivery_time: '30-40',
     delivery_fee: '0',
@@ -209,54 +219,28 @@ const mockRestaurants = [
   {
     id: 3,
     name: 'Sushi master',
-    image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=600&auto=format&fit=crop&q=80',
+    slug: 'sushi-master',
     rating: '4.9',
     delivery_time: '40-50',
     delivery_fee: '8',
     min_order: '40',
     description: 'Свежайшие роллы, суши и гунканы по традиционным рецептам',
     category: 'sushi'
-  },
-  {
-    id: 4,
-    name: 'Sweet Story',
-    image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&auto=format&fit=crop&q=80',
-    rating: '4.6',
-    delivery_time: '15-25',
-    delivery_fee: '4',
-    min_order: '20',
-    description: 'Изысканные десерты, макаруны и ароматная выпечка',
-    category: 'desserts'
   }
 ];
 
-const fetchRestaurants = async () => {
-  try {
-    const response = await fetch('/api/v1/restaurants');
-    if (response.ok) {
-      const data = await response.json();
-      if (data && data.length > 0) {
-        restaurants.value = data;
-      } else {
-        restaurants.value = mockRestaurants;
-      }
-    } else {
-      restaurants.value = mockRestaurants;
-    }
-  } catch (err) {
-    console.error('API Error, loading high-quality mock data:', err);
-    restaurants.value = mockRestaurants;
-  } finally {
-    loading.value = false;
-  }
+const handleImageError = (e) => {
+  e.target.src = 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=600&auto=format&fit=crop&q=80'; // Fallback food pattern
 };
 
-const handleImageError = (e) => {
-  e.target.src = 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=600&auto=format&fit=crop&q=80'; // Fallback high-quality food pattern
+const openMenu = (slug) => {
+  router.push({ name: 'restaurant-menu', params: { slug } });
 };
 
 const filteredRestaurants = computed(() => {
-  let list = [...restaurants.value];
+  let list = store.restaurants && store.restaurants.length > 0 
+    ? [...store.restaurants] 
+    : [...mockRestaurantsFallback];
   
   // Filter by category
   if (activeCategory.value !== 'all') {
@@ -278,7 +262,7 @@ const filteredRestaurants = computed(() => {
 });
 
 onMounted(() => {
-  fetchRestaurants();
+  store.fetchRestaurants();
 });
 </script>
 

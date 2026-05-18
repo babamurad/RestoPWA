@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomePage from '../pages/HomePage.vue';
 import CartPage from '../pages/CartPage.vue';
 import ProfilePage from '../pages/ProfilePage.vue';
+import RestaurantMenuPage from '../pages/RestaurantMenuPage.vue';
 
 const routes = [
     {
@@ -9,6 +10,12 @@ const routes = [
         name: 'home',
         component: HomePage,
         meta: { title: 'Каталог ресторанов' }
+    },
+    {
+        path: '/restaurants/:slug',
+        name: 'restaurant-menu',
+        component: RestaurantMenuPage,
+        meta: { title: 'Меню ресторана' }
     },
     {
         path: '/cart',
