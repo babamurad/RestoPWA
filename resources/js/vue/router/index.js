@@ -24,6 +24,12 @@ const routes = [
         meta: { title: 'Корзина' }
     },
     {
+        path: '/checkout',
+        name: 'checkout',
+        component: () => import('../pages/CheckoutPage.vue'),
+        meta: { title: 'Оформление заказа' }
+    },
+    {
         path: '/profile',
         name: 'profile',
         component: ProfilePage,

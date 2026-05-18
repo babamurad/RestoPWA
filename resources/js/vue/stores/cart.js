@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import apiClient from '../api/client';
 
 export const useCartStore = defineStore('cart', {
   state: () => ({
@@ -127,8 +128,6 @@ export const useCartStore = defineStore('cart', {
       this.syncError = null;
 
       try {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        
         // Format payload to match backend expectations in CartController.php
         const payload = {
           vendor_id: this.vendorId,
@@ -140,21 +139,8 @@ export const useCartStore = defineStore('cart', {
           }))
         };
 
-        const res = await fetch('/api/v1/cart/sync', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': csrfToken || ''
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) {
-          throw new Error('Не удалось синхронизировать корзину с сервером');
-        }
-
-        const data = await res.json();
+        const response = await apiClient.post('/cart/sync', payload);
+        const data = response.data;
 
         if (data && data.status === 'success' && data.data) {
           const syncData = data.data;

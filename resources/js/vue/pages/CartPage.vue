@@ -179,6 +179,9 @@
 import { onMounted } from 'vue';
 import { useCartStore } from '../stores/cart';
 
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 const cartStore = useCartStore();
 
 const increaseQty = (item) => {
@@ -197,7 +200,7 @@ const clearCart = () => {
 
 const proceedToCheckout = () => {
   if (!cartStore.isMinOrderMet) return;
-  alert('Переход к оформлению заказа! (В Sprint 4 мы добавим сюда полноценный CheckoutWizard SPA)');
+  router.push('/checkout');
 };
 
 const handleImageError = (e) => {

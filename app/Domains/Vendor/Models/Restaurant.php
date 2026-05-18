@@ -86,6 +86,24 @@ class Restaurant extends Model
         ];
     }
 
+    protected static ?bool $hasPostgis = null;
+
+    protected static function checkPostGis(): bool
+    {
+        if (self::$hasPostgis !== null) {
+            return self::$hasPostgis;
+        }
+        
+        try {
+            $result = DB::select("SELECT proname FROM pg_proc WHERE proname = 'addgeometrycolumn' LIMIT 1");
+            self::$hasPostgis = !empty($result);
+        } catch (\Throwable $e) {
+            self::$hasPostgis = false;
+        }
+        
+        return self::$hasPostgis;
+    }
+
     /**
      * @return Attribute<array<mixed>|null, string|array<mixed>|null>
      */
@@ -108,11 +126,15 @@ class Restaurant extends Model
 
                 // Fallback for PostGIS binary if not automatically converted by DB driver
                 try {
-                    $geojson = DB::selectOne("SELECT ST_AsGeoJSON(?) as geo", [$value])?->geo;
-                    return $geojson ? json_decode($geojson, true) : null;
+                    if (DB::getDriverName() !== 'sqlite' && self::checkPostGis()) {
+                        $geojson = DB::selectOne("SELECT ST_AsGeoJSON(?) as geo", [$value])?->geo;
+                        return $geojson ? json_decode($geojson, true) : null;
+                    }
                 } catch (\Exception $e) {
-                    return is_string($value) ? json_decode($value, true) : null;
+                    // Ignore and fallback
                 }
+                
+                return is_string($value) ? json_decode($value, true) : null;
             },
             set: function ($value) {
                 if (empty($value)) {
@@ -121,12 +143,12 @@ class Restaurant extends Model
 
                 $json = is_array($value) ? json_encode($value) : $value;
 
-                if (DB::getDriverName() === 'sqlite') {
+                if (DB::getDriverName() === 'sqlite' || !self::checkPostGis()) {
                     return $json;
                 }
 
                 // Wrap in ST_Multi if it's a MultiPolygon to be safe
-                return DB::raw("ST_GeomFromGeoJSON('$json')");
+                return DB::raw("ST_GeomFromGeoJSON('$json'::text)");
             }
         );
     }
