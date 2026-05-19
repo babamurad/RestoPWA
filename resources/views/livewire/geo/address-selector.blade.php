@@ -243,7 +243,7 @@
                         <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                         </div>
-                        <input type="text" x-model="searchQuery" @input="search()" @focus="showSuggestions = @js(!empty($suggestions))" @blur="setTimeout(() => showSuggestions = false, 200)" @keydown.enter.prevent="$wire.confirmAddress()" placeholder="Улица, дом..." class="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-sm bg-gray-50 focus:bg-white transition-all">
+                        <input type="text" x-model="searchQuery" @input="search()" @focus="showSuggestions = @js(!empty($suggestions))" @blur="setTimeout(() => showSuggestions = false, 200)" @keydown.enter.prevent="$wire.goToRefinement()" placeholder="Улица, дом..." class="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-sm bg-gray-50 focus:bg-white transition-all">
                         <div x-show="showSuggestions && @js(!empty($suggestions))" class="absolute z-20 w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto" style="display:none">
                             @foreach($suggestions as $index => $suggestion)
                                 <button type="button" @click="select({{ $index }})" class="w-full px-3 py-2.5 text-left hover:bg-orange-50 border-b border-gray-50 last:border-b-0 transition-colors flex items-start gap-2">
@@ -279,11 +279,11 @@
                 @if($address && $hasSelectedPoint && !$isInDeliveryZone && !$error && !$showRefinement)<div class="flex items-center gap-2 p-3 bg-amber-50 border border-amber-100 rounded-xl text-amber-700 text-sm"><svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span>Адрес за пределами зоны доставки</span></div>@endif
             </div>
             <div class="px-4 pb-4 shrink-0">
-                <button type="button" wire:click="confirmAddress" wire:loading.attr="disabled" class="w-full py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200 hover:from-orange-600 hover:to-orange-700 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2">
-                    <span wire:loading wire:target="confirmAddress" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
-                    <svg wire:loading.remove wire:target="confirmAddress" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span wire:loading.remove wire:target="confirmAddress">Подтвердить адрес</span>
-                    <span wire:loading wire:target="confirmAddress">Обработка...</span>
+                <button type="button" wire:click="goToRefinement" wire:loading.attr="disabled" class="w-full py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200 hover:from-orange-600 hover:to-orange-700 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2">
+                    <span wire:loading wire:target="goToRefinement" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    <svg wire:loading.remove wire:target="goToRefinement" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span wire:loading.remove wire:target="goToRefinement">Продолжить</span>
+                    <span wire:loading wire:target="goToRefinement">Обработка...</span>
                 </button>
             </div>
         </div>

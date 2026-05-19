@@ -61,6 +61,7 @@ class AddressSelector extends Component
     public function openModal(): void
     {
         $this->selectedVendorId = session('current_vendor_id', '');
+        $this->showRefinement = false;
         $this->isAddressModalOpen = true;
     }
 
@@ -171,7 +172,6 @@ class AddressSelector extends Component
             $this->provider = null;
         }
 
-        $this->showRefinement = true;
         $this->checkDeliveryZone();
         
         // No map-update dispatch here because setLocation is often called FROM the map itself.
@@ -216,7 +216,6 @@ class AddressSelector extends Component
         $this->provider = $selected['source'] ?? null;
         $this->suggestions = [];
         $this->error = null;
-        $this->showRefinement = true;
         $this->hasSelectedPoint = true;
         
         $this->dispatch('map-update', lat: $this->lat, lon: $this->lon);
@@ -230,43 +229,29 @@ class AddressSelector extends Component
         $this->checkDeliveryZone();
     }
 
-    public function confirmAddress(): void
+    public function goToRefinement(): void
     {
-        Log::info('[AddressSelector] confirmAddress called', [
-            'hasSelectedPoint' => $this->hasSelectedPoint,
-            'lat' => $this->lat,
-            'lon' => $this->lon,
-            'address' => $this->address,
-            'vendor_id' => $this->selectedVendorId,
-        ]);
-
         $hasCoords = $this->hasSelectedPoint && $this->lat && $this->lon;
         
         if (! $hasCoords) {
             if (empty($this->address)) {
-                Log::info('[AddressSelector] confirmAddress: No coords and empty address');
                 $this->error = 'Выберите точку на карте или введите адрес';
                 return;
             }
 
-            Log::info('[AddressSelector] confirmAddress: Attempting geocoding for address', ['address' => $this->address]);
             $this->isDetectingLocation = true;
             // Use fallback geocoding for better reliability
             $result = $this->geoService->geocodeWithFallback($this->address);
 
             if ($result) {
-                Log::info('[AddressSelector] confirmAddress: Geocoding successful', $result);
                 $this->address = $result['address'];
                 $this->lat = $result['lat'];
                 $this->lon = $result['lon'];
                 $this->source = 'manual_geocoded';
                 $this->provider = $result['provider'] ?? null;
                 $this->hasSelectedPoint = true;
-                $this->showRefinement = true;
-                $this->checkDeliveryZone();
                 $this->dispatch('map-update', lat: $this->lat, lon: $this->lon);
             } else {
-                Log::warning('[AddressSelector] confirmAddress: Geocoding failed', ['address' => $this->address]);
                 $this->error = 'Адрес не найден. Пожалуйста, укажите точку на карте вручную.';
                 $this->isDetectingLocation = false;
                 return;
@@ -279,27 +264,32 @@ class AddressSelector extends Component
             return;
         }
 
-        if ($hasCoords && ! $this->isInDeliveryZone) {
-            $checkResult = $this->geoService->checkDeliveryZone(
-                $this->lat,
-                $this->lon,
-                $this->selectedVendorId
-            );
-            $this->isInDeliveryZone = $checkResult->isAllowed();
-            if (!$this->isInDeliveryZone) {
-                $this->error = $checkResult->messageForUser();
-                return;
-            }
+        $this->checkDeliveryZone();
+
+        if (! $this->isInDeliveryZone) {
+            return;
         }
 
-        if (! $this->isInDeliveryZone && $this->lat && $this->lon) {
-            $checkResult = $this->geoService->checkDeliveryZone(
-                $this->lat,
-                $this->lon,
-                $this->selectedVendorId
-            );
-            $this->error = $checkResult->messageForUser();
+        $this->showRefinement = true;
+    }
+
+    public function confirmAddress(): void
+    {
+        if (! $this->hasSelectedPoint || ! $this->lat || ! $this->lon) {
+            $this->error = 'Выберите точку на карте';
             return;
+        }
+
+        if (! $this->selectedVendorId) {
+            $this->error = 'Выберите ресторан для проверки зоны доставки';
+            return;
+        }
+
+        if (! $this->isInDeliveryZone) {
+            $this->checkDeliveryZone();
+            if (! $this->isInDeliveryZone) {
+                return;
+            }
         }
 
         $addressData = [
