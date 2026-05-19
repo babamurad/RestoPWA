@@ -137,9 +137,9 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  if (mapInstance && typeof mapInstance.destroy === 'function') {
+  if (mapInstance && typeof mapInstance.remove === 'function') {
     try {
-      mapInstance.destroy();
+      mapInstance.remove();
     } catch(e) {}
   }
 });
@@ -158,11 +158,17 @@ watch(localData, (newVal) => {
 
 const initMap = async () => {
   try {
-    if (!window.ymaps3) {
-      // Dynamically load the script if it wasn't included in app.blade.php
+    if (!window.L) {
+      // Dynamically load Leaflet CSS
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+
+      // Dynamically load Leaflet JS
       await new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = "https://api-maps.yandex.ru/v3/?apikey=863cf462-3d5e-4f14-8b5c-51b730f59148&lang=ru_RU";
+        script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
         script.type = "text/javascript";
         script.onload = resolve;
         script.onerror = reject;
@@ -170,44 +176,36 @@ const initMap = async () => {
       });
     }
 
-    if (!window.ymaps3) {
-      console.error('window.ymaps3 is still not defined after script load');
+    if (!window.L) {
+      console.error('Leaflet script failed to load');
       mapLoaded.value = true;
       return;
     }
 
-    await window.ymaps3.ready;
-    const {YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapListener} = window.ymaps3;
-    
     const container = document.getElementById('checkout-map');
     if (!container) return;
 
-    const map = new YMap(
-      container,
-      {
-        location: {
-          center: [localData.value.lon, localData.value.lat],
-          zoom: 15
-        }
-      }
-    );
-
-    map.addChild(new YMapDefaultSchemeLayer());
-    map.addChild(new YMapDefaultFeaturesLayer());
-
-    const mapListener = new YMapListener({
-      onActionEnd: () => {
-        const center = map.location.center;
-        localData.value.lon = center[0];
-        localData.value.lat = center[1];
-      }
+    const map = window.L.map('checkout-map', {
+      center: [localData.value.lat, localData.value.lon],
+      zoom: 15,
+      zoomControl: false,
+      attributionControl: false
     });
-    map.addChild(mapListener);
+
+    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+    }).addTo(map);
+
+    map.on('moveend', () => {
+      const center = map.getCenter();
+      localData.value.lat = center.lat;
+      localData.value.lon = center.lng;
+    });
     
     mapInstance = map;
     mapLoaded.value = true;
   } catch (e) {
-    console.error('Yandex Map init error', e);
+    console.error('Map init error', e);
     mapLoaded.value = true; // prevent infinite loader
   }
 };
