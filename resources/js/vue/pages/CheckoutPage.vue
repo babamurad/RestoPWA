@@ -140,7 +140,7 @@ const submitOrder = async () => {
     address: {
       lat: orderData.value.lat || 39.0886,
       lon: orderData.value.lon || 63.5593,
-      address: orderData.value.address || 'Самовывоз',
+      address: orderData.value.address ? orderData.value.address : (orderData.value.delivery_type === 'delivery' ? 'Точка на карте' : 'Самовывоз'),
       name: authStore.user?.name || 'Покупатель',
       phone: cleanPhone,
       entrance: orderData.value.entrance || null,

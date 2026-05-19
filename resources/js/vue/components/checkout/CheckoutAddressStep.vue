@@ -42,7 +42,7 @@
       </div>
 
       <div>
-        <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5 ml-1">Улица, дом</label>
+        <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5 ml-1">Улица, дом (необязательно)</label>
         <input 
           v-model="localData.address" 
           type="text" 
@@ -220,9 +220,6 @@ const updateType = (type) => {
 
 const isValid = computed(() => {
   if (!localData.value.phone || localData.value.phone.length < 8) return false;
-  if (localData.value.delivery_type === 'delivery') {
-    return localData.value.address && localData.value.address.length > 3;
-  }
   return true;
 });
 
