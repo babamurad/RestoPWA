@@ -155,8 +155,25 @@ watch(localData, (newVal) => {
 }, { deep: true });
 
 const initMap = async () => {
-  if (!window.ymaps3) return;
   try {
+    if (!window.ymaps3) {
+      // Dynamically load the script if it wasn't included in app.blade.php
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = "https://api-maps.yandex.ru/v3/?apikey=863cf462-3d5e-4f14-8b5c-51b730f59148&lang=ru_RU";
+        script.type = "text/javascript";
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    if (!window.ymaps3) {
+      console.error('window.ymaps3 is still not defined after script load');
+      mapLoaded.value = true;
+      return;
+    }
+
     await window.ymaps3.ready;
     const {YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapListener} = window.ymaps3;
     
