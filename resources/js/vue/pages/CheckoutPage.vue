@@ -138,8 +138,8 @@ const submitOrder = async () => {
     vendor_id: cartStore.vendorId,
     delivery_type: orderData.value.delivery_type,
     address: {
-      lat: 39.0886, // Default latitude for Turkmenabat
-      lon: 63.5593, // Default longitude for Turkmenabat
+      lat: orderData.value.lat || 39.0886,
+      lon: orderData.value.lon || 63.5593,
       address: orderData.value.address || 'Самовывоз',
       name: authStore.user?.name || 'Покупатель',
       phone: cleanPhone,

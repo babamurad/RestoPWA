@@ -22,6 +22,23 @@
 
     <!-- Address Fields (only for delivery) -->
     <div v-if="localData.delivery_type === 'delivery'" class="space-y-4 animate-fade-in">
+      
+      <!-- MAP CONTAINER -->
+      <div class="h-48 w-full rounded-xl overflow-hidden relative border border-slate-800" v-show="mapLoaded">
+        <div id="checkout-map" class="w-full h-full"></div>
+        
+        <!-- Pin icon in center (fixed, map moves) -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none pb-8">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-orange-500 drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </div>
+      </div>
+      <div v-if="!mapLoaded" class="h-48 w-full flex items-center justify-center bg-slate-900 rounded-xl border border-slate-800">
+        <div class="w-6 h-6 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
+      </div>
+
       <div>
         <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5 ml-1">Улица, дом</label>
         <input 
@@ -91,7 +108,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 
 const props = defineProps({
   orderData: {
@@ -102,11 +119,79 @@ const props = defineProps({
 
 const emit = defineEmits(['update-data', 'next-step']);
 
-const localData = ref({ ...props.orderData });
+const localData = ref({ 
+  ...props.orderData,
+  lat: props.orderData.lat || 39.0886,
+  lon: props.orderData.lon || 63.5593
+});
+
+const mapLoaded = ref(false);
+let mapInstance = null;
+
+onMounted(() => {
+  if (localData.value.delivery_type === 'delivery') {
+    initMap();
+  }
+});
+
+onUnmounted(() => {
+  if (mapInstance && typeof mapInstance.destroy === 'function') {
+    try {
+      mapInstance.destroy();
+    } catch(e) {}
+  }
+});
+
+watch(() => localData.value.delivery_type, (newType) => {
+  if (newType === 'delivery' && !mapInstance) {
+    nextTick(() => {
+      initMap();
+    });
+  }
+});
 
 watch(localData, (newVal) => {
   emit('update-data', newVal);
 }, { deep: true });
+
+const initMap = async () => {
+  if (!window.ymaps3) return;
+  try {
+    await window.ymaps3.ready;
+    const {YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapListener} = window.ymaps3;
+    
+    const container = document.getElementById('checkout-map');
+    if (!container) return;
+
+    const map = new YMap(
+      container,
+      {
+        location: {
+          center: [localData.value.lon, localData.value.lat],
+          zoom: 15
+        }
+      }
+    );
+
+    map.addChild(new YMapDefaultSchemeLayer());
+    map.addChild(new YMapDefaultFeaturesLayer());
+
+    const mapListener = new YMapListener({
+      onActionEnd: () => {
+        const center = map.location.center;
+        localData.value.lon = center[0];
+        localData.value.lat = center[1];
+      }
+    });
+    map.addChild(mapListener);
+    
+    mapInstance = map;
+    mapLoaded.value = true;
+  } catch (e) {
+    console.error('Yandex Map init error', e);
+    mapLoaded.value = true; // prevent infinite loader
+  }
+};
 
 const updateType = (type) => {
   localData.value.delivery_type = type;
