@@ -24,19 +24,21 @@
     <div v-if="localData.delivery_type === 'delivery'" class="space-y-4 animate-fade-in">
       
       <!-- MAP CONTAINER -->
-      <div class="h-48 w-full rounded-xl overflow-hidden relative border border-slate-800" v-show="mapLoaded">
+      <div class="h-48 w-full rounded-xl overflow-hidden relative border border-slate-800">
         <div id="checkout-map" class="w-full h-full"></div>
         
         <!-- Pin icon in center (fixed, map moves) -->
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none pb-8">
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none pb-8" v-show="mapLoaded">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-orange-500 drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
         </div>
-      </div>
-      <div v-if="!mapLoaded" class="h-48 w-full flex items-center justify-center bg-slate-900 rounded-xl border border-slate-800">
-        <div class="w-6 h-6 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
+
+        <!-- Spinner overlay -->
+        <div v-if="!mapLoaded" class="absolute inset-0 flex items-center justify-center bg-slate-900 z-10">
+          <div class="w-6 h-6 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
+        </div>
       </div>
 
       <div>
