@@ -54,7 +54,7 @@
     <div class="pt-4 border-t border-slate-800">
       <div class="flex justify-between items-baseline mb-6">
         <span class="text-sm font-bold text-slate-400">Итого к оплате</span>
-        <span class="text-3xl font-black text-orange-500 font-outfit">{{ cartStore.total }} TMT</span>
+        <span class="text-3xl font-black text-orange-500 font-outfit">{{ finalTotal }} TMT</span>
       </div>
 
       <button 
@@ -75,7 +75,7 @@ import { useCartStore } from '../../stores/cart';
 
 const cartStore = useCartStore();
 
-defineProps({
+const props = defineProps({
   orderData: {
     type: Object,
     required: true
@@ -83,4 +83,14 @@ defineProps({
 });
 
 defineEmits(['submit']);
+
+import { computed } from 'vue';
+
+const finalTotal = computed(() => {
+  const subtotal = cartStore.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  if (props.orderData.delivery_type === 'delivery') {
+    return subtotal + cartStore.deliveryFee;
+  }
+  return subtotal;
+});
 </script>

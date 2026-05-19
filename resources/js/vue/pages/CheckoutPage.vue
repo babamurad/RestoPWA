@@ -134,6 +134,10 @@ const submitOrder = async () => {
     cleanPhone = '+' + cleanPhone;
   }
 
+  const finalSubtotal = cartStore.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const finalDeliveryFee = orderData.value.delivery_type === 'delivery' ? cartStore.deliveryFee : 0;
+  const finalTotal = finalSubtotal + finalDeliveryFee;
+
   const payload = {
     vendor_id: cartStore.vendorId,
     delivery_type: orderData.value.delivery_type,
@@ -150,8 +154,8 @@ const submitOrder = async () => {
       landmark: null,
       courier_comment: orderData.value.comment || null
     },
-    total: Math.round(cartStore.total * 100),
-    delivery_fee: Math.round(cartStore.deliveryFee * 100),
+    total: Math.round(finalTotal * 100),
+    delivery_fee: Math.round(finalDeliveryFee * 100),
     delivery_time: 'asap',
     payment_method: orderData.value.payment_method,
     comment: orderData.value.comment,
