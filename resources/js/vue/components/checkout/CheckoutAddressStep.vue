@@ -28,8 +28,8 @@
         <div id="checkout-map" class="w-full h-full"></div>
         
         <!-- Pin icon in center (fixed, map moves) -->
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none pb-8" v-show="mapLoaded">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-orange-500 drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none pb-8" style="z-index: 1000" v-show="mapLoaded">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-orange-600 drop-shadow-xl" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
@@ -200,6 +200,10 @@ const initMap = async () => {
       const center = map.getCenter();
       localData.value.lat = center.lat;
       localData.value.lon = center.lng;
+    });
+
+    map.on('click', (e) => {
+      map.panTo(e.latlng);
     });
     
     mapInstance = map;
