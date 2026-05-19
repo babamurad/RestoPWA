@@ -39,8 +39,11 @@
     <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
 
     
-    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(config('services.yandex_maps.js_key')): ?>
-    <script src="https://api-maps.yandex.ru/v3/?apikey=<?php echo e(config('services.yandex_maps.js_key')); ?>&lang=ru_RU" type="text/javascript"></script>
+    <?php
+        $yandexJsKey = config('services.yandex_maps.js_key') ?: config('services.yandex_maps.key');
+    ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($yandexJsKey): ?>
+    <script src="https://api-maps.yandex.ru/v3/?apikey=<?php echo e($yandexJsKey); ?>&lang=ru_RU" type="text/javascript"></script>
     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
     <style>
