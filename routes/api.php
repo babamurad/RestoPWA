@@ -6,6 +6,7 @@ use App\Domains\Menu\Models\Product;
 use App\Domains\Order\Http\Controllers\Api\OrderController as DomainOrderController;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\GeoController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\PushController;
 use App\Http\Controllers\Auth\AuthController;
@@ -31,6 +32,11 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->gro
     Route::get('categories', fn () => response()->json(['data' => Category::where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'sort_order', 'parent_id'])]))->name('api.categories.index');
 
     Route::post('cart/sync', [CartController::class, 'sync'])->name('api.cart.sync');
+
+    // Geo endpoints (public — no auth required)
+    Route::post('geo/zone-check', [GeoController::class, 'zoneCheck'])->name('api.geo.zone-check');
+    Route::post('geo/reverse', [GeoController::class, 'reverse'])->name('api.geo.reverse');
+    Route::post('telemetry', [GeoController::class, 'telemetry'])->name('api.telemetry');
 
     Route::post('login', [AuthController::class, 'login'])->name('api.login');
     Route::post('register', [AuthController::class, 'register'])->name('api.register');
