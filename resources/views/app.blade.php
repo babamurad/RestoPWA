@@ -17,13 +17,7 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    {{-- Yandex Maps JS API v3 --}}
-    @php
-        $yandexJsKey = config('services.yandex_maps.js_key') ?: config('services.yandex_maps.key');
-    @endphp
-    @if($yandexJsKey)
-    <script src="https://api-maps.yandex.ru/v3/?apikey={{ $yandexJsKey }}&lang=ru_RU" type="text/javascript"></script>
-    @endif
+
 
     <style>
         [x-cloak] { display: none !important; }
