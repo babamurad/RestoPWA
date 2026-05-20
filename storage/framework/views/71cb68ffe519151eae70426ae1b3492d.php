@@ -58,6 +58,7 @@
     <script>
         window.vapidPublicKey = '<?php echo e(config('services.push.public_key')); ?>';
         window.apiPingUrl = '<?php echo e(route('api.ping')); ?>';
+        window.checkoutDefaultGeolocateEnabled = <?php echo json_encode(config('checkout.default_geolocate_enabled'), 15, 512) ?>;
     </script>
 
     <!-- Vue mount element -->

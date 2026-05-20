@@ -38,6 +38,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Default Geolocation on Checkout
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, the address step in checkout will attempt to center the map
+    | on the user's current geolocation automatically.
+    |
+    */
+    'default_geolocate_enabled' => env('CHECKOUT_DEFAULT_GEOLOCATE_ENABLED', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Regional Phone Patterns (for strict_region mode)
     |--------------------------------------------------------------------------
     | Key: country code (without +), Value: regex pattern for the national part

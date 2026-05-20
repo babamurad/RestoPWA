@@ -37,6 +37,7 @@
     <script>
         window.vapidPublicKey = '{{ config('services.push.public_key') }}';
         window.apiPingUrl = '{{ route('api.ping') }}';
+        window.checkoutDefaultGeolocateEnabled = @json(config('checkout.default_geolocate_enabled'));
     </script>
 
     <!-- Vue mount element -->
