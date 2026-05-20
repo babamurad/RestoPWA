@@ -28,7 +28,9 @@ return new class extends Migration
             $table->index('type');
             $table->index('popularity');
             $table->index('is_verified');
-            $table->fullText('name');
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->fullText('name');
+            }
         });
     }
 

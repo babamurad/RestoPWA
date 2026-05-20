@@ -33,7 +33,7 @@ class PushSubscriptionTest extends TestCase
             ]);
 
         $response->assertStatus(200)
-            ->assertJson(['success' => true]);
+            ->assertJsonStructure(['id']);
 
         $this->assertDatabaseHas('push_subscriptions', [
             'user_id' => $this->user->id,

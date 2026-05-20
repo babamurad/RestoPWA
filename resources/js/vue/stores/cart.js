@@ -27,6 +27,14 @@ export const useCartStore = defineStore('cart', {
     },
     isEmpty: (state) => {
       return state.items.length === 0;
+    },
+    // Instant local subtotal (used before server sync completes)
+    localSubtotal: (state) => {
+      return state.items.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
+    },
+    localTotal: (state) => {
+      const sub = state.items.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
+      return sub + state.deliveryFee;
     }
   },
 
@@ -212,9 +220,18 @@ export const useCartStore = defineStore('cart', {
           this.vendorId = cartData.vendorId || null;
           this.vendorSlug = cartData.vendorSlug || null;
           this.vendorName = cartData.vendorName || null;
-          
+
           if (this.items.length > 0) {
-            this.syncCart(); // Sync immediately once loaded to verify latest prices/avail
+            // Pre-compute totals immediately from local prices so the UI
+            // never shows 0 while the async server sync is in flight.
+            const localSub = this.items.reduce(
+              (sum, item) => sum + (item.price || 0) * item.quantity, 0
+            );
+            this.subtotal = localSub;
+            this.total = localSub + this.deliveryFee;
+
+            // Then confirm with server (will override with authoritative values)
+            this.syncCart();
           }
         }
       } catch (err) {

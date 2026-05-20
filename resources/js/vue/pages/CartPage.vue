@@ -135,7 +135,9 @@
           <div class="space-y-3.5 text-sm text-slate-400 font-semibold border-b border-slate-700/30 pb-5">
             <div class="flex justify-between">
               <span>Стоимость блюд</span>
-              <span class="text-slate-200">{{ cartStore.subtotal }} TMT</span>
+              <span class="text-slate-200">
+                {{ cartStore.syncLoading ? cartStore.localSubtotal.toFixed(0) : cartStore.subtotal }} TMT
+              </span>
             </div>
             <div class="flex justify-between">
               <span>Доставка</span>
@@ -155,7 +157,9 @@
           <!-- Total price -->
           <div class="flex justify-between items-baseline">
             <span class="text-sm font-bold text-slate-400 font-outfit">Итого</span>
-            <span class="text-2xl font-black text-orange-500 font-outfit">{{ cartStore.total }} TMT</span>
+            <span class="text-2xl font-black text-orange-500 font-outfit">
+              {{ cartStore.syncLoading ? cartStore.localTotal.toFixed(0) : cartStore.total }} TMT
+            </span>
           </div>
 
           <!-- Checkout CTA -->
@@ -239,7 +243,12 @@ const handleImageError = (e) => {
 };
 
 onMounted(() => {
-  cartStore.syncCart();
+  // If items already in store (navigated within SPA), sync immediately.
+  // If items not yet loaded (hard reload), App.vue.onMounted will call
+  // loadFromLocalStorage() which pre-computes local totals then syncs.
+  if (!cartStore.isEmpty) {
+    cartStore.syncCart();
+  }
 });
 </script>
 

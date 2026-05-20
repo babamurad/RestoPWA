@@ -21,6 +21,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        if (class_exists(\Filament\Actions\ViewAction::class) && !class_exists('Filament\Tables\Actions\ViewAction')) {
+            class_alias(\Filament\Actions\ViewAction::class, 'Filament\Tables\Actions\ViewAction');
+        }
+        if (class_exists(\Filament\Actions\EditAction::class) && !class_exists('Filament\Tables\Actions\EditAction')) {
+            class_alias(\Filament\Actions\EditAction::class, 'Filament\Tables\Actions\EditAction');
+        }
+        if (class_exists(\Filament\Actions\DeleteAction::class) && !class_exists('Filament\Tables\Actions\DeleteAction')) {
+            class_alias(\Filament\Actions\DeleteAction::class, 'Filament\Tables\Actions\DeleteAction');
+        }
+        if (class_exists(\Filament\Actions\DeleteBulkAction::class) && !class_exists('Filament\Tables\Actions\DeleteBulkAction')) {
+            class_alias(\Filament\Actions\DeleteBulkAction::class, 'Filament\Tables\Actions\DeleteBulkAction');
+        }
+        if (class_exists(\Filament\Actions\BulkActionGroup::class) && !class_exists('Filament\Tables\Actions\BulkActionGroup')) {
+            class_alias(\Filament\Actions\BulkActionGroup::class, 'Filament\Tables\Actions\BulkActionGroup');
+        }
+
         $this->app->singleton(TenantContext::class);
         $this->app->singleton(GeoService::class);
 

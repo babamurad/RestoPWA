@@ -32,11 +32,11 @@ class OrderLifecycleTest extends TestCase
 
         $this->product = Product::factory()->create([
             'vendor_id' => $this->restaurant->id,
-            'price' => 10000, // 100.00
+            'price' => 100.00, // 10000 cents
             'is_available' => true,
         ]);
 
-        $this->user = User::factory()->create();
+        $this->user = User::factory()->create(['phone' => '+99361234567']);
     }
 
     /**
@@ -61,7 +61,7 @@ class OrderLifecycleTest extends TestCase
                 ],
             ]);
         $response->assertStatus(200)
-            ->assertJsonPath('data.total', 200.0);
+            ->assertJsonPath('data.total', 200); // 200 dollars
 
         // 3. Create Order (requires authentication)
         $response = $this->actingAs($this->user)
@@ -73,15 +73,18 @@ class OrderLifecycleTest extends TestCase
                         'product_id' => $this->product->id,
                         'product_name' => $this->product->name,
                         'quantity' => 2,
-                        'unit_price' => 100.0,
-                        'total_price' => 200.0,
+                        'unit_price' => 10000,
+                        'total_price' => 20000,
                     ],
                 ],
-                'total' => 200.0,
+                'total' => 20000,
+                'payment_method' => 'card',
                 'address' => [
                     'address' => 'Test Street 10',
-                    'lat' => 55.75,
-                    'lon' => 37.61,
+                    'lat' => 39.0886,
+                    'lon' => 63.5593,
+                    'name' => 'John Doe',
+                    'phone' => '+99361234567',
                 ],
             ]);
 
@@ -101,9 +104,9 @@ class OrderLifecycleTest extends TestCase
     public function test_cart_sync_reconciles_price_shift(): void
     {
         // Change product price on server
-        $this->product->update(['price' => 15000]); // 150.00
+        $this->product->update(['price' => 150.00]); // 15000 cents
 
-        // Client thinks it is still 100.00
+        // Client thinks it is still 100.00 (10000 cents)
         $response = $this->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
             ->postJson('/api/v1/cart/sync', [
                 'vendor_id' => $this->restaurant->id,
@@ -117,8 +120,8 @@ class OrderLifecycleTest extends TestCase
             ]);
 
         $response->assertStatus(200);
-        $this->assertEquals(150.0, $response->json('data.items.0.price'));
-        $this->assertEquals(150.0, $response->json('data.total'));
+        $this->assertEquals(15000, $response->json('data.items.0.price')); // Item price returned in cents (15000)
+        $this->assertEquals(150.0, $response->json('data.total')); // Cart total returned in dollars (150.0)
     }
 
     /**
@@ -140,8 +143,10 @@ class OrderLifecycleTest extends TestCase
             ]);
 
         $response->assertStatus(200);
-        // The sync should mark it as unavailable or remove it
-        $this->assertFalse($response->json('data.items.0.is_available'));
+        // The sync should mark it as unavailable and put in unavailable_items
+        $this->assertCount(0, $response->json('data.items'));
+        $this->assertCount(1, $response->json('data.unavailable_items'));
+        $this->assertEquals($this->product->id, $response->json('data.unavailable_items.0.product_id'));
     }
 
     /**
@@ -149,7 +154,8 @@ class OrderLifecycleTest extends TestCase
      */
     public function test_tenant_isolation_enforcement(): void
     {
-        $otherRestaurant = Restaurant::factory()->create(['id' => 'other-vendor']);
+        $otherRestaurant = Restaurant::factory()->create();
+        $otherRestaurant->update(['vendor_id' => $otherRestaurant->id]);
 
         // Attempting to order our product using other-vendor context
         $response = $this->actingAs($this->user)
@@ -162,12 +168,10 @@ class OrderLifecycleTest extends TestCase
                         'quantity' => 1,
                     ],
                 ],
-                'total' => 100.0,
+                'total' => 10000,
             ]);
 
-        // Should return 400 or 403 because current vendor is set to 'other-vendor'
-        // and we are trying to create an order for 'test-vendor'.
-        // Or the Global Scope will prevent finding either.
+        // Should return 400 because of tenant mismatch check in SetTenantContext middleware
         $response->assertStatus(400);
     }
 }

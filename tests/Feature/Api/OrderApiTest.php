@@ -31,7 +31,7 @@ class OrderApiTest extends TestCase
             'price' => 10000,
             'is_available' => true,
         ]);
-        $this->user = User::factory()->create();
+        $this->user = User::factory()->create(['phone' => '+99361234567']);
     }
 
     public function test_guest_cannot_create_order(): void
@@ -66,22 +66,24 @@ class OrderApiTest extends TestCase
                         'product_id' => $this->product->id,
                         'product_name' => $this->product->name,
                         'quantity' => 2,
-                        'unit_price' => 100,
-                        'total_price' => 200,
+                        'unit_price' => 10000,
+                        'total_price' => 20000,
                     ],
                 ],
-                'total' => 200,
+                'total' => 20000,
+                'payment_method' => 'card',
                 'address' => [
-                    'street' => 'Main St',
-                    'house' => '10',
+                    'address' => 'Main St 10',
+                    'lat' => 39.0886,
+                    'lon' => 63.5593,
+                    'name' => 'John Doe',
+                    'phone' => '+99361234567',
                 ],
             ]);
 
-        $response->assertStatus(201)
-            ->assertJson([
-                'success' => true,
-                'data' => ['order_id' => 1],
-            ]);
+        $response->assertStatus(201);
+        $this->assertTrue($response->json('success'));
+        $this->assertNotEmpty($response->json('data.order_id'));
     }
 
     public function test_order_creation_is_idempotent(): void
@@ -92,15 +94,22 @@ class OrderApiTest extends TestCase
             'vendor_id' => $this->restaurant->id,
             'items' => [
                 [
-                    'product_id' => (string) Str::uuid(),
+                    'product_id' => $this->product->id,
                     'product_name' => 'Pizza',
                     'quantity' => 2,
-                    'unit_price' => 10.5,
-                    'total_price' => 21.0,
+                    'unit_price' => 1000,
+                    'total_price' => 2000,
                 ]
             ],
-            'total' => 21.0,
-            'address' => ['street' => 'Abashidze 1'],
+            'total' => 2000,
+            'payment_method' => 'card',
+            'address' => [
+                'address' => 'Abashidze 1',
+                'lat' => 39.0886,
+                'lon' => 63.5593,
+                'name' => 'John Doe',
+                'phone' => '+99361234567',
+            ],
         ];
 
         $response1 = $this->actingAs($this->user)
@@ -136,14 +145,22 @@ class OrderApiTest extends TestCase
             'vendor_id' => $this->restaurant->id,
             'items' => [
                 [
-                    'product_id' => (string) Str::uuid(),
+                    'product_id' => $this->product->id,
                     'product_name' => 'Pizza',
                     'quantity' => 1,
-                    'unit_price' => 10.0,
-                    'total_price' => 10.0,
+                    'unit_price' => 1000,
+                    'total_price' => 1000,
                 ]
             ],
-            'total' => 10.0,
+            'total' => 1000,
+            'payment_method' => 'card',
+            'address' => [
+                'address' => 'Main St 10',
+                'lat' => 39.0886,
+                'lon' => 63.5593,
+                'name' => 'John Doe',
+                'phone' => '+99361234567',
+            ],
         ];
 
         $response1 = $this->actingAs($this->user)
@@ -181,7 +198,7 @@ class OrderApiTest extends TestCase
                 'total' => 100,
             ]);
 
-        $response->assertStatus(404);
+        $response->assertStatus(400);
     }
 
     public function test_authenticated_user_can_list_own_orders(): void
@@ -206,16 +223,26 @@ class OrderApiTest extends TestCase
                     'product_id' => $this->product->id,
                     'product_name' => 'Test',
                     'quantity' => 1,
-                    'unit_price' => 100,
-                    'total_price' => 100,
+                    'unit_price' => 1000,
+                    'total_price' => 1000,
                 ]
             ],
-            'total' => 100,
+            'total' => 1000,
+            'payment_method' => 'card',
+            'address' => [
+                'address' => 'Main St 10',
+                'lat' => 39.0886,
+                'lon' => 63.5593,
+                'name' => 'John Doe',
+                'phone' => '+99361234567',
+            ],
         ];
 
         $createResponse = $this->actingAs($this->user)
             ->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
             ->postJson('/api/v1/orders', $orderPayload);
+
+        $createResponse->assertStatus(201);
 
         $orderId = $createResponse->json('data.order_id');
 

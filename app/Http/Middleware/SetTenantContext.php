@@ -78,7 +78,7 @@ class SetTenantContext
         } elseif (
             $request->is('api/ping') ||
             $request->is('api/order/*/track*') ||
-            $request->is('api/push/*') ||
+            $request->is('api/v1/push/*') ||
             $request->is('api/v1/restaurants*') ||
             $request->is('api/v1/categories*') ||
             $request->is('api/v1/login') ||
