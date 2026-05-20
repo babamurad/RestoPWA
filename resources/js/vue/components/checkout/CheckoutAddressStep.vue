@@ -123,6 +123,17 @@
         </button>
       </div>
 
+      <!-- Low GPS accuracy warning banner -->
+      <div
+        v-if="isLowGpsAccuracy"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-400"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        </svg>
+        <span>Низкая точность геолокации. Рекомендуется уточнить адрес на карте вручную.</span>
+      </div>
+
       <!-- Reverse-geocoded address hint -->
       <div
         v-if="reverseAddr && confidence"
@@ -217,8 +228,8 @@ import { useGeolocate } from '../../composables/useGeolocate';
 import { useZoneCheck } from '../../composables/useZoneCheck';
 import { useTelemetry } from '../../composables/useTelemetry';
 
-// Feature flag: VITE_CHECKOUT_GEOLOCATE=false в .env отключает автогеолокацию
-const GEO_ENABLED = import.meta.env.VITE_CHECKOUT_GEOLOCATE !== 'false';
+// Feature flag: VITE_CHECKOUT_GEOLOCATE=false в .env или backend config отключает автогеолокацию
+const GEO_ENABLED = window.checkoutDefaultGeolocateEnabled !== false && import.meta.env.VITE_CHECKOUT_GEOLOCATE !== 'false';
 
 const props = defineProps({
   orderData: {
@@ -236,6 +247,9 @@ const localData = ref({
   lat: props.orderData.lat || 39.0886,
   lon: props.orderData.lon || 63.5593,
   address_source: props.orderData.address_source || null,
+  geolocate_attempted: props.orderData.geolocate_attempted || false,
+  geolocate_status: props.orderData.geolocate_status || null,
+  geolocate_accuracy_m: props.orderData.geolocate_accuracy_m || null,
 });
 
 const mapLoaded = ref(false);
@@ -244,6 +258,9 @@ let mapInstance = null;
 // Защита от перезаписи ручного выбора (FR-4)
 const userHasMovedMap = ref(false);
 let skipNextMoveEnd = false;
+
+// Низкая точность геолокации (GPS accuracy > 200м)
+const isLowGpsAccuracy = ref(false);
 
 // Флаг: пользователь явно выбрал точку (GPS / drag / клик)
 // До этого zone check не запускается, чтобы дефолтные координаты не давали ложный «вне зоны»
@@ -353,6 +370,9 @@ const initMap = async () => {
         return;
       }
 
+      // Сбрасываем предупреждение о низкой точности, так как пользователь двигает маркер вручную
+      isLowGpsAccuracy.value = false;
+
       // Пользователь двинул карту вручную — это явный выбор точки
       userHasMovedMap.value = true;
       hasSelectedPoint.value = true;
@@ -434,6 +454,9 @@ const tryGeolocate = async () => {
     time_from_step_open_ms: Date.now() - stepOpenedAt,
   });
 
+  localData.value.geolocate_attempted = true;
+  localData.value.geolocate_status = 'loading';
+
   try {
     const { lat, lon, accuracy } = await geo.request();
 
@@ -444,7 +467,12 @@ const tryGeolocate = async () => {
       time_from_step_open_ms: Date.now() - stepOpenedAt,
     });
 
-    if (userHasMovedMap.value) return;
+    localData.value.geolocate_status = 'success';
+    localData.value.geolocate_accuracy_m = accuracy;
+    isLowGpsAccuracy.value = accuracy > 200;
+
+    // Защита от перезаписи ручного выбора (при автоматическом запуске)
+    if (userHasMovedMap.value || (localData.value.address_source && localData.value.address_source !== 'geolocate')) return;
 
     localData.value.lat = lat;
     localData.value.lon = lon;
@@ -476,8 +504,13 @@ const tryGeolocate = async () => {
       unavailable: 'geolocate_error',
       error: 'geolocate_error',
     };
-    track(eventMap[code] ?? 'geolocate_error', {
-      code,
+    const statusCode = code || 'error';
+    localData.value.geolocate_status = statusCode;
+    localData.value.geolocate_accuracy_m = null;
+    isLowGpsAccuracy.value = false;
+
+    track(eventMap[statusCode] ?? 'geolocate_error', {
+      code: statusCode,
       time_from_step_open_ms: Date.now() - stepOpenedAt,
     });
   }
@@ -488,6 +521,10 @@ const handleRetryGeo = () => {
     time_from_step_open_ms: Date.now() - stepOpenedAt,
   });
   userHasMovedMap.value = false;
+  isLowGpsAccuracy.value = false;
+
+  localData.value.geolocate_attempted = true;
+  localData.value.geolocate_status = 'loading';
 
   geo.retry()
     .then(({ lat, lon, accuracy }) => {
@@ -497,6 +534,10 @@ const handleRetryGeo = () => {
         lon_rounded: Math.round(lon * 100) / 100,
         time_from_step_open_ms: Date.now() - stepOpenedAt,
       });
+      localData.value.geolocate_status = 'success';
+      localData.value.geolocate_accuracy_m = accuracy;
+      isLowGpsAccuracy.value = accuracy > 200;
+
       localData.value.lat = lat;
       localData.value.lon = lon;
       localData.value.address_source = 'geolocate';
@@ -524,8 +565,13 @@ const handleRetryGeo = () => {
         unavailable: 'geolocate_error',
         error: 'geolocate_error',
       };
-      track(eventMap[code] ?? 'geolocate_error', {
-        code,
+      const statusCode = code || 'error';
+      localData.value.geolocate_status = statusCode;
+      localData.value.geolocate_accuracy_m = null;
+      isLowGpsAccuracy.value = false;
+
+      track(eventMap[statusCode] ?? 'geolocate_error', {
+        code: statusCode,
         time_from_step_open_ms: Date.now() - stepOpenedAt,
       });
     });

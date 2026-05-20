@@ -87,6 +87,10 @@ const orderData = ref({
   phone: '',
   comment: '',
   payment_method: 'cash',
+  address_source: null,
+  geolocate_attempted: false,
+  geolocate_status: null,
+  geolocate_accuracy_m: null,
 });
 
 onMounted(async () => {
@@ -152,7 +156,11 @@ const submitOrder = async () => {
       apartment: orderData.value.apartment || null,
       manual_address: orderData.value.address || null,
       landmark: null,
-      courier_comment: orderData.value.comment || null
+      courier_comment: orderData.value.comment || null,
+      address_source: orderData.value.address_source || null,
+      geolocate_attempted: orderData.value.geolocate_attempted || false,
+      geolocate_status: orderData.value.geolocate_status || null,
+      geolocate_accuracy_m: orderData.value.geolocate_accuracy_m || null
     },
     total: Math.round(finalTotal * 100),
     delivery_fee: Math.round(finalDeliveryFee * 100),
