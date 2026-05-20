@@ -83,7 +83,6 @@ class CartSyncTest extends TestCase
     public function test_cart_sync_fails_without_vendor_header(): void
     {
         $response = $this->postJson(route('api.cart.sync'), [
-            'vendor_id' => $this->restaurant->id,
             'items' => [],
         ]);
 

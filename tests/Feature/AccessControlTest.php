@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Domains\Order\Models\Order;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Models\User;
+use App\Enums\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -61,7 +62,7 @@ class AccessControlTest extends TestCase
     {
         $response = $this->get('/vendor/orders');
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/vendor/login');
     }
 
     /**
@@ -70,11 +71,11 @@ class AccessControlTest extends TestCase
     public function test_vendor_cannot_see_other_vendors_orders(): void
     {
         // Создаем два ресторана (вендора)
-        $vendor1 = Restaurant::factory()->create(['vendor_id' => 'vendor-1']);
-        $vendor2 = Restaurant::factory()->create(['vendor_id' => 'vendor-2']);
+        $vendor1 = Restaurant::factory()->create(['slug' => 'vendor-1', 'vendor_id' => 'vendor-1']);
+        $vendor2 = Restaurant::factory()->create(['slug' => 'vendor-2', 'vendor_id' => 'vendor-2']);
         
         // Создаем пользователя для доступа к панели
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => UserRole::ADMIN]);
 
         // Создаем заказы для каждого вендора
         $order1 = Order::factory()->create([
@@ -91,7 +92,7 @@ class AccessControlTest extends TestCase
         // Используем X-Vendor-ID заголовок для установки контекста
         $response = $this->actingAs($user)
             ->withHeaders(['X-Vendor-ID' => 'vendor-1'])
-            ->get('/vendor/orders');
+            ->get("/vendor/{$vendor1->id}/orders");
 
         $response->assertStatus(200);
         

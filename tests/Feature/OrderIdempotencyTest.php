@@ -21,12 +21,13 @@ class OrderIdempotencyTest extends TestCase
     {
         parent::setUp();
         // Create a restaurant for the orders
-        $this->restaurant = Restaurant::factory()->create(['vendor_id' => 'test-vendor']);
+        $this->restaurant = Restaurant::factory()->create();
+        $this->restaurant->update(['vendor_id' => $this->restaurant->id]);
     }
 
     public function test_order_submission_is_idempotent(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['phone' => '+99361234567']);
         $idempotencyKey = (string) Str::uuid();
 
         $payload = [
@@ -36,13 +37,18 @@ class OrderIdempotencyTest extends TestCase
                     'product_id' => (string) Str::uuid(),
                     'product_name' => 'Pizza',
                     'quantity' => 2,
-                    'unit_price' => 10.5,
-                    'total_price' => 21.0,
+                    'unit_price' => 1000,
+                    'total_price' => 2000,
                 ]
             ],
-            'total' => 21.0,
+            'total' => 2000,
+            'payment_method' => 'card',
             'address' => [
-                'street' => 'Abashidze 1',
+                'address' => 'Main St 10',
+                'lat' => 39.0886,
+                'lon' => 63.5593,
+                'name' => 'John Doe',
+                'phone' => '+99361234567',
             ],
         ];
 
@@ -50,27 +56,29 @@ class OrderIdempotencyTest extends TestCase
         $response1 = $this->actingAs($user)
             ->withHeaders([
                 'X-Idempotency-Key' => $idempotencyKey,
-                'X-Vendor-ID' => 'test-vendor',
+                'X-Vendor-ID' => $this->restaurant->id,
             ])
             ->postJson('/api/v1/orders', $payload);
 
         $response1->assertStatus(201);
-        $orderId = $response1->json('order_id');
+        $orderId = $response1->json('data.order_id');
         $this->assertNotNull($orderId);
 
         // Second request with SAME key
         $response2 = $this->actingAs($user)
             ->withHeaders([
                 'X-Idempotency-Key' => $idempotencyKey,
-                'X-Vendor-ID' => 'test-vendor',
+                'X-Vendor-ID' => $this->restaurant->id,
             ])
             ->postJson('/api/v1/orders', $payload);
 
         $response2->assertStatus(200);
         $response2->assertJson([
             'success' => true,
-            'order_id' => $orderId,
-            'is_duplicate' => true,
+            'data' => [
+                'order_id' => $orderId,
+                'is_duplicate' => true,
+            ],
         ]);
 
         // Check that only ONE order was created in DB
@@ -79,7 +87,7 @@ class OrderIdempotencyTest extends TestCase
 
     public function test_order_submission_without_key_creates_new_orders(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['phone' => '+99361234567']);
 
         $payload = [
             'vendor_id' => $this->restaurant->id,
@@ -88,37 +96,41 @@ class OrderIdempotencyTest extends TestCase
                     'product_id' => (string) Str::uuid(),
                     'product_name' => 'Pizza',
                     'quantity' => 1,
-                    'unit_price' => 10.0,
-                    'total_price' => 10.0,
+                    'unit_price' => 1000,
+                    'total_price' => 1000,
                 ]
             ],
-            'total' => 10.0,
+            'total' => 1000,
+            'payment_method' => 'card',
+            'address' => [
+                'address' => 'Main St 10',
+                'lat' => 39.0886,
+                'lon' => 63.5593,
+                'name' => 'John Doe',
+                'phone' => '+99361234567',
+            ],
         ];
 
         // First request
         $response1 = $this->actingAs($user)
-            ->withHeaders(['X-Vendor-ID' => 'test-vendor'])
+            ->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
             ->postJson('/api/v1/orders', $payload);
         $response1->assertStatus(201);
 
         // Second request
         $response2 = $this->actingAs($user)
-            ->withHeaders(['X-Vendor-ID' => 'test-vendor'])
+            ->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
             ->postJson('/api/v1/orders', $payload);
         $response2->assertStatus(201);
 
-        $this->assertNotEquals($response1->json('order_id'), $response2->json('order_id'));
+        $this->assertNotEquals($response1->json('data.order_id'), $response2->json('data.order_id'));
         $this->assertEquals(2, Order::count());
     }
 
     public function test_different_users_with_same_key_do_not_interfere_on_logic_level(): void
     {
-        // Note: idempotency_key is UNIQUE in DB, so if two different users try to use the SAME key, 
-        // the second one will typically fail with DB error if not handled.
-        // However, our logic checks key AND user_id. 
-        
-        $user1 = User::factory()->create();
-        $user2 = User::factory()->create();
+        $user1 = User::factory()->create(['phone' => '+99361234567']);
+        $user2 = User::factory()->create(['phone' => '+99361234568']);
         $idempotencyKey = (string) Str::uuid();
 
         $payload = [
@@ -128,18 +140,26 @@ class OrderIdempotencyTest extends TestCase
                     'product_id' => (string) Str::uuid(),
                     'product_name' => 'Burger',
                     'quantity' => 1,
-                    'unit_price' => 5.0,
-                    'total_price' => 5.0,
+                    'unit_price' => 1000,
+                    'total_price' => 1000,
                 ]
             ],
-            'total' => 5.0,
+            'total' => 1000,
+            'payment_method' => 'card',
+            'address' => [
+                'address' => 'Main St 10',
+                'lat' => 39.0886,
+                'lon' => 63.5593,
+                'name' => 'John Doe',
+                'phone' => '+99361234567',
+            ],
         ];
 
         // User 1 creates order
         $this->actingAs($user1)
             ->withHeaders([
                 'X-Idempotency-Key' => $idempotencyKey,
-                'X-Vendor-ID' => 'test-vendor',
+                'X-Vendor-ID' => $this->restaurant->id,
             ])
             ->postJson('/api/v1/orders', $payload)
             ->assertStatus(201);
@@ -149,11 +169,18 @@ class OrderIdempotencyTest extends TestCase
         $response = $this->actingAs($user2)
             ->withHeaders([
                 'X-Idempotency-Key' => $idempotencyKey,
-                'X-Vendor-ID' => 'test-vendor',
+                'X-Vendor-ID' => $this->restaurant->id,
             ])
-            ->postJson('/api/v1/orders', $payload);
+            ->postJson('/api/v1/orders', array_merge($payload, [
+                'address' => [
+                    'address' => 'Main St 10',
+                    'lat' => 39.0886,
+                    'lon' => 63.5593,
+                    'name' => 'Jane Doe',
+                    'phone' => '+99361234568',
+                ]
+            ]));
 
-        // Since it's a UUID, collisions are rare, but unique constraint is global.
-        $response->assertStatus(500); // Or handled error
+        $response->assertStatus(500);
     }
 }

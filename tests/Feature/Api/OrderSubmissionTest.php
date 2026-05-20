@@ -39,7 +39,7 @@ class OrderSubmissionTest extends TestCase
 
         // Mock geo service
         $this->instance(GeoService::class, \Mockery::mock(GeoService::class, function ($mock) {
-            $mock->shouldReceive('isPointInDeliveryZone')->andReturn(true);
+            $mock->shouldReceive('checkDeliveryZone')->andReturn(new \App\Domains\Geo\Services\DeliveryZoneCheckResult('inside', true, 'Allowed'));
         }));
     }
 

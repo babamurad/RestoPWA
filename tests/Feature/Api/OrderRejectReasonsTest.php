@@ -39,7 +39,8 @@ class OrderRejectReasonsTest extends TestCase
 
         // Default mock for geo service
         $this->instance(\App\Domains\Geo\Services\GeoService::class, \Mockery::mock(\App\Domains\Geo\Services\GeoService::class, function ($mock) {
-            $mock->shouldReceive('isPointInDeliveryZone')->andReturn(true);
+            $mock->shouldReceive('checkDeliveryZone')->andReturn(new \App\Domains\Geo\Services\DeliveryZoneCheckResult('inside', true, 'Allowed'));
+            $mock->shouldReceive('geocodeWithFallback')->andReturn(null);
         }));
     }
 
@@ -163,8 +164,8 @@ class OrderRejectReasonsTest extends TestCase
         $response = $this->actingAs($this->user)
             ->postJson('/api/v1/orders', $this->validOrderPayload([
                 'address' => [
-                    'lat' => null,
-                    'lon' => null,
+                    'lat' => 'not-numeric',
+                    'lon' => 'not-numeric',
                     'address' => 'Test',
                     'name' => 'Test',
                     'phone' => '+99312345678',
@@ -183,7 +184,7 @@ class OrderRejectReasonsTest extends TestCase
                     'lat' => 1.0,
                     'lon' => 1.0,
                     'address' => 'Test',
-                    'name' => '',
+                    'name' => 123,
                     'phone' => '+99312345678',
                 ],
             ]));

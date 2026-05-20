@@ -6,20 +6,33 @@ namespace Tests\Feature;
 
 use App\Domains\Order\Models\Order;
 use App\Domains\Order\Models\OrderStatusHistory;
+use App\Domains\Vendor\Models\Restaurant;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class OrderStatusHistoryTest extends TestCase
 {
     use RefreshDatabase;
 
+    private Restaurant $restaurant;
+    private User $user;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->restaurant = Restaurant::factory()->create();
+        $this->restaurant->update(['vendor_id' => $this->restaurant->id]);
+        $this->user = User::factory()->create();
+    }
+
     public function test_creates_status_history_on_status_change(): void
     {
         $order = Order::create([
-            'vendor_id' => Str::uuid()->toString(),
+            'vendor_id' => $this->restaurant->id,
+            'user_id' => $this->user->id,
             'status' => 'pending',
-            'address' => ['street' => 'Test St'],
+            'address' => ['address' => 'Test St'],
             'items' => [],
             'total' => 1000,
         ]);
@@ -36,7 +49,8 @@ class OrderStatusHistoryTest extends TestCase
     public function test_creates_history_with_correct_metadata(): void
     {
         $order = Order::create([
-            'vendor_id' => Str::uuid()->toString(),
+            'vendor_id' => $this->restaurant->id,
+            'user_id' => $this->user->id,
             'status' => 'pending',
             'address' => [],
             'items' => [],
@@ -54,7 +68,8 @@ class OrderStatusHistoryTest extends TestCase
     public function test_no_history_created_when_status_unchanged(): void
     {
         $order = Order::create([
-            'vendor_id' => Str::uuid()->toString(),
+            'vendor_id' => $this->restaurant->id,
+            'user_id' => $this->user->id,
             'status' => 'pending',
             'address' => [],
             'items' => [],
@@ -71,7 +86,8 @@ class OrderStatusHistoryTest extends TestCase
     public function test_multiple_status_changes_create_multiple_history_records(): void
     {
         $order = Order::create([
-            'vendor_id' => Str::uuid()->toString(),
+            'vendor_id' => $this->restaurant->id,
+            'user_id' => $this->user->id,
             'status' => 'pending',
             'address' => [],
             'items' => [],
@@ -95,7 +111,8 @@ class OrderStatusHistoryTest extends TestCase
     public function test_order_status_history_belongs_to_order(): void
     {
         $order = Order::create([
-            'vendor_id' => Str::uuid()->toString(),
+            'vendor_id' => $this->restaurant->id,
+            'user_id' => $this->user->id,
             'status' => 'pending',
             'address' => [],
             'items' => [],
@@ -112,7 +129,8 @@ class OrderStatusHistoryTest extends TestCase
     public function test_money_cast_on_order_total(): void
     {
         $order = Order::create([
-            'vendor_id' => Str::uuid()->toString(),
+            'vendor_id' => $this->restaurant->id,
+            'user_id' => $this->user->id,
             'status' => 'pending',
             'address' => [],
             'items' => [],

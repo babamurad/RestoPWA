@@ -74,11 +74,11 @@ class OrderController
                 $addressInput['lon'] = $lon;
             }
 
-            if (empty($addressInput['name'])) {
+            if (!isset($addressInput['name'])) {
                 $addressInput['name'] = $request->user()?->name ?? 'Покупатель';
             }
 
-            if (empty($addressInput['phone'])) {
+            if (!isset($addressInput['phone'])) {
                 $addressInput['phone'] = $request->user()?->phone ?? '';
             }
 
