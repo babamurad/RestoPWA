@@ -48,6 +48,12 @@ const routes = [
         component: ProfilePage,
         meta: { title: 'Профиль', requiresAuth: true }
     },
+    {
+        path: '/orders',
+        name: 'orders',
+        component: () => import('../pages/OrdersPage.vue'),
+        meta: { title: 'Заказы', requiresAuth: true }
+    },
     // Redirect all other unmatched routes to home
     {
         path: '/:pathMatch(.*)*',

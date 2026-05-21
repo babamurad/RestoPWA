@@ -35,6 +35,14 @@
           </router-link>
 
           <router-link 
+            to="/orders" 
+            active-class="bg-slate-800/50 text-orange-400 border-slate-700/40"
+            class="px-4 py-2.5 rounded-xl border border-transparent hover:bg-slate-800/40 hover:text-slate-100 transition-all flex items-center gap-2"
+          >
+            <span>📋</span> Заказы
+          </router-link>
+
+          <router-link 
             to="/profile" 
             active-class="bg-slate-800/50 text-orange-400 border-slate-700/40"
             class="px-4 py-2.5 rounded-xl border border-transparent hover:bg-slate-800/40 hover:text-slate-100 transition-all flex items-center gap-2"
@@ -77,6 +85,16 @@
         <span v-if="cartStore.totalItemsCount > 0" class="absolute -top-1.5 -right-2.5 w-4 h-4 rounded-full bg-orange-500 text-white text-[9px] font-black flex items-center justify-center border border-slate-950 shadow-md">
           {{ cartStore.totalItemsCount }}
         </span>
+      </router-link>
+
+      <!-- Orders tab -->
+      <router-link 
+        to="/orders" 
+        active-class="text-orange-500 scale-105"
+        class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-200"
+      >
+        <span class="text-xl">📋</span>
+        <span class="text-[9px] font-black uppercase tracking-wider">Заказы</span>
       </router-link>
 
       <!-- Profile tab -->

@@ -1,5 +1,5 @@
 <template>
-  <div class="px-4 py-6 max-w-lg mx-auto md:max-w-4xl lg:max-w-6xl pb-24 font-inter">
+  <div class="px-4 py-6 max-w-xl mx-auto pb-24 font-inter">
     <!-- Profile Card Header -->
     <div class="relative overflow-hidden rounded-3xl mb-8 bg-gradient-to-tr from-slate-800 to-slate-900 border border-slate-700/40 p-6 shadow-xl flex flex-col sm:flex-row items-center gap-6 group">
       <!-- Decorative radial backing glow -->
@@ -30,149 +30,67 @@
       </div>
     </div>
 
-    <!-- Active Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Order History list (takes 2 columns) -->
-      <div class="lg:col-span-2">
-        <div class="flex items-center justify-between mb-4">
-          <h4 class="text-base font-bold text-slate-100 font-outfit tracking-wide">История заказов</h4>
-          <span class="text-xs text-slate-400 font-semibold">Всего: {{ ordersStore.orders.length }}</span>
-        </div>
-
-        <div v-if="ordersStore.isLoading" class="space-y-4">
-          <div v-for="i in 3" :key="i" class="bg-slate-800/20 border border-slate-800/80 rounded-2xl p-5 animate-pulse flex flex-col gap-3">
-            <div class="h-4 bg-slate-700/50 rounded w-1/3"></div>
-            <div class="h-8 bg-slate-700/30 rounded"></div>
-            <div class="h-4 bg-slate-700/40 rounded w-1/4 self-end"></div>
+    <!-- Quick Settings Links list -->
+    <div>
+      <h4 class="text-base font-bold text-slate-100 mb-4 font-outfit tracking-wide">Параметры и настройки</h4>
+      <div class="bg-slate-800/40 border border-slate-800/80 rounded-2xl overflow-hidden divide-y divide-slate-800/50 shadow-md">
+        <!-- Addresses link -->
+        <div class="p-4 hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="text-lg">📍</span>
+            <span class="text-xs font-bold text-slate-200">Адреса доставки</span>
           </div>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-slate-500">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
         </div>
 
-        <div v-else-if="ordersStore.orders.length === 0" class="bg-slate-800/20 border border-slate-800/60 rounded-2xl p-8 text-center">
-          <p class="text-sm text-slate-400 font-medium">У вас пока нет оформленных заказов</p>
-          <router-link to="/" class="inline-block mt-4 px-6 py-2 bg-orange-500 text-white text-xs font-bold rounded-xl hover:bg-orange-600 transition-colors">
-            Перейти к покупкам
-          </router-link>
+        <!-- Payments link -->
+        <div class="p-4 hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="text-lg">💳</span>
+            <span class="text-xs font-bold text-slate-200">Способы оплаты</span>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-slate-500">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
         </div>
 
-        <div v-else class="space-y-4">
-          <div 
-            v-for="order in ordersStore.orders" 
-            :key="order.id"
-            class="bg-slate-800/40 border border-slate-800/80 rounded-2xl p-5 hover:border-slate-700/40 transition-all duration-300 shadow-md"
+        <!-- Push settings selector -->
+        <div class="p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="text-lg">🔔</span>
+            <span class="text-xs font-bold text-slate-200">Push-уведомления</span>
+          </div>
+          <!-- Interactive Switch -->
+          <button 
+            @click="togglePush"
+            :class="['w-9 h-5 rounded-full p-0.5 transition-all shadow-inner relative flex items-center', pushEnabled ? 'bg-orange-500' : 'bg-slate-700']"
           >
-            <!-- Order status & details header -->
-            <div class="flex justify-between items-start mb-4">
-              <div>
-                <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Заказ #{{ order.id }}</span>
-                <span class="text-xs text-slate-500 font-bold block mt-0.5">{{ formatDate(order.created_at) }}</span>
-              </div>
-              <span 
-                :class="[
-                  'text-[10px] px-2.5 py-1 rounded-full font-black border tracking-wide uppercase',
-                  order.status === 'delivered' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : '',
-                  ['pending', 'accepted', 'preparing'].includes(order.status) ? 'bg-orange-500/10 border-orange-500/20 text-orange-400' : '',
-                  ['cancelled', 'canceled'].includes(order.status) ? 'bg-slate-800 border-slate-700 text-slate-400' : ''
-                ]"
-              >
-                {{ getStatusLabel(order.status) }}
-              </span>
-            </div>
-
-            <!-- Restaurant name & list of items description -->
-            <div class="flex items-center gap-3 py-3 border-y border-slate-700/20">
-              <!-- Restaurant Image or Icon fallback -->
-              <div class="w-10 h-10 rounded-xl overflow-hidden bg-slate-900 flex items-center justify-center">
-                <img 
-                  v-if="getRestaurantImage(order.vendor_id)" 
-                  :src="getRestaurantImage(order.vendor_id)" 
-                  class="w-full h-full object-cover"
-                />
-                <span v-else class="text-lg">🍽️</span>
-              </div>
-              <div class="min-w-0 flex-1">
-                <h5 class="text-sm font-bold text-slate-200 truncate">{{ getRestaurantName(order.vendor_id) }}</h5>
-                <p class="text-xs text-slate-400 truncate mt-0.5">{{ getOrderItemsSummary(order) }}</p>
-              </div>
-            </div>
-
-            <!-- Price & action -->
-            <div class="flex justify-between items-center mt-4">
-              <span class="text-xs text-slate-400 font-semibold">
-                Сумма: <strong class="text-slate-100 text-sm font-bold ml-1">{{ order.total }} TMT</strong>
-              </span>
-              <button 
-                @click="repeatOrder(order)"
-                class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 hover:text-orange-400 text-xs font-bold rounded-lg transition-colors border border-slate-700/30"
-              >
-                Повторить
-              </button>
-            </div>
-          </div>
+            <div :class="['w-4 h-4 rounded-full bg-white shadow-md transition-all absolute', pushEnabled ? 'right-0.5' : 'left-0.5']"></div>
+          </button>
         </div>
-      </div>
 
-      <!-- Quick Settings Links list -->
-      <div class="lg:col-span-1">
-        <h4 class="text-base font-bold text-slate-100 mb-4 font-outfit tracking-wide">Параметры и настройки</h4>
-        <div class="bg-slate-800/40 border border-slate-800/80 rounded-2xl overflow-hidden divide-y divide-slate-800/50 shadow-md">
-          <!-- Addresses link -->
-          <div class="p-4 hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <span class="text-lg">📍</span>
-              <span class="text-xs font-bold text-slate-200">Адреса доставки</span>
-            </div>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-slate-500">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-            </svg>
+        <!-- Support link -->
+        <div class="p-4 hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="text-lg">💬</span>
+            <span class="text-xs font-bold text-slate-200">Служба поддержки</span>
           </div>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-slate-500">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
+        </div>
 
-          <!-- Payments link -->
-          <div class="p-4 hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <span class="text-lg">💳</span>
-              <span class="text-xs font-bold text-slate-200">Способы оплаты</span>
-            </div>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-slate-500">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-            </svg>
+        <!-- Logout option -->
+        <div @click="handleLogout" class="p-4 hover:bg-rose-500/5 transition-colors cursor-pointer flex items-center justify-between text-rose-400 group">
+          <div class="flex items-center gap-3">
+            <span class="text-lg">🚪</span>
+            <span class="text-xs font-black text-rose-500 group-hover:text-rose-400 transition-colors">Выйти из профиля</span>
           </div>
-
-          <!-- Push settings selector -->
-          <div class="p-4 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <span class="text-lg">🔔</span>
-              <span class="text-xs font-bold text-slate-200">Push-уведомления</span>
-            </div>
-            <!-- Interactive Switch -->
-            <button 
-              @click="togglePush"
-              :class="['w-9 h-5 rounded-full p-0.5 transition-all shadow-inner relative flex items-center', pushEnabled ? 'bg-orange-500' : 'bg-slate-700']"
-            >
-              <div :class="['w-4 h-4 rounded-full bg-white shadow-md transition-all absolute', pushEnabled ? 'right-0.5' : 'left-0.5']"></div>
-            </button>
-          </div>
-
-          <!-- Support link -->
-          <div class="p-4 hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <span class="text-lg">💬</span>
-              <span class="text-xs font-bold text-slate-200">Служба поддержки</span>
-            </div>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-slate-500">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-            </svg>
-          </div>
-
-          <!-- Logout option -->
-          <div @click="handleLogout" class="p-4 hover:bg-rose-500/5 transition-colors cursor-pointer flex items-center justify-between text-rose-400 group">
-            <div class="flex items-center gap-3">
-              <span class="text-lg">🚪</span>
-              <span class="text-xs font-black text-rose-500 group-hover:text-rose-400 transition-colors">Выйти из профиля</span>
-            </div>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-rose-500/70 group-hover:text-rose-400 transition-colors">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-            </svg>
-          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-rose-500/70 group-hover:text-rose-400 transition-colors">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
         </div>
       </div>
     </div>
@@ -180,29 +98,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
-import { useOrdersStore } from '../stores/orders';
-import { useRestaurantsStore } from '../stores/restaurants';
-import { useCartStore } from '../stores/cart';
 
 const router = useRouter();
 const authStore = useAuthStore();
-const ordersStore = useOrdersStore();
-const restaurantsStore = useRestaurantsStore();
-const cartStore = useCartStore();
 
 const pushEnabled = ref(true);
-
-onMounted(async () => {
-  // Ensure restaurants list is loaded for mapping IDs to names/images
-  if (restaurantsStore.restaurants.length === 0) {
-    await restaurantsStore.fetchRestaurants();
-  }
-  // Load order history
-  await ordersStore.fetchOrders();
-});
 
 // Format phone number to clean localized string
 const formatPhone = (phone) => {
@@ -214,110 +117,11 @@ const formatPhone = (phone) => {
   return phone;
 };
 
-// Date formatter
-const formatDate = (isoStr) => {
-  if (!isoStr) return '';
-  const date = new Date(isoStr);
-  return date.toLocaleString('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
-
-// Status mapper
-const getStatusLabel = (status) => {
-  const labels = {
-    pending: 'Новый',
-    accepted: 'Принят',
-    preparing: 'Готовится',
-    delivered: 'Доставлен',
-    cancelled: 'Отменен',
-    canceled: 'Отменен'
-  };
-  return labels[status] || status;
-};
-
-// Helper to match restaurant details
-const getRestaurantName = (vendorId) => {
-  const r = restaurantsStore.restaurants.find(x => x.id === vendorId);
-  return r ? r.name : 'Ресторан';
-};
-
-const getRestaurantImage = (vendorId) => {
-  const r = restaurantsStore.restaurants.find(x => x.id === vendorId);
-  return r ? r.image : '';
-};
-
-// Generates items string description
-const getOrderItemsSummary = (order) => {
-  if (!order.items || !Array.isArray(order.items)) return '';
-  return order.items.map(item => `${item.name} x${item.quantity}`).join(', ');
-};
-
 // Interactive Switch for push notifications
 const togglePush = () => {
   pushEnabled.value = !pushEnabled.value;
   if (pushEnabled.value && window.askPushPermission) {
     window.askPushPermission();
-  }
-};
-
-// One-click Repeat Order Action
-const repeatOrder = (order) => {
-  if (!order.items || !Array.isArray(order.items)) return;
-  
-  if (window.Swal) {
-    window.Swal.fire({
-      title: 'Повторить заказ?',
-      text: 'Текущая корзина будет очищена, и все блюда из этого заказа будут добавлены.',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Повторить',
-      cancelButtonText: 'Отмена',
-      confirmButtonColor: '#f97316',
-      cancelButtonColor: '#334155',
-      background: '#0f172a',
-      color: '#f8fafc',
-      reverseButtons: true,
-      customClass: { popup: 'rounded-3xl border border-slate-850 shadow-2xl' }
-    }).then((result) => {
-      if (result.isConfirmed) {
-        cartStore.clear();
-        cartStore.setVendorId(order.vendor_id);
-        
-        order.items.forEach(item => {
-          cartStore.addItem({
-            id: item.product_id || item.id,
-            name: item.name,
-            price: Number(item.price),
-            weight_g: item.weight_g || item.weight || null,
-            image_url: item.image_url || null
-          }, item.quantity);
-        });
-        
-        router.push('/cart');
-      }
-    });
-  } else {
-    if (confirm(`Добавить все блюда из этого заказа в корзину?`)) {
-      cartStore.clear();
-      cartStore.setVendorId(order.vendor_id);
-      
-      order.items.forEach(item => {
-        cartStore.addItem({
-          id: item.product_id || item.id,
-          name: item.name,
-          price: Number(item.price),
-          weight_g: item.weight_g || item.weight || null,
-          image_url: item.image_url || null
-        }, item.quantity);
-      });
-      
-      router.push('/cart');
-    }
   }
 };
 
