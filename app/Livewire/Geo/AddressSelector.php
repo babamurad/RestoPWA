@@ -58,11 +58,14 @@ class AddressSelector extends Component
     }
 
     #[On('open-address-selector')]
-    public function openModal(): void
+    public function openModal(bool $fullscreen = false): void
     {
         $this->selectedVendorId = session('current_vendor_id', '');
         $this->showRefinement = false;
         $this->isAddressModalOpen = true;
+        if ($fullscreen) {
+            $this->dispatch('enter-fullscreen-mode');
+        }
     }
 
     public function closeModal(): void
@@ -348,6 +351,52 @@ class AddressSelector extends Component
     public function updatedAddress(string $value): void
     {
         $this->searchAddress($value);
+    }
+
+    /**
+     * Atomically apply a point selected in fullscreen map.
+     * Coordinates are stored locally in Alpine until this method is called,
+     * ensuring true atomicity: either the entire point is applied or nothing changes.
+     */
+    public function confirmFullscreenPoint(float $lat, float $lon): void
+    {
+        $this->lat = $lat;
+        $this->lon = $lon;
+        $this->source = 'fullscreen_map';
+        $this->hasSelectedPoint = true;
+        $this->error = null;
+
+        // Reverse geocode to get address text
+        $result = $this->geoService->reverseGeocode($lat, $lon);
+        if ($result) {
+            $this->address = $result['address'];
+            $this->provider = $result['provider'] ?? null;
+        }
+
+        // Validate delivery zone
+        $this->checkDeliveryZone();
+
+        if (! $this->isInDeliveryZone) {
+            return;
+        }
+
+        $addressData = [
+            'address' => $this->address,
+            'lat' => $this->lat,
+            'lon' => $this->lon,
+            'source' => 'fullscreen_map',
+            'provider' => $this->provider,
+            'manual_address' => $this->manualAddress,
+            'landmark' => $this->landmark,
+            'entrance' => $this->entrance,
+            'floor' => $this->floor,
+            'apartment' => $this->apartment,
+            'courier_comment' => $this->courierComment,
+        ];
+
+        session(['current_address' => $addressData]);
+        $this->dispatch('address-selected', ...$addressData);
+        $this->isAddressModalOpen = false;
     }
 
     public function render(): View

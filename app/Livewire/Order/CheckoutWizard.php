@@ -176,20 +176,37 @@ class CheckoutWizard extends Component
 
     /**
      * Live validation/normalization on phone input change.
-     * Uses the shared PhoneNormalizer policy.
+     * Shows inline error immediately, so the user isn't surprised at step submit.
      */
     public function updatedPhone($value): void
     {
-        $this->phoneError = '';
-
         if (empty($value)) {
             $this->phone = '';
+            $this->phoneError = '';
             return;
         }
 
-        // Normalize but don show error until submit
         $normalized = PhoneNormalizer::normalize($value);
         $this->phone = $normalized;
+
+        if (!empty($this->phone)) {
+            $result = PhoneNormalizer::validate($this->phone);
+            $this->phoneError = $result['valid'] ? '' : $result['message'];
+        } else {
+            $this->phoneError = '';
+        }
+    }
+
+    /**
+     * Live validation on name input change.
+     */
+    public function updatedName($value): void
+    {
+        if (config('checkout.phone.require_name', true) && empty(trim($value))) {
+            $this->nameError = __('checkout.validation.name.required');
+        } else {
+            $this->nameError = '';
+        }
     }
 
     /**

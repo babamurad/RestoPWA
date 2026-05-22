@@ -191,7 +191,18 @@
                     <section class="space-y-4 animate-slide-up">
                         <div class="flex items-center justify-between">
                             <h3 class="text-lg font-bold text-gray-900">Адрес доставки</h3>
-                            <button wire:click="$dispatch('open-address-selector')" class="text-sm font-bold text-orange-500 hover:text-orange-600">Изменить</button>
+                            @if(!empty($address['address']) || !empty($address['lat']))
+                                <div class="flex gap-2">
+                                    <button wire:click="$dispatch('open-address-selector')" class="text-sm font-bold text-orange-500 hover:text-orange-600">Изменить</button>
+                                    <button wire:click="$dispatch('open-address-selector', { fullscreen: true })" 
+                                        class="text-sm font-bold text-orange-500 hover:text-orange-600 flex items-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                                        На карте
+                                    </button>
+                                </div>
+                            @else
+                                <button wire:click="$dispatch('open-address-selector', { fullscreen: true })" class="text-sm font-bold text-orange-500 hover:text-orange-600">Открыть карту на весь экран</button>
+                            @endif
                         </div>
                         
                         @if(!empty($address['address']) || !empty($address['lat']))
@@ -223,12 +234,12 @@
                                 @endif
                             </div>
                         @else
-                            <button wire:click="$dispatch('open-address-selector')" 
+                            <button wire:click="$dispatch('open-address-selector', { fullscreen: true })" 
                                 class="w-full p-8 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-3 text-gray-400 hover:border-orange-200 hover:text-orange-500 transition-all group">
                                 <div class="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-orange-50 flex items-center justify-center transition-all">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/></svg>
                                 </div>
-                                <span class="font-bold text-sm">Выбрать адрес на карте</span>
+                                <span class="font-bold text-sm">Открыть карту на весь экран</span>
                             </button>
                         @endif
                     </section>
