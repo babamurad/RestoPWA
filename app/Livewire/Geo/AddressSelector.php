@@ -114,6 +114,7 @@ class AddressSelector extends Component
         $this->isDetectingLocation = true;
 
         $this->js(<<<'JS'
+            window.dispatchEvent(new CustomEvent('geolocate-request'));
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
@@ -125,22 +126,31 @@ class AddressSelector extends Component
                         window.dispatchEvent(new CustomEvent('map-update', { 
                             detail: { lat: position.coords.latitude, lon: position.coords.longitude } 
                         }));
+                        window.dispatchEvent(new CustomEvent('geolocate-success', { 
+                            detail: { lat: position.coords.latitude, lon: position.coords.longitude } 
+                        }));
                     },
                     (error) => {
                         let msg = 'Не удалось определить местоположение';
+                        let reason = 'unknown';
                         if (error.code === 1) {
                             msg = 'Доступ к геолокации запрещён. Поставьте точку на карте вручную.';
+                            reason = 'permission_denied';
                         } else if (error.code === 2) {
                             msg = 'Не удалось получить координаты. Попробуйте ещё раз или поставьте точку на карте.';
+                            reason = 'position_unavailable';
                         } else if (error.code === 3) {
                             msg = 'Время ожидания геолокации истекло. Поставьте точку на карте вручную.';
+                            reason = 'timeout';
                         }
                         $wire.gpsError(msg);
+                        window.dispatchEvent(new CustomEvent('geolocate-error', { detail: { reason: reason } }));
                     },
                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
                 );
             } else {
                 $wire.gpsError('Геолокация не поддерживается вашим браузером. Поставьте точку на карте вручную.');
+                window.dispatchEvent(new CustomEvent('geolocate-error', { detail: { reason: 'not_supported' } }));
             }
         JS);
     }

@@ -98,6 +98,7 @@ class Order extends Model
         'payment_method',
         'comment',
         'is_offline',
+        'metadata',
     ];
 
     /**
@@ -111,6 +112,7 @@ class Order extends Model
             'total' => MoneyCast::class,
             'delivery_fee' => 'float',
             'is_offline' => 'boolean',
+            'metadata' => 'array',
         ];
     }
 

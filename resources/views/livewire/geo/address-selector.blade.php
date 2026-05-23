@@ -220,6 +220,7 @@
             this.isFullscreen = true;
             this.fsInitRetryCount = 0;
             this.fsMapInitialized = false;
+            window.dispatchEvent(new CustomEvent('map-fullscreen-open'));
             setTimeout(() => this.initFullscreenMap(), 400);
         },
 
@@ -229,6 +230,7 @@
             this.isMapLoading = true;
             this.mapFailed = false;
             this.initRetryCount = 0;
+            window.dispatchEvent(new CustomEvent('map-fullscreen-close'));
             setTimeout(() => this.initMap(), 300);
         },
 
@@ -236,6 +238,7 @@
             if (!this.fullscreenLat || !this.fullscreenLon) return;
             this.cleanupFullscreenMap();
             this.isFullscreen = false;
+            window.dispatchEvent(new CustomEvent('map-fullscreen-confirm'));
             try {
                 await $wire.confirmFullscreenPoint(this.fullscreenLat, this.fullscreenLon);
             } catch (e) {

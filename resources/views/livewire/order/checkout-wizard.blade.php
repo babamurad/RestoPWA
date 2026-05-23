@@ -186,7 +186,7 @@
             @endif
 
             @switch($currentStep)
-                @case(1)
+                @case(2)
                     {{-- Delivery Address --}}
                     <section class="space-y-4 animate-slide-up">
                         <div class="flex items-center justify-between">
@@ -234,18 +234,28 @@
                                 @endif
                             </div>
                         @else
-                            <button wire:click="$dispatch('open-address-selector', { fullscreen: true })" 
-                                class="w-full p-8 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-3 text-gray-400 hover:border-orange-200 hover:text-orange-500 transition-all group">
-                                <div class="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-orange-50 flex items-center justify-center transition-all">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-                                </div>
-                                <span class="font-bold text-sm">Открыть карту на весь экран</span>
-                            </button>
+                            @if($isMapRolloutEnabled)
+                                <button wire:click="$dispatch('open-address-selector', { fullscreen: true })" 
+                                    class="w-full py-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-2xl flex flex-col items-center justify-center gap-3 shadow-lg shadow-orange-200 hover:from-orange-600 hover:to-orange-700 transition-all active:scale-[0.98] group btn-press">
+                                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center transition-all">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                                    </div>
+                                    <span class="font-bold text-base">Указать на карте</span>
+                                </button>
+                            @else
+                                <button wire:click="$dispatch('open-address-selector')" 
+                                    class="w-full p-8 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-3 text-gray-400 hover:border-orange-200 hover:text-orange-500 transition-all group">
+                                    <div class="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-orange-50 flex items-center justify-center transition-all">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    </div>
+                                    <span class="font-bold text-sm">Ввести адрес</span>
+                                </button>
+                            @endif
                         @endif
                     </section>
                     @break
 
-                @case(2)
+                @case(3)
                     {{-- Time Selection --}}
                     <section class="space-y-4 animate-slide-up">
                         <h3 class="text-lg font-bold text-gray-900">Время доставки</h3>
@@ -283,7 +293,7 @@
                     </section>
                     @break
 
-                @case(3)
+                @case(1)
                     {{-- Your Contacts --}}
                     <section class="space-y-6 animate-slide-up">
                         <div class="flex items-center gap-3">
@@ -549,4 +559,23 @@
             </div>
         </div>
     @endif
+
+    {{-- Telemetry --}}
+    <script>
+        document.addEventListener('alpine:init', () => {
+            const emitTelemetry = (eventName, data = {}) => {
+                const payload = { event: eventName, ...data };
+                console.log('[Telemetry]', payload);
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push(payload);
+            };
+
+            window.addEventListener('geolocate-request', () => emitTelemetry('geolocate_request'));
+            window.addEventListener('geolocate-success', (e) => emitTelemetry('geolocate_success', { lat: e.detail.lat, lon: e.detail.lon }));
+            window.addEventListener('geolocate-error', (e) => emitTelemetry('geolocate_error', { reason: e.detail.reason }));
+            window.addEventListener('map-fullscreen-open', () => emitTelemetry('map_fullscreen_open'));
+            window.addEventListener('map-fullscreen-close', () => emitTelemetry('map_fullscreen_close'));
+            window.addEventListener('map-fullscreen-confirm', () => emitTelemetry('map_fullscreen_confirm'));
+        });
+    </script>
 </div>

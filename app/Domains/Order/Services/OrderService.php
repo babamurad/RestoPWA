@@ -44,6 +44,7 @@ class OrderService
                 'payment_method' => $data['payment_method'] ?? 'card',
                 'comment' => $data['comment'] ?? null,
                 'is_offline' => $data['is_offline'] ?? false,
+                'metadata' => $data['metadata'] ?? null,
             ]);
 
             $order->statusHistory()->create([

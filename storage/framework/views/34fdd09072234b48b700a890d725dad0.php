@@ -11,24 +11,41 @@
         isDragging: false,
         initRetryCount: 0,
         showRefinement: <?php if ((object) ('showRefinement') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('showRefinement'->value()); ?>')<?php echo e('showRefinement'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('showRefinement'); ?>')<?php endif; ?>,
-        
+
+        // Fullscreen map state
+        isFullscreen: false,
+        fullscreenLat: 0,
+        fullscreenLon: 0,
+        fullscreenMapInstance: null,
+        fullscreenMarkerInstance: null,
+        fsMapInitialized: false,
+        fsInitRetryCount: 0,
+
+        debugLog(...args) {
+            if (<?php echo \Illuminate\Support\Js::from(config('app.debug'))->toHtml() ?>) {
+                console.log(...args);
+            }
+        },
+
         init() {
-            console.log('[AddressSelector] Component initialized');
+            this.debugLog('[AddressSelector] Component initialized');
             this.$watch('isLocalModalOpen', value => {
-                console.log('[AddressSelector] Modal open state changed:', value);
+                this.debugLog('[AddressSelector] Modal open state changed:', value);
                 if (value === true) {
                     this.isMapLoading = true;
                     this.mapFailed = false;
                     this.initRetryCount = 0;
                     setTimeout(() => this.initMap(), 400);
                 } else {
+                    this.cleanupFullscreenMap();
+                    this.isFullscreen = false;
                     this.cleanupMap();
                 }
             });
 
             this.$watch('showRefinement', value => {
                 if (value === false && this.mapInitialized && this.mapInstance) {
-                    console.log('[AddressSelector] Returning to map');
+                    this.debugLog('[AddressSelector] Returning to map');
                     setTimeout(() => {
                         try {
                             if (this.mapInstance) {
@@ -45,7 +62,7 @@
         },
 
         cleanupMap() {
-            console.log('[AddressSelector] Cleaning up map');
+            this.debugLog('[AddressSelector] Cleaning up map');
             if (this.mapInstance) {
                 try { this.mapInstance.destroy(); } catch(e) {}
             }
@@ -77,7 +94,7 @@
                 return;
             }
 
-            console.log('[AddressSelector] initMap v3 started...');
+            this.debugLog('[AddressSelector] initMap v3 started...');
             try {
                 await ymaps3.ready;
             } catch(e) {
@@ -114,7 +131,7 @@
             const startLat = (serverLat && !isNaN(serverLat) && serverLat !== 0) ? serverLat : 39.0886;
             const startLon = (serverLon && !isNaN(serverLon) && serverLon !== 0) ? serverLon : 63.5593;
 
-            console.log('[AddressSelector] Creating ymaps3.YMap', { startLat, startLon });
+            this.debugLog('[AddressSelector] Creating ymaps3.YMap', { startLat, startLon });
             try {
                 const { YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapControls, YMapZoomControl, YMapDefaultMarker, YMapListener } = ymaps3;
 
@@ -167,7 +184,7 @@
                 this.mapInstance = map;
                 this.mapInitialized = true;
                 this.isMapLoading = false;
-                console.log('[AddressSelector] YMap v3 initialized successfully');
+                this.debugLog('[AddressSelector] YMap v3 initialized successfully');
 
             } catch (e) {
                 console.error('[AddressSelector] YMap v3 creation error:', e);
@@ -192,6 +209,115 @@
         resetToMap() {
             this.showRefinement = false;
             $wire.backToMap();
+        },
+
+        // ── Fullscreen Map ──
+
+        enterFullscreen() {
+            this.cleanupMap();
+            this.fullscreenLat = 0;
+            this.fullscreenLon = 0;
+            this.isFullscreen = true;
+            this.fsInitRetryCount = 0;
+            this.fsMapInitialized = false;
+            setTimeout(() => this.initFullscreenMap(), 400);
+        },
+
+        exitFullscreen() {
+            this.cleanupFullscreenMap();
+            this.isFullscreen = false;
+            this.isMapLoading = true;
+            this.mapFailed = false;
+            this.initRetryCount = 0;
+            setTimeout(() => this.initMap(), 300);
+        },
+
+        async confirmFullscreenSelection() {
+            if (!this.fullscreenLat || !this.fullscreenLon) return;
+            this.cleanupFullscreenMap();
+            this.isFullscreen = false;
+            try {
+                await $wire.confirmFullscreenPoint(this.fullscreenLat, this.fullscreenLon);
+            } catch (e) {
+                console.error('[AddressSelector] Fullscreen confirm error:', e);
+            }
+        },
+
+        async initFullscreenMap() {
+            if (typeof ymaps3 === 'undefined') return;
+            try { await ymaps3.ready; } catch(e) { return; }
+            if (!this.isFullscreen) return;
+
+            const el = this.$refs.fullscreenMapContainer;
+            if (!el || el.offsetWidth === 0) {
+                this.fsInitRetryCount++;
+                if (this.fsInitRetryCount >= 12) return;
+                if (this.isFullscreen) setTimeout(() => this.initFullscreenMap(), 400);
+                return;
+            }
+
+            this.cleanupFullscreenMap();
+
+            const startLat = 39.0886;
+            const startLon = 63.5593;
+
+            try {
+                const { YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapControls, YMapZoomControl, YMapDefaultMarker, YMapListener } = ymaps3;
+
+                const map = new YMap(el, {
+                    location: { center: [startLon, startLat], zoom: 16 },
+                    behaviors: ['drag', 'pinchZoom', 'dblClick'],
+                });
+
+                map.addChild(new YMapDefaultSchemeLayer());
+                map.addChild(new YMapDefaultFeaturesLayer());
+
+                const controls = new YMapControls({ position: 'right' });
+                controls.addChild(new YMapZoomControl());
+                map.addChild(controls);
+
+                const marker = new YMapDefaultMarker({
+                    coordinates: [startLon, startLat],
+                    title: 'Перетащите метку',
+                    draggable: true,
+                    color: '#FF6B35',
+                    onDragEnd: (coords) => {
+                        if (coords && coords.length >= 2) {
+                            this.fullscreenLat = coords[1];
+                            this.fullscreenLon = coords[0];
+                        }
+                    },
+                });
+                map.addChild(marker);
+                this.fullscreenMarkerInstance = marker;
+
+                const listener = new YMapListener({
+                    layer: 'any',
+                    onClick: (obj, event) => {
+                        const coords = event.coordinates;
+                        if (coords) {
+                            marker.update({ coordinates: coords });
+                            this.fullscreenLat = coords[1];
+                            this.fullscreenLon = coords[0];
+                        }
+                    }
+                });
+                map.addChild(listener);
+
+                this.fullscreenMapInstance = map;
+                this.fsMapInitialized = true;
+            } catch (e) {
+                console.error('[AddressSelector] Fullscreen map creation error:', e);
+            }
+        },
+
+        cleanupFullscreenMap() {
+            if (this.fullscreenMapInstance) {
+                try { this.fullscreenMapInstance.destroy(); } catch(e) {}
+            }
+            this.fullscreenMapInstance = null;
+            this.fullscreenMarkerInstance = null;
+            this.fsMapInitialized = false;
         }
     }"
     <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::$currentLoop['key'] = 'address-selector-v2'; ?>wire:key="address-selector-v2"
@@ -203,9 +329,10 @@
     x-transition:leave="transition ease-in duration-200"
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0"
-    @open-address-selector.window="$wire.openModal()"
+    @open-address-selector.window="$wire.openModal($event.detail?.fullscreen ?? false)"
     @close-address-selector.window="$wire.closeModal()"
     @map-update.window="updateMap($event.detail.lat, $event.detail.lon)"
+    @enter-fullscreen-mode.window="setTimeout(() => { if (isLocalModalOpen && !showRefinement) enterFullscreen(); }, 600);"
     class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
     style="display: none;"
 >
@@ -237,7 +364,7 @@
                         <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                         </div>
-                        <input type="text" x-model="searchQuery" @input="search()" @focus="showSuggestions = <?php echo \Illuminate\Support\Js::from(!empty($suggestions))->toHtml() ?>" @blur="setTimeout(() => showSuggestions = false, 200)" @keydown.enter.prevent="$wire.confirmAddress()" placeholder="Улица, дом..." class="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-sm bg-gray-50 focus:bg-white transition-all">
+                        <input type="text" x-model="searchQuery" @input="search()" @focus="showSuggestions = <?php echo \Illuminate\Support\Js::from(!empty($suggestions))->toHtml() ?>" @blur="setTimeout(() => showSuggestions = false, 200)" @keydown.enter.prevent="$wire.goToRefinement()" placeholder="Улица, дом..." class="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-sm bg-gray-50 focus:bg-white transition-all">
                         <div x-show="showSuggestions && <?php echo \Illuminate\Support\Js::from(!empty($suggestions))->toHtml() ?>" class="absolute z-20 w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto" style="display:none">
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $suggestions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $suggestion): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                                 <button type="button" @click="select(<?php echo e($index); ?>)" class="w-full px-3 py-2.5 text-left hover:bg-orange-50 border-b border-gray-50 last:border-b-0 transition-colors flex items-start gap-2">
@@ -266,6 +393,11 @@
                 </div>
                 <div x-ref="yandexMap" id="yandex-map-v2" class="w-full h-full" style="width: 100%; height: 100%;"></div>
                 <div x-show="!isMapLoading && !mapFailed" class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow text-[11px] text-gray-500 font-medium whitespace-nowrap pointer-events-none z-10" style="display:none">Перетащите метку для уточнения адреса</div>
+                <button @click="enterFullscreen()" x-show="!isMapLoading && !mapFailed"
+                    class="absolute top-2 right-2 z-10 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-lg shadow flex items-center justify-center text-gray-500 hover:text-orange-500 hover:bg-white transition-all"
+                    title="Открыть карту на весь экран">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                </button>
             </div>
             <div class="px-4 pb-2 shrink-0 space-y-2">
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($error && !$showRefinement): ?><div class="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm"><svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span><?php echo e($error); ?></span></div><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
@@ -273,11 +405,11 @@
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($address && $hasSelectedPoint && !$isInDeliveryZone && !$error && !$showRefinement): ?><div class="flex items-center gap-2 p-3 bg-amber-50 border border-amber-100 rounded-xl text-amber-700 text-sm"><svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span>Адрес за пределами зоны доставки</span></div><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
             <div class="px-4 pb-4 shrink-0">
-                <button type="button" wire:click="confirmAddress" wire:loading.attr="disabled" class="w-full py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200 hover:from-orange-600 hover:to-orange-700 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2">
-                    <span wire:loading wire:target="confirmAddress" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
-                    <svg wire:loading.remove wire:target="confirmAddress" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span wire:loading.remove wire:target="confirmAddress">Подтвердить адрес</span>
-                    <span wire:loading wire:target="confirmAddress">Обработка...</span>
+                <button type="button" wire:click="goToRefinement" wire:loading.attr="disabled" class="w-full py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200 hover:from-orange-600 hover:to-orange-700 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2">
+                    <span wire:loading wire:target="goToRefinement" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    <svg wire:loading.remove wire:target="goToRefinement" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span wire:loading.remove wire:target="goToRefinement">Продолжить</span>
+                    <span wire:loading wire:target="goToRefinement">Обработка...</span>
                 </button>
             </div>
         </div>
@@ -344,6 +476,52 @@
                     <svg wire:loading.remove wire:target="confirmAddress" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                     <span wire:loading.remove wire:target="confirmAddress">Подтвердить адрес</span>
                     <span wire:loading wire:target="confirmAddress">Обработка...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    
+    <div x-show="isFullscreen"
+         x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[60] bg-white flex flex-col">
+        <div class="flex items-center justify-between px-4 h-14 border-b border-gray-100 shrink-0">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 bg-orange-100 rounded-xl flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <h2 class="text-base font-bold text-gray-900">Выберите точку на карте</h2>
+            </div>
+            <button @click="exitFullscreen()" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="flex-1 relative overflow-hidden" wire:ignore>
+            <div x-show="!fsMapInitialized && !mapFailed" class="absolute inset-0 bg-gray-100 flex flex-col items-center justify-center gap-3 z-10">
+                <div class="w-10 h-10 border-orange-200 border-t-orange-500 rounded-full animate-spin" style="border-width: 3px; border-style: solid;"></div>
+                <p class="text-xs text-gray-400 font-medium">Загрузка карты...</p>
+            </div>
+            <div x-ref="fullscreenMapContainer" class="w-full h-full"></div>
+            <div x-show="fsMapInitialized" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow text-xs text-gray-500 font-medium whitespace-nowrap pointer-events-none z-10">
+                Перетащите метку для выбора точки
+            </div>
+        </div>
+        <div class="px-4 py-4 border-t border-gray-100 shrink-0 bg-white">
+            <div class="flex gap-3">
+                <button @click="exitFullscreen()"
+                    class="flex-1 py-3.5 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-all active:scale-[0.98]">
+                    Отмена
+                </button>
+                <button @click="confirmFullscreenSelection()"
+                    x-bind:disabled="!fullscreenLat || !fullscreenLon"
+                    class="flex-1 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200 hover:from-orange-600 hover:to-orange-700 transition-all active:scale-[0.98] disabled:opacity-50">
+                    Подтвердить
                 </button>
             </div>
         </div>

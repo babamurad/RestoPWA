@@ -89,6 +89,8 @@ class CheckoutWizard extends Component
 
     public bool $isProcessing = false;
 
+    public bool $isMapRolloutEnabled = false;
+
     public ?object $createdOrder = null;
 
     public ?string $error = null;
@@ -115,9 +117,14 @@ class CheckoutWizard extends Component
     public function mount(): void
     {
         $this->traceId = (string) (request()->query('trace_id') ?? str()->uuid());
+        
+        $rolloutPercent = (int) config('checkout.map_rollout_percent', 100);
+        $this->isMapRolloutEnabled = (crc32($this->traceId) % 100) < $rolloutPercent;
+
         \Illuminate\Support\Facades\Log::info('[Checkout] Wizard mounted', [
             'trace_id' => $this->traceId,
             'user_id' => Auth::id(),
+            'map_rollout' => $this->isMapRolloutEnabled,
         ]);
 
         // Load phone validation policy info for frontend
@@ -295,9 +302,9 @@ class CheckoutWizard extends Component
         $this->error = null;
 
         return match ($this->currentStep) {
-            1 => $this->validateAddress(),
-            2 => $this->validateTime(),
-            3 => $this->validateContacts(),
+            1 => $this->validateContacts(),
+            2 => $this->validateAddress(),
+            3 => $this->validateTime(),
             4 => true,
             default => true,
         };
@@ -376,14 +383,8 @@ class CheckoutWizard extends Component
     public function nextStep(): void
     {
         $oldStep = $this->currentStep;
-        if ($this->validateStep()) {
-            $this->currentStep++;
-            \Illuminate\Support\Facades\Log::info('[Checkout] Step advanced', [
-                'trace_id' => $this->traceId,
-                'from' => $oldStep,
-                'to' => $this->currentStep,
-            ]);
-        } else {
+
+        if (! $this->validateStep()) {
             \Illuminate\Support\Facades\Log::warning('[Checkout] Step validation failed', [
                 'trace_id' => $this->traceId,
                 'step' => $oldStep,
@@ -391,7 +392,15 @@ class CheckoutWizard extends Component
                 'phone_error' => $this->phoneError,
                 'name_error' => $this->nameError,
             ]);
+            return;
         }
+
+        $this->currentStep++;
+        \Illuminate\Support\Facades\Log::info('[Checkout] Step advanced', [
+            'trace_id' => $this->traceId,
+            'from' => $oldStep,
+            'to' => $this->currentStep,
+        ]);
     }
 
     public function prevStep(): void
@@ -486,6 +495,11 @@ class CheckoutWizard extends Component
                 'created_via' => 'web',
                 'is_offline' => $this->isOffline,
                 'trace_id' => $this->traceId,
+                'metadata' => [
+                    'address_source' => $this->address['source'] ?? 'unknown',
+                    'geolocate_status' => $this->address['provider'] ?? null,
+                    'geolocate_accuracy_m' => null, // Optional enhancement if accuracy is fetched via browser API
+                ]
             ];
 
             // PII-safe log of payload summary
