@@ -39,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 if ($e instanceof \Illuminate\Validation\ValidationException) {
                     $code = 422;
+                    $message = 'Ошибка валидации данных';
                     $errors = $e->errors();
                 } elseif ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException || 
                           $e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
@@ -46,7 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     $message = 'Ресурс не найден';
                 } elseif ($e instanceof \Illuminate\Auth\AuthenticationException) {
                     $code = 401;
-                    $message = 'Unauthenticated';
+                    $message = 'Не авторизован';
                 } elseif ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
                     $code = $e->getStatusCode();
                 }
