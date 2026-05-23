@@ -99,7 +99,7 @@ onMounted(async () => {
     return;
   }
   // Prefill phone from authenticated user if available
-  if (!authStore.user) {
+  if (!authStore.hasChecked) {
     await authStore.fetchUser();
   }
   if (authStore.user && authStore.user.phone) {

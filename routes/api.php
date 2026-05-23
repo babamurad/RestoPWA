@@ -41,9 +41,9 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->gro
     Route::post('login', [AuthController::class, 'login'])->name('api.login');
     Route::post('register', [AuthController::class, 'register'])->name('api.register');
     Route::post('logout', [AuthController::class, 'logout'])->name('api.logout');
+    Route::get('user', [AuthController::class, 'user'])->name('api.user');
 
     Route::middleware('auth')->group(function () {
-        Route::get('user', [AuthController::class, 'user'])->name('api.user');
         Route::post('orders', [DomainOrderController::class, 'store'])->name('api.orders.store');
         Route::get('orders', [OrderController::class, 'index'])->name('api.v1.orders.index');
         Route::get('orders/{id}', [OrderController::class, 'show'])->name('api.v1.orders.show');

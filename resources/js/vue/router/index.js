@@ -82,7 +82,7 @@ router.beforeEach(async (to, from, next) => {
     document.title = title;
 
     // Check if user is already loaded/authenticated
-    if (!authStore.isAuthenticated && authStore.user === null) {
+    if (!authStore.hasChecked) {
         await authStore.fetchUser();
     }
 

@@ -119,7 +119,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'authenticated' => false,
-            ], 401);
+            ]);
         }
 
         return response()->json([

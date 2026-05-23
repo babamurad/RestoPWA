@@ -54,7 +54,7 @@ class SetTenantContext
                 }
             } elseif ($request->is('api/v1/restaurants/*')) {
                 $vendorId = $request->segment(4);
-            } elseif ($request->is('api/v1/cart/sync') || $request->is('api/v1/orders')) {
+            } elseif ($request->is('api/v1/cart/sync') || $request->is('api/v1/orders') || $request->is('api/v1/geo/zone-check')) {
                 $vendorId = $request->input('vendor_id');
             }
         }
@@ -85,7 +85,9 @@ class SetTenantContext
             $request->is('api/v1/register') ||
             $request->is('api/v1/logout') ||
             $request->is('api/v1/user') ||
-            $request->is('api/v1/orders*')
+            $request->is('api/v1/orders*') ||
+            $request->is('api/v1/telemetry') ||
+            $request->is('api/v1/geo/*')
         ) {
             // Allow health check, guest tracking, push endpoints, global restaurants/categories lists, and global auth endpoints without tenant header
             return $next($request);

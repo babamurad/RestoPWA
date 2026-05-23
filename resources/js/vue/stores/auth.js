@@ -6,6 +6,7 @@ export const useAuthStore = defineStore('auth', {
         user: null,
         isAuthenticated: false,
         isLoading: false,
+        hasChecked: false,
     }),
     actions: {
         async fetchUser() {
@@ -24,6 +25,7 @@ export const useAuthStore = defineStore('auth', {
                 this.isAuthenticated = false;
             } finally {
                 this.isLoading = false;
+                this.hasChecked = true;
             }
         },
         async login(credentials) {
@@ -33,6 +35,7 @@ export const useAuthStore = defineStore('auth', {
                 if (response.data && response.data.success) {
                     this.user = response.data.user;
                     this.isAuthenticated = true;
+                    this.hasChecked = true;
                 } else {
                     throw new Error(response.data?.message || 'Неверные учетные данные');
                 }
@@ -48,6 +51,7 @@ export const useAuthStore = defineStore('auth', {
                 this.user = null;
                 this.isAuthenticated = false;
                 this.isLoading = false;
+                this.hasChecked = true;
             }
         }
     }
