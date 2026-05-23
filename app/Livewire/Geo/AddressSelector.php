@@ -34,6 +34,8 @@ class AddressSelector extends Component
 
     public ?string $provider = null;
 
+    public ?float $accuracy = null;
+
     public string $manualAddress = '';
 
     public string $landmark = '';
@@ -90,6 +92,7 @@ class AddressSelector extends Component
             $this->floor = $savedAddress['floor'] ?? '';
             $this->apartment = $savedAddress['apartment'] ?? '';
             $this->courierComment = $savedAddress['courier_comment'] ?? '';
+            $this->accuracy = $savedAddress['accuracy'] ?? null;
             if ($this->lat && $this->lon) {
                 $this->hasSelectedPoint = true;
                 if ($this->selectedVendorId) {
@@ -121,7 +124,8 @@ class AddressSelector extends Component
                         $wire.setLocation(
                             position.coords.latitude,
                             position.coords.longitude,
-                            'gps'
+                            'gps',
+                            position.coords.accuracy
                         );
                         window.dispatchEvent(new CustomEvent('map-update', { 
                             detail: { lat: position.coords.latitude, lon: position.coords.longitude } 
@@ -162,12 +166,13 @@ class AddressSelector extends Component
         Log::info('[AddressSelector] GPS error', ['message' => $message]);
     }
 
-    public function setLocation(float $lat, float $lon, string $source = 'map_pin'): void
+    public function setLocation(float $lat, float $lon, string $source = 'map_pin', ?float $accuracy = null): void
     {
-        Log::info('[AddressSelector] setLocation called', ['lat' => $lat, 'lon' => $lon, 'source' => $source]);
+        Log::info('[AddressSelector] setLocation called', ['lat' => $lat, 'lon' => $lon, 'source' => $source, 'accuracy' => $accuracy]);
         $this->lat = $lat;
         $this->lon = $lon;
         $this->source = $source;
+        $this->accuracy = $accuracy;
         $this->isDetectingLocation = false;
         $this->error = null;
         $this->hasSelectedPoint = true;
@@ -317,6 +322,7 @@ class AddressSelector extends Component
             'floor' => $this->floor,
             'apartment' => $this->apartment,
             'courier_comment' => $this->courierComment,
+            'accuracy' => $this->accuracy,
         ];
 
         session(['current_address' => $addressData]);
@@ -373,6 +379,7 @@ class AddressSelector extends Component
         $this->lat = $lat;
         $this->lon = $lon;
         $this->source = 'fullscreen_map';
+        $this->accuracy = null;
         $this->hasSelectedPoint = true;
         $this->error = null;
 
@@ -402,6 +409,7 @@ class AddressSelector extends Component
             'floor' => $this->floor,
             'apartment' => $this->apartment,
             'courier_comment' => $this->courierComment,
+            'accuracy' => null,
         ];
 
         session(['current_address' => $addressData]);

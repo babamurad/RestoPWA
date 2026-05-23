@@ -86,6 +86,11 @@ final readonly class OrderSubmitDTO
             'is_offline' => $this->isOffline,
             'idempotency_key' => $this->idempotencyKey,
             'trace_id' => $this->traceId,
+            'metadata' => [
+                'address_source' => $this->address['address_source'] ?? 'unknown',
+                'geolocate_status' => $this->address['geolocate_status'] ?? null,
+                'geolocate_accuracy_m' => isset($this->address['geolocate_accuracy_m']) ? (float) $this->address['geolocate_accuracy_m'] : null,
+            ],
         ];
     }
 }

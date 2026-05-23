@@ -494,7 +494,7 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          class="fixed inset-0 z-[60] bg-white flex flex-col">
-        <div class="flex items-center justify-between px-4 h-14 border-b border-gray-100 shrink-0">
+        <div class="flex items-center justify-between px-4 border-b border-gray-100 shrink-0" style="height: calc(3.5rem + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top);">
             <div class="flex items-center gap-2.5">
                 <div class="w-8 h-8 bg-orange-100 rounded-xl flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -515,7 +515,7 @@
                 Перетащите метку для выбора точки
             </div>
         </div>
-        <div class="px-4 py-4 border-t border-gray-100 shrink-0 bg-white">
+        <div class="px-4 border-t border-gray-100 shrink-0 bg-white" style="padding-top: 1rem; padding-left: 1rem; padding-right: 1rem; padding-bottom: max(1rem, env(safe-area-inset-bottom));">
             <div class="flex gap-3">
                 <button @click="exitFullscreen()"
                     class="flex-1 py-3.5 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-all active:scale-[0.98]">

@@ -76,6 +76,21 @@
           <div class="w-3 h-3 border border-slate-400/30 border-t-slate-300 rounded-full animate-spin"></div>
         </div>
 
+        <!-- Fullscreen button (top-right of map) -->
+        <button
+          v-if="mapLoaded"
+          @click="enterFullscreen"
+          title="Открыть карту на весь экран"
+          class="absolute top-2 right-2 z-20 w-8 h-8 rounded-lg bg-slate-900/90 border border-slate-700 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 3H5a2 2 0 0 0-2 2v3" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8V5a2 2 0 0 0-2-2h-3" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16 21h3a2 2 0 0 0 2-2v-3" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16v3a2 2 0 0 0 2 2h3" />
+          </svg>
+        </button>
+
         <!-- Retry geo button (bottom-right of map) -->
         <button
           v-if="mapLoaded && GEO_ENABLED && geo.status.value !== 'loading'"
@@ -210,7 +225,6 @@
       />
     </div>
 
-    <!-- Next Button -->
     <button 
       @click="handleNext"
       :disabled="!isValid"
@@ -218,6 +232,74 @@
     >
       Продолжить
     </button>
+
+    <!-- Fullscreen Map Overlay -->
+    <div 
+      v-if="isFullscreen"
+      class="fixed inset-0 z-[60] bg-slate-950 flex flex-col select-none"
+    >
+      <!-- Header with safe-area top padding for premium mobile UX -->
+      <div class="flex items-center justify-between px-4 border-b border-slate-800 shrink-0 bg-slate-900" style="height: calc(4rem + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top);">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 bg-orange-500/10 rounded-xl flex items-center justify-center border border-orange-500/20">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <h2 class="text-sm font-bold text-slate-100 font-outfit tracking-wide">Укажите точку на карте</h2>
+        </div>
+        <button @click="exitFullscreen" class="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-slate-200 active:scale-95">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Map Container -->
+      <div class="flex-1 relative overflow-hidden bg-slate-900">
+        <div id="checkout-map-fullscreen" class="w-full h-full"></div>
+        
+        <!-- Fixed Pin in Center -->
+        <div
+          class="absolute inset-0 flex items-center justify-center pointer-events-none pb-8"
+          style="z-index: 1000"
+          v-show="fullscreenMapLoaded"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-orange-500 drop-shadow-2xl" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </div>
+
+        <div v-show="!fullscreenMapLoaded" class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center gap-3 z-10">
+          <div class="w-8 h-8 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
+          <p class="text-xs text-slate-400 font-medium">Загрузка...</p>
+        </div>
+        
+        <div v-show="fullscreenMapLoaded" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-800 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-[10px] uppercase font-black tracking-wider text-slate-300 whitespace-nowrap pointer-events-none z-10">
+          Перетащите карту под маркер
+        </div>
+      </div>
+
+      <!-- Actions with safe-area bottom padding -->
+      <div class="px-4 border-t border-slate-800 shrink-0 bg-slate-900" style="padding-top: 1rem; padding-left: 1rem; padding-right: 1rem; padding-bottom: max(1rem, env(safe-area-inset-bottom));">
+        <div class="flex gap-3">
+          <button 
+            @click="exitFullscreen"
+            class="flex-1 py-3.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-750 text-slate-300 font-bold rounded-xl transition-all active:scale-[0.98] text-sm font-inter"
+          >
+            Отмена
+          </button>
+          <button 
+            @click="confirmFullscreenSelection"
+            class="flex-1 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-xl shadow-lg shadow-orange-500/20 transition-all active:scale-[0.98] text-sm font-inter"
+          >
+            Подтвердить
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -251,6 +333,12 @@ const localData = ref({
   geolocate_status: props.orderData.geolocate_status || null,
   geolocate_accuracy_m: props.orderData.geolocate_accuracy_m || null,
 });
+
+const isFullscreen = ref(false);
+const tempLat = ref(39.0886);
+const tempLon = ref(63.5593);
+let fullscreenMapInstance = null;
+const fullscreenMapLoaded = ref(false);
 
 const mapLoaded = ref(false);
 let mapInstance = null;
@@ -429,6 +517,105 @@ const initMap = async () => {
     console.error('Map init error', e);
     mapLoaded.value = true;
   }
+};
+
+const initFullscreenMap = async () => {
+  try {
+    tempLat.value = localData.value.lat;
+    tempLon.value = localData.value.lon;
+
+    const el = document.getElementById('checkout-map-fullscreen');
+    if (!el) return;
+
+    const map = window.L.map('checkout-map-fullscreen', {
+      center: [tempLat.value, tempLon.value],
+      zoom: 16,
+      zoomControl: false,
+      attributionControl: false
+    });
+
+    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+    }).addTo(map);
+
+    map.on('moveend', () => {
+      const center = map.getCenter();
+      tempLat.value = center.lat;
+      tempLon.value = center.lng;
+    });
+
+    map.on('click', (e) => {
+      map.panTo(e.latlng);
+    });
+
+    fullscreenMapInstance = map;
+    fullscreenMapLoaded.value = true;
+  } catch (e) {
+    console.error('Fullscreen map init error', e);
+    fullscreenMapLoaded.value = true;
+  }
+};
+
+const enterFullscreen = () => {
+  track('map_fullscreen_open', {
+    time_from_step_open_ms: Date.now() - stepOpenedAt,
+  });
+
+  if (mapInstance) {
+    mapInstance.remove();
+    mapInstance = null;
+    mapLoaded.value = false;
+  }
+
+  isFullscreen.value = true;
+  nextTick(() => {
+    initFullscreenMap();
+  });
+};
+
+const exitFullscreen = () => {
+  track('map_fullscreen_close', {
+    time_from_step_open_ms: Date.now() - stepOpenedAt,
+  });
+
+  if (fullscreenMapInstance) {
+    fullscreenMapInstance.remove();
+    fullscreenMapInstance = null;
+    fullscreenMapLoaded.value = false;
+  }
+
+  isFullscreen.value = false;
+  nextTick(() => {
+    initMap();
+  });
+};
+
+const confirmFullscreenSelection = () => {
+  track('map_fullscreen_confirm', {
+    lat_rounded: Math.round(tempLat.value * 100) / 100,
+    lon_rounded: Math.round(tempLon.value * 100) / 100,
+    time_from_step_open_ms: Date.now() - stepOpenedAt,
+  });
+
+  localData.value.lat = tempLat.value;
+  localData.value.lon = tempLon.value;
+  localData.value.address_source = 'fullscreen_map';
+  hasSelectedPoint.value = true;
+
+  if (fullscreenMapInstance) {
+    fullscreenMapInstance.remove();
+    fullscreenMapInstance = null;
+    fullscreenMapLoaded.value = false;
+  }
+
+  isFullscreen.value = false;
+  nextTick(() => {
+    initMap();
+    if (cartStore.vendorId) {
+      zoneChecker.checkZone(cartStore.vendorId, localData.value.lat, localData.value.lon);
+    }
+    zoneChecker.reverseGeocode(localData.value.lat, localData.value.lon);
+  });
 };
 
 // --- Zone check watchers for telemetry (P0.4) ---

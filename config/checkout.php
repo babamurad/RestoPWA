@@ -49,6 +49,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Map Feature Rollout Percent
+    |--------------------------------------------------------------------------
+    |
+    | Percentage of users (0 to 100) who will see the fullscreen map features.
+    |
+    */
+    'map_rollout_percent' => env('CHECKOUT_MAP_ROLLOUT_PERCENT', 100),
+
+    /*
+    |--------------------------------------------------------------------------
     | Regional Phone Patterns (for strict_region mode)
     |--------------------------------------------------------------------------
     | Key: country code (without +), Value: regex pattern for the national part

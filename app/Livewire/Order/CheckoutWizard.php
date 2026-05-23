@@ -30,6 +30,7 @@ class CheckoutWizard extends Component
         string $floor = '',
         string $apartment = '',
         string $courier_comment = '',
+        ?float $accuracy = null,
     ): void {
         $this->address = [
             'address' => $address,
@@ -43,6 +44,7 @@ class CheckoutWizard extends Component
             'floor' => $floor,
             'apartment' => $apartment,
             'courier_comment' => $courier_comment,
+            'accuracy' => $accuracy,
         ];
 
         if ($this->restaurant) {
@@ -497,8 +499,8 @@ class CheckoutWizard extends Component
                 'trace_id' => $this->traceId,
                 'metadata' => [
                     'address_source' => $this->address['source'] ?? 'unknown',
-                    'geolocate_status' => $this->address['provider'] ?? null,
-                    'geolocate_accuracy_m' => null, // Optional enhancement if accuracy is fetched via browser API
+                    'geolocate_status' => $this->address['provider'] ?? ($this->address['source'] === 'gps' ? 'success' : null),
+                    'geolocate_accuracy_m' => isset($this->address['accuracy']) ? (float) $this->address['accuracy'] : null,
                 ]
             ];
 
