@@ -215,8 +215,8 @@
 
         enterFullscreen() {
             this.cleanupMap();
-            this.fullscreenLat = 0;
-            this.fullscreenLon = 0;
+            this.fullscreenLat = parseFloat($wire.lat) || 0;
+            this.fullscreenLon = parseFloat($wire.lon) || 0;
             this.isFullscreen = true;
             this.fsInitRetryCount = 0;
             this.fsMapInitialized = false;
@@ -261,8 +261,10 @@
 
             this.cleanupFullscreenMap();
 
-            const startLat = 39.0886;
-            const startLon = 63.5593;
+            const startLat = parseFloat(this.fullscreenLat) || parseFloat($wire.lat) || 39.0886;
+            const startLon = parseFloat(this.fullscreenLon) || parseFloat($wire.lon) || 63.5593;
+            this.fullscreenLat = startLat;
+            this.fullscreenLon = startLon;
 
             try {
                 const { YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapControls, YMapZoomControl, YMapDefaultMarker, YMapListener } = ymaps3;
@@ -332,10 +334,17 @@
     x-transition:leave="transition ease-in duration-200"
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0"
-    @open-address-selector.window="$wire.openModal($event.detail?.fullscreen ?? false)"
+    @open-address-selector.window="
+        $wire.openModal($event.detail?.fullscreen ?? false);
+        if ($event.detail?.fullscreen) {
+            isLocalModalOpen = true;
+            showRefinement = false;
+            setTimeout(() => enterFullscreen(), 300);
+        }
+    "
     @close-address-selector.window="$wire.closeModal()"
     @map-update.window="updateMap($event.detail.lat, $event.detail.lon)"
-    @enter-fullscreen-mode.window="setTimeout(() => { if (isLocalModalOpen && !showRefinement) enterFullscreen(); }, 600);"
+    @enter-fullscreen-mode.window="isLocalModalOpen = true; showRefinement = false; setTimeout(() => enterFullscreen(), 300);"
     class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
     style="display: none;"
 >

@@ -59,7 +59,7 @@
       <div class="mt-8 text-center relative z-10 border-t border-slate-800 pt-6">
         <p class="text-xs text-slate-400 font-semibold">
           Еще нет аккаунта? 
-          <router-link to="/register" class="text-orange-400 hover:text-orange-350 transition-colors ml-1 font-bold">
+          <router-link :to="{ name: 'register', query: { redirect: $route.query.redirect } }" class="text-orange-400 hover:text-orange-350 transition-colors ml-1 font-bold">
             Зарегистрироваться
           </router-link>
         </p>
@@ -70,10 +70,11 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const form = reactive({
@@ -87,7 +88,8 @@ const handleLogin = async () => {
   errorMsg.value = '';
   try {
     await authStore.login({ ...form });
-    router.push('/profile');
+    const redirectPath = route.query.redirect || '/profile';
+    router.push(redirectPath);
   } catch (err) {
     errorMsg.value = err.message || 'Ошибка входа. Проверьте правильность email и пароля.';
   }

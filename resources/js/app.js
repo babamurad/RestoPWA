@@ -75,7 +75,7 @@ function setupOrderSubmission(registration) {
                         customClass: { popup: 'rounded-2xl' },
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            window.location.href = '/login';
+                            window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
                         }
                     });
                 } else {

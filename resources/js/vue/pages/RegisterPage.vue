@@ -96,7 +96,7 @@
       <div class="mt-8 text-center relative z-10 border-t border-slate-800 pt-6">
         <p class="text-xs text-slate-400 font-semibold">
           Уже зарегистрированы? 
-          <router-link to="/login" class="text-orange-400 hover:text-orange-350 transition-colors ml-1 font-bold">
+          <router-link :to="{ name: 'login', query: { redirect: $route.query.redirect } }" class="text-orange-400 hover:text-orange-350 transition-colors ml-1 font-bold">
             Войти в аккаунт
           </router-link>
         </p>
@@ -107,11 +107,12 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import apiClient from '../api/client';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const phoneInput = ref('');
@@ -147,7 +148,8 @@ const handleRegister = async () => {
     if (response.data && response.data.success) {
       // Re-fetch user in store
       await authStore.fetchUser();
-      router.push('/profile');
+      const redirectPath = route.query.redirect || '/profile';
+      router.push(redirectPath);
     } else {
       errorMsg.value = response.data.message || 'Ошибка регистрации.';
     }

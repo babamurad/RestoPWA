@@ -243,13 +243,20 @@
                                     <span class="font-bold text-base">Указать на карте</span>
                                 </button>
                             @else
-                                <button wire:click="$dispatch('open-address-selector')" 
-                                    class="w-full p-8 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-3 text-gray-400 hover:border-orange-200 hover:text-orange-500 transition-all group">
-                                    <div class="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-orange-50 flex items-center justify-center transition-all">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                    </div>
-                                    <span class="font-bold text-sm">Ввести адрес</span>
-                                </button>
+                                <div class="flex flex-col gap-3">
+                                    <button wire:click="$dispatch('open-address-selector')" 
+                                        class="w-full p-8 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-3 text-gray-400 hover:border-orange-200 hover:text-orange-500 transition-all group">
+                                        <div class="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-orange-50 flex items-center justify-center transition-all">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                        </div>
+                                        <span class="font-bold text-sm">Ввести адрес</span>
+                                    </button>
+                                    <button wire:click="$dispatch('open-address-selector', { fullscreen: true })" 
+                                        class="w-full py-4 bg-gray-50 text-gray-650 hover:bg-gray-100 rounded-2xl flex items-center justify-center gap-2 font-bold transition-all border border-gray-200/60 shadow-sm btn-press">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-orange-550"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                                        <span>Открыть карту на весь экран</span>
+                                    </button>
+                                </div>
                             @endif
                         @endif
                     </section>

@@ -28,7 +28,7 @@ const routes = [
         path: '/checkout',
         name: 'checkout',
         component: () => import('../pages/CheckoutPage.vue'),
-        meta: { title: 'Оформление заказа' }
+        meta: { title: 'Оформление заказа', requiresAuth: true }
     },
     {
         path: '/login',
@@ -87,7 +87,7 @@ router.beforeEach(async (to, from, next) => {
     }
 
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-        next({ name: 'login' });
+        next({ name: 'login', query: { redirect: to.fullPath } });
     } else if (to.meta.guestOnly && authStore.isAuthenticated) {
         next({ name: 'profile' });
     } else {
