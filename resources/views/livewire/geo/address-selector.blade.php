@@ -523,7 +523,7 @@
          x-transition:leave="transition ease-in duration-200"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-[60] bg-white flex flex-col">
+         class="fixed inset-0 z-[60] bg-white flex flex-col overflow-hidden">
         <div class="flex items-center justify-between px-4 border-b border-gray-100 shrink-0 relative z-[2000]" style="height: calc(3.5rem + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top);">
             <div class="flex items-center gap-2.5">
                 <div class="w-8 h-8 bg-orange-100 rounded-xl flex items-center justify-center">
@@ -535,7 +535,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
         </div>
-        <div class="flex-1 relative overflow-hidden" wire:ignore>
+        <div class="flex-1 min-h-0 h-0 relative overflow-hidden" wire:ignore>
             <div x-show="!fsMapInitialized && !mapFailed" class="absolute inset-0 bg-gray-100 flex flex-col items-center justify-center gap-3 z-[2000]">
                 <div class="w-10 h-10 border-orange-200 border-t-orange-500 rounded-full animate-spin" style="border-width: 3px; border-style: solid;"></div>
                 <p class="text-xs text-gray-400 font-medium">Загрузка карты...</p>

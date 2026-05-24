@@ -236,7 +236,7 @@
     <!-- Fullscreen Map Overlay -->
     <div 
       v-if="isFullscreen"
-      class="fixed inset-0 z-[60] bg-slate-950 flex flex-col select-none"
+      class="fixed inset-0 z-[60] bg-slate-950 flex flex-col select-none overflow-hidden"
     >
       <!-- Header with safe-area top padding for premium mobile UX -->
       <div class="flex items-center justify-between px-4 border-b border-slate-800 shrink-0 bg-slate-900 relative z-[2000]" style="height: calc(4rem + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top);">
@@ -257,7 +257,7 @@
       </div>
 
       <!-- Map Container -->
-      <div class="flex-1 relative overflow-hidden bg-slate-900">
+      <div class="flex-1 min-h-0 h-0 relative overflow-hidden bg-slate-900">
         <div id="checkout-map-fullscreen" class="absolute inset-0"></div>
         
         <!-- Floating controls on top of the fullscreen map -->
