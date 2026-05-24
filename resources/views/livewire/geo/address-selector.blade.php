@@ -564,7 +564,7 @@
         <!-- Geolocate Button in Livewire Fullscreen Map (Moved outside map container) -->
         <button type="button" @click="geolocateInFullscreen()" x-show="fsMapInitialized"
             class="absolute right-4 top-24 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-lg shadow flex items-center justify-center text-gray-500 hover:text-orange-500 hover:bg-white transition-all active:scale-95 pointer-events-auto"
-            style="z-index: 99999;"
+            style="z-index: 99999; transform: translateZ(1000px);"
             title="Определить моё местоположение">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3"/>

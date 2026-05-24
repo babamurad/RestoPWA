@@ -303,7 +303,7 @@
       </div>
 
       <!-- Floating controls on top of the fullscreen modal (moved outside map container) -->
-      <div v-show="fullscreenMapLoaded" class="absolute right-4 bottom-[120px] flex flex-col gap-2.5 pointer-events-auto" style="z-index: 99999;">
+      <div v-show="fullscreenMapLoaded" class="absolute right-4 bottom-[120px] flex flex-col gap-2.5 pointer-events-auto" style="z-index: 99999; transform: translateZ(1000px);">
         <!-- Zoom In -->
         <button
           @click="zoomInFullscreen"
