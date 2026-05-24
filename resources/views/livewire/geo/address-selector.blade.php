@@ -414,17 +414,21 @@
                     </button>
                 </div>
             </div>
-            <div class="relative mx-4 mb-3 rounded-xl overflow-hidden shrink-0 border border-gray-200 shadow-sm" style="height: 260px;" wire:ignore>
-                <div x-show="isMapLoading && !mapFailed" class="absolute inset-0 bg-gray-100 flex flex-col items-center justify-center gap-3 z-10" style="display:none">
+            <div class="relative mx-4 mb-3 shrink-0 group" style="height: 260px;" wire:ignore>
+                <!-- Inner container with overflow-hidden for rounded corners -->
+                <div class="absolute inset-0 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                    <div x-ref="yandexMap" id="yandex-map-v2" class="w-full h-full" style="width: 100%; height: 100%;"></div>
+                </div>
+                <!-- Loading overlays (outside overflow-hidden so they aren't clipped) -->
+                <div x-show="isMapLoading && !mapFailed" class="absolute inset-0 bg-gray-100 flex flex-col items-center justify-center gap-3 z-10 rounded-xl" style="display:none">
                     <div class="w-10 h-10 border-orange-200 border-t-orange-500 rounded-full animate-spin" style="border-width: 3px; border-style: solid;"></div>
                     <p class="text-xs text-gray-400 font-medium">Загрузка карты...</p>
                 </div>
-                <div x-show="mapFailed" class="absolute inset-0 bg-gray-50 flex flex-col items-center justify-center gap-3 z-10 p-4" style="display:none">
+                <div x-show="mapFailed" class="absolute inset-0 bg-gray-50 flex flex-col items-center justify-center gap-3 z-10 p-4 rounded-xl" style="display:none">
                     <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
                     <p class="text-xs text-gray-500 font-medium text-center">Карта недоступна.<br>Введите адрес вручную или попробуйте снова.</p>
                     <button type="button" @click="mapFailed = false; isMapLoading = true; initRetryCount = 0; initMap()" class="text-xs text-orange-500 font-bold hover:text-orange-600 underline">Попробовать снова</button>
                 </div>
-                <div x-ref="yandexMap" id="yandex-map-v2" class="w-full h-full" style="width: 100%; height: 100%;"></div>
                 <div x-show="!isMapLoading && !mapFailed" class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow text-[11px] text-gray-500 font-medium whitespace-nowrap pointer-events-none z-10" style="display:none; transform: translateZ(100px);">Перетащите метку для уточнения адреса</div>
                 <button @click="enterFullscreen()" x-show="!isMapLoading && !mapFailed"
                     class="absolute top-2 right-2 z-10 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-lg shadow flex items-center justify-center text-gray-500 hover:text-orange-500 hover:bg-white transition-all"

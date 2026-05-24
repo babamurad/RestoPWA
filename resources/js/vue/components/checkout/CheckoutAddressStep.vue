@@ -23,9 +23,12 @@
     <!-- Address Fields (only for delivery) -->
     <div v-if="localData.delivery_type === 'delivery'" class="space-y-4 animate-fade-in">
       
-      <!-- MAP CONTAINER -->
-      <div class="h-48 w-full rounded-xl overflow-hidden relative border border-slate-800">
-        <div id="checkout-map" class="w-full h-full"></div>
+      <!-- Mini Map for Delivery -->
+      <div v-show="localData.delivery_type === 'delivery'" class="relative h-48 shrink-0 group">
+        <!-- Inner container with overflow-hidden for rounded corners -->
+        <div class="absolute inset-0 rounded-2xl overflow-hidden border border-slate-800 shadow-inner">
+          <div id="checkout-map" class="absolute inset-0 z-10"></div>
+        </div>
         
         <!-- Pin icon in center (fixed, map moves) -->
         <div
@@ -39,15 +42,19 @@
           </svg>
         </div>
 
-        <!-- Map init spinner -->
-        <div v-if="!mapLoaded" class="absolute inset-0 flex items-center justify-center bg-slate-900 z-10">
-          <div class="w-6 h-6 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
+        <!-- Loading Overlay -->
+        <div 
+          v-if="!mapLoaded"
+          class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm z-20 rounded-2xl"
+        >
+          <div class="w-8 h-8 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mb-3"></div>
+          <p class="text-xs text-slate-400 font-medium tracking-wide">Загрузка карты...</p>
         </div>
 
         <!-- Geolocation loading overlay -->
         <div
           v-if="mapLoaded && geo.status.value === 'loading'"
-          class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm z-20"
+          class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm z-20 rounded-2xl"
         >
           <div class="w-6 h-6 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mb-2"></div>
           <span class="text-xs text-slate-300 font-semibold">Определяем ваше местоположение…</span>
@@ -264,8 +271,6 @@
       <div class="flex-1 min-h-0 h-0 relative overflow-hidden bg-slate-900">
         <div id="checkout-map-fullscreen" class="absolute inset-0"></div>
         
-        </div>
-        
         <!-- Fixed Pin in Center -->
         <div
           class="absolute inset-0 flex items-center justify-center pointer-events-none pb-8"
@@ -305,8 +310,9 @@
           </button>
         </div>
       </div>
+    </div> <!-- /isFullscreen -->
 
-      <!-- Floating controls on top of the fullscreen modal (Teleported to body to avoid ANY layering bugs) -->
+    <!-- Floating controls on top of the fullscreen modal (Teleported to body to avoid ANY layering bugs) -->
       <Teleport to="body">
         <div v-if="isFullscreen" v-show="fullscreenMapLoaded" class="fixed right-4 bottom-[120px] flex flex-col gap-2.5 pointer-events-auto" style="z-index: 2147483647;">
           <!-- Zoom In -->
