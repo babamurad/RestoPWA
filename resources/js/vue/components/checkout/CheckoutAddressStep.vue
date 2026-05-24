@@ -258,7 +258,7 @@
 
       <!-- Map Container -->
       <div class="flex-1 relative overflow-hidden bg-slate-900">
-        <div id="checkout-map-fullscreen" class="w-full h-full"></div>
+        <div id="checkout-map-fullscreen" class="absolute inset-0"></div>
         
         <!-- Floating controls on top of the fullscreen map -->
         <div v-show="fullscreenMapLoaded" class="absolute right-4 bottom-20 z-[2000] flex flex-col gap-2.5">

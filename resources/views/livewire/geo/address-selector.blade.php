@@ -540,7 +540,7 @@
                 <div class="w-10 h-10 border-orange-200 border-t-orange-500 rounded-full animate-spin" style="border-width: 3px; border-style: solid;"></div>
                 <p class="text-xs text-gray-400 font-medium">Загрузка карты...</p>
             </div>
-            <div x-ref="fullscreenMapContainer" class="w-full h-full"></div>
+            <div x-ref="fullscreenMapContainer" class="absolute inset-0"></div>
             
             <!-- Geolocate Button in Livewire Fullscreen Map -->
             <button type="button" @click="geolocateInFullscreen()" x-show="fsMapInitialized"
