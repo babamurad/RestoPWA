@@ -425,9 +425,10 @@
                     <button type="button" @click="mapFailed = false; isMapLoading = true; initRetryCount = 0; initMap()" class="text-xs text-orange-500 font-bold hover:text-orange-600 underline">Попробовать снова</button>
                 </div>
                 <div x-ref="yandexMap" id="yandex-map-v2" class="w-full h-full" style="width: 100%; height: 100%;"></div>
-                <div x-show="!isMapLoading && !mapFailed" class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow text-[11px] text-gray-500 font-medium whitespace-nowrap pointer-events-none z-10" style="display:none">Перетащите метку для уточнения адреса</div>
+                <div x-show="!isMapLoading && !mapFailed" class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow text-[11px] text-gray-500 font-medium whitespace-nowrap pointer-events-none z-10" style="display:none; transform: translateZ(100px);">Перетащите метку для уточнения адреса</div>
                 <button @click="enterFullscreen()" x-show="!isMapLoading && !mapFailed"
                     class="absolute top-2 right-2 z-10 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-lg shadow flex items-center justify-center text-gray-500 hover:text-orange-500 hover:bg-white transition-all"
+                    style="transform: translateZ(100px);"
                     title="Открыть карту на весь экран">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/></svg>
                 </button>

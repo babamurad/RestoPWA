@@ -57,6 +57,7 @@
         <div
           v-if="mapLoaded && localData.delivery_type === 'delivery' && zoneStatus !== 'idle' && zoneStatus !== 'loading'"
           class="absolute top-2 left-2 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold shadow-lg backdrop-blur-sm"
+          style="transform: translateZ(100px);"
           :class="{
             'bg-green-500/20 border border-green-500/40 text-green-400': zoneStatus === 'inside',
             'bg-red-500/20 border border-red-500/40 text-red-400': zoneStatus === 'outside',
@@ -72,6 +73,7 @@
         <div
           v-if="mapLoaded && zoneStatus === 'loading'"
           class="absolute top-2 left-2 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-700/80 border border-slate-600/50"
+          style="transform: translateZ(100px);"
         >
           <div class="w-3 h-3 border border-slate-400/30 border-t-slate-300 rounded-full animate-spin"></div>
         </div>
@@ -82,6 +84,7 @@
           @click="enterFullscreen"
           title="Открыть карту на весь экран"
           class="absolute top-2 right-2 z-20 w-8 h-8 rounded-lg bg-slate-900/90 border border-slate-700 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg"
+          style="transform: translateZ(100px);"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8 3H5a2 2 0 0 0-2 2v3" />
@@ -97,6 +100,7 @@
           @click="handleRetryGeo"
           title="Определить моё местоположение"
           class="absolute bottom-2 right-2 z-20 w-8 h-8 rounded-lg bg-slate-900/90 border border-slate-700 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg"
+          style="transform: translateZ(100px);"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="3" />
