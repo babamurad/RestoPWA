@@ -1,13 +1,13 @@
 {
-  "_orders-C5Yu9zU7.js": {
-    "file": "assets/orders-C5Yu9zU7.js",
+  "_orders-Bgtdrrbn.js": {
+    "file": "assets/orders-Bgtdrrbn.js",
     "name": "orders",
     "imports": [
       "resources/js/app.js"
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-CBcLla-1.css",
+    "file": "assets/app-z70KgEV3.css",
     "name": "app",
     "names": [
       "app.css"
@@ -16,7 +16,7 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-BL7sYrna.js",
+    "file": "assets/app-BQQbzkoi.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -31,20 +31,20 @@
     ]
   },
   "resources/js/vue/pages/CheckoutPage.vue": {
-    "file": "assets/CheckoutPage-JBGR8VqY.js",
+    "file": "assets/CheckoutPage-D_ksKhOp.js",
     "name": "CheckoutPage",
     "src": "resources/js/vue/pages/CheckoutPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_orders-C5Yu9zU7.js"
+      "_orders-Bgtdrrbn.js"
     ],
     "css": [
-      "assets/CheckoutPage-CIYkEU_g.css"
+      "assets/CheckoutPage-BTZCS7Li.css"
     ]
   },
   "resources/js/vue/pages/LoginPage.vue": {
-    "file": "assets/LoginPage-DjTEZ-Ex.js",
+    "file": "assets/LoginPage-CLmYzVsC.js",
     "name": "LoginPage",
     "src": "resources/js/vue/pages/LoginPage.vue",
     "isDynamicEntry": true,
@@ -53,17 +53,17 @@
     ]
   },
   "resources/js/vue/pages/OrdersPage.vue": {
-    "file": "assets/OrdersPage-DTFhR3k7.js",
+    "file": "assets/OrdersPage-UmfZysy-.js",
     "name": "OrdersPage",
     "src": "resources/js/vue/pages/OrdersPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_orders-C5Yu9zU7.js"
+      "_orders-Bgtdrrbn.js"
     ]
   },
   "resources/js/vue/pages/RegisterPage.vue": {
-    "file": "assets/RegisterPage-CLOMM0FD.js",
+    "file": "assets/RegisterPage-B9ugrP9X.js",
     "name": "RegisterPage",
     "src": "resources/js/vue/pages/RegisterPage.vue",
     "isDynamicEntry": true,
