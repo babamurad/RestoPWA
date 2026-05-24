@@ -1,0 +1,74 @@
+{
+  "_orders-C5Yu9zU7.js": {
+    "file": "assets/orders-C5Yu9zU7.js",
+    "name": "orders",
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-CBcLla-1.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-BL7sYrna.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/vue/pages/CheckoutPage.vue",
+      "resources/js/vue/pages/LoginPage.vue",
+      "resources/js/vue/pages/RegisterPage.vue",
+      "resources/js/vue/pages/OrdersPage.vue"
+    ],
+    "css": [
+      "assets/app-XH3Q-Bxf.css"
+    ]
+  },
+  "resources/js/vue/pages/CheckoutPage.vue": {
+    "file": "assets/CheckoutPage-JBGR8VqY.js",
+    "name": "CheckoutPage",
+    "src": "resources/js/vue/pages/CheckoutPage.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_orders-C5Yu9zU7.js"
+    ],
+    "css": [
+      "assets/CheckoutPage-CIYkEU_g.css"
+    ]
+  },
+  "resources/js/vue/pages/LoginPage.vue": {
+    "file": "assets/LoginPage-DjTEZ-Ex.js",
+    "name": "LoginPage",
+    "src": "resources/js/vue/pages/LoginPage.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/vue/pages/OrdersPage.vue": {
+    "file": "assets/OrdersPage-DTFhR3k7.js",
+    "name": "OrdersPage",
+    "src": "resources/js/vue/pages/OrdersPage.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_orders-C5Yu9zU7.js"
+    ]
+  },
+  "resources/js/vue/pages/RegisterPage.vue": {
+    "file": "assets/RegisterPage-CLOMM0FD.js",
+    "name": "RegisterPage",
+    "src": "resources/js/vue/pages/RegisterPage.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  }
+}
