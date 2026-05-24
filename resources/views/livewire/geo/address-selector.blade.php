@@ -323,6 +323,27 @@
             this.fullscreenMapInstance = null;
             this.fullscreenMarkerInstance = null;
             this.fsMapInitialized = false;
+        },
+
+        geolocateInFullscreen() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        this.fullscreenLat = lat;
+                        this.fullscreenLon = lon;
+                        if (this.fullscreenMapInstance && this.fullscreenMarkerInstance) {
+                            this.fullscreenMarkerInstance.update({ coordinates: [lon, lat] });
+                            this.fullscreenMapInstance.setLocation({ center: [lon, lat], zoom: 16, duration: 300 });
+                        }
+                    },
+                    (error) => {
+                        console.error('[AddressSelector] Fullscreen geolocate error:', error);
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+                );
+            }
         }
     }"
     wire:key="address-selector-v2"
@@ -503,7 +524,7 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          class="fixed inset-0 z-[60] bg-white flex flex-col">
-        <div class="flex items-center justify-between px-4 border-b border-gray-100 shrink-0" style="height: calc(3.5rem + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top);">
+        <div class="flex items-center justify-between px-4 border-b border-gray-100 shrink-0 relative z-[2000]" style="height: calc(3.5rem + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top);">
             <div class="flex items-center gap-2.5">
                 <div class="w-8 h-8 bg-orange-100 rounded-xl flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -515,16 +536,34 @@
             </button>
         </div>
         <div class="flex-1 relative overflow-hidden" wire:ignore>
-            <div x-show="!fsMapInitialized && !mapFailed" class="absolute inset-0 bg-gray-100 flex flex-col items-center justify-center gap-3 z-10">
+            <div x-show="!fsMapInitialized && !mapFailed" class="absolute inset-0 bg-gray-100 flex flex-col items-center justify-center gap-3 z-[2000]">
                 <div class="w-10 h-10 border-orange-200 border-t-orange-500 rounded-full animate-spin" style="border-width: 3px; border-style: solid;"></div>
                 <p class="text-xs text-gray-400 font-medium">Загрузка карты...</p>
             </div>
             <div x-ref="fullscreenMapContainer" class="w-full h-full"></div>
-            <div x-show="fsMapInitialized" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow text-xs text-gray-500 font-medium whitespace-nowrap pointer-events-none z-10">
+            
+            <!-- Geolocate Button in Livewire Fullscreen Map -->
+            <button type="button" @click="geolocateInFullscreen()" x-show="fsMapInitialized"
+                class="absolute right-4 top-24 z-[2000] w-9 h-9 bg-white/90 backdrop-blur-sm rounded-lg shadow flex items-center justify-center text-gray-500 hover:text-orange-500 hover:bg-white transition-all active:scale-95"
+                title="Определить моё местоположение">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <line x1="12" y1="1" x2="12" y2="3"/>
+                    <line x1="12" y1="21" x2="12" y2="23"/>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                    <line x1="1" y1="12" x2="3" y2="12"/>
+                    <line x1="21" y1="12" x2="23" y2="12"/>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+            </button>
+
+            <div x-show="fsMapInitialized" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow text-xs text-gray-500 font-medium whitespace-nowrap pointer-events-none z-[2000]">
                 Перетащите метку для выбора точки
             </div>
         </div>
-        <div class="px-4 border-t border-gray-100 shrink-0 bg-white" style="padding-top: 1rem; padding-left: 1rem; padding-right: 1rem; padding-bottom: max(1rem, env(safe-area-inset-bottom));">
+        <div class="px-4 border-t border-gray-100 shrink-0 bg-white relative z-[2000]" style="padding-top: 1rem; padding-left: 1rem; padding-right: 1rem; padding-bottom: max(1rem, env(safe-area-inset-bottom));">
             <div class="flex gap-3">
                 <button @click="exitFullscreen()"
                     class="flex-1 py-3.5 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-all active:scale-[0.98]">

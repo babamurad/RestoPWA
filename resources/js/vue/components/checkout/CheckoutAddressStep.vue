@@ -239,7 +239,7 @@
       class="fixed inset-0 z-[60] bg-slate-950 flex flex-col select-none"
     >
       <!-- Header with safe-area top padding for premium mobile UX -->
-      <div class="flex items-center justify-between px-4 border-b border-slate-800 shrink-0 bg-slate-900" style="height: calc(4rem + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top);">
+      <div class="flex items-center justify-between px-4 border-b border-slate-800 shrink-0 bg-slate-900 relative z-[2000]" style="height: calc(4rem + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top);">
         <div class="flex items-center gap-2.5">
           <div class="w-8 h-8 bg-orange-500/10 rounded-xl flex items-center justify-center border border-orange-500/20">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -260,10 +260,54 @@
       <div class="flex-1 relative overflow-hidden bg-slate-900">
         <div id="checkout-map-fullscreen" class="w-full h-full"></div>
         
+        <!-- Floating controls on top of the fullscreen map -->
+        <div v-show="fullscreenMapLoaded" class="absolute right-4 bottom-20 z-[2000] flex flex-col gap-2.5">
+          <!-- Zoom In -->
+          <button
+            @click="zoomInFullscreen"
+            type="button"
+            title="Приблизить"
+            class="w-10 h-10 rounded-xl bg-slate-900/95 border border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </button>
+          
+          <!-- Zoom Out -->
+          <button
+            @click="zoomOutFullscreen"
+            type="button"
+            title="Отдалить"
+            class="w-10 h-10 rounded-xl bg-slate-900/95 border border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" />
+            </svg>
+          </button>
+
+          <!-- Geolocate Button -->
+          <button
+            v-if="GEO_ENABLED"
+            @click="handleRetryGeo"
+            type="button"
+            :disabled="geo.status.value === 'loading'"
+            title="Определить моё местоположение"
+            class="w-10 h-10 rounded-xl bg-slate-900/95 border border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg mt-2 disabled:opacity-50"
+          >
+            <div v-if="geo.status.value === 'loading'" class="w-4 h-4 border border-orange-400/30 border-t-orange-400 rounded-full animate-spin"></div>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3" />
+              <path stroke-linecap="round" d="M12 2v2m0 16v2M2 12h2m16 0h2" />
+              <path stroke-linecap="round" d="M12 5a7 7 0 100 14A7 7 0 0012 5z" />
+            </svg>
+          </button>
+        </div>
+        
         <!-- Fixed Pin in Center -->
         <div
           class="absolute inset-0 flex items-center justify-center pointer-events-none pb-8"
-          style="z-index: 1000"
+          style="z-index: 2000"
           v-show="fullscreenMapLoaded"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-orange-500 drop-shadow-2xl" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -272,18 +316,18 @@
           </svg>
         </div>
 
-        <div v-show="!fullscreenMapLoaded" class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center gap-3 z-10">
+        <div v-show="!fullscreenMapLoaded" class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center gap-3 z-[2000]">
           <div class="w-8 h-8 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
           <p class="text-xs text-slate-400 font-medium">Загрузка...</p>
         </div>
         
-        <div v-show="fullscreenMapLoaded" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-800 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-[10px] uppercase font-black tracking-wider text-slate-300 whitespace-nowrap pointer-events-none z-10">
+        <div v-show="fullscreenMapLoaded" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-800 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-[10px] uppercase font-black tracking-wider text-slate-300 whitespace-nowrap pointer-events-none z-[2000]">
           Перетащите карту под маркер
         </div>
       </div>
 
       <!-- Actions with safe-area bottom padding -->
-      <div class="px-4 border-t border-slate-800 shrink-0 bg-slate-900" style="padding-top: 1rem; padding-left: 1rem; padding-right: 1rem; padding-bottom: max(1rem, env(safe-area-inset-bottom));">
+      <div class="px-4 border-t border-slate-800 shrink-0 bg-slate-900 relative z-[2000]" style="padding-top: 1rem; padding-left: 1rem; padding-right: 1rem; padding-bottom: max(1rem, env(safe-area-inset-bottom));">
         <div class="flex gap-3">
           <button 
             @click="exitFullscreen"
@@ -556,6 +600,18 @@ const initFullscreenMap = async () => {
   }
 };
 
+const zoomInFullscreen = () => {
+  if (fullscreenMapInstance) {
+    fullscreenMapInstance.zoomIn();
+  }
+};
+
+const zoomOutFullscreen = () => {
+  if (fullscreenMapInstance) {
+    fullscreenMapInstance.zoomOut();
+  }
+};
+
 const enterFullscreen = () => {
   track('map_fullscreen_open', {
     time_from_step_open_ms: Date.now() - stepOpenedAt,
@@ -666,7 +722,11 @@ const tryGeolocate = async () => {
     localData.value.address_source = 'geolocate';
     hasSelectedPoint.value = true; // геолокация = явный выбор точки
 
-    if (mapInstance) {
+    if (fullscreenMapInstance) {
+      fullscreenMapInstance.setView([lat, lon], 16);
+      tempLat.value = lat;
+      tempLon.value = lon;
+    } else if (mapInstance) {
       skipNextMoveEnd = true;
       mapInstance.setView([lat, lon], 15);
 
@@ -730,7 +790,11 @@ const handleRetryGeo = () => {
       localData.value.address_source = 'geolocate';
       hasSelectedPoint.value = true;
 
-      if (mapInstance) {
+      if (fullscreenMapInstance) {
+        fullscreenMapInstance.setView([lat, lon], 16);
+        tempLat.value = lat;
+        tempLon.value = lon;
+      } else if (mapInstance) {
         skipNextMoveEnd = true;
         mapInstance.setView([lat, lon], 15);
         track('geolocate_applied_to_map', {
