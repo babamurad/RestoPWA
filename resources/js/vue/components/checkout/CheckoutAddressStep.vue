@@ -302,49 +302,51 @@
         </div>
       </div>
 
-      <!-- Floating controls on top of the fullscreen modal (moved outside map container) -->
-      <div v-show="fullscreenMapLoaded" class="absolute right-4 bottom-[120px] flex flex-col gap-2.5 pointer-events-auto" style="z-index: 99999; transform: translateZ(1000px);">
-        <!-- Zoom In -->
-        <button
-          @click="zoomInFullscreen"
-          type="button"
-          title="Приблизить"
-          class="w-10 h-10 rounded-xl bg-slate-900/95 border border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-        </button>
-        
-        <!-- Zoom Out -->
-        <button
-          @click="zoomOutFullscreen"
-          type="button"
-          title="Отдалить"
-          class="w-10 h-10 rounded-xl bg-slate-900/95 border border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" />
-          </svg>
-        </button>
+      <!-- Floating controls on top of the fullscreen modal (Teleported to body to avoid ANY layering bugs) -->
+      <Teleport to="body">
+        <div v-if="isFullscreen" v-show="fullscreenMapLoaded" class="fixed right-4 bottom-[120px] flex flex-col gap-2.5 pointer-events-auto" style="z-index: 2147483647;">
+          <!-- Zoom In -->
+          <button
+            @click="zoomInFullscreen"
+            type="button"
+            title="Приблизить"
+            class="w-10 h-10 rounded-xl bg-slate-900/95 border border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </button>
+          
+          <!-- Zoom Out -->
+          <button
+            @click="zoomOutFullscreen"
+            type="button"
+            title="Отдалить"
+            class="w-10 h-10 rounded-xl bg-slate-900/95 border border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" />
+            </svg>
+          </button>
 
-        <!-- Geolocate Button -->
-        <button
-          v-if="GEO_ENABLED"
-          @click="handleRetryGeo"
-          type="button"
-          :disabled="geo.status.value === 'loading'"
-          title="Определить моё местоположение"
-          class="w-10 h-10 rounded-xl bg-slate-900/95 border border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg mt-2 disabled:opacity-50"
-        >
-          <div v-if="geo.status.value === 'loading'" class="w-4 h-4 border border-orange-400/30 border-t-orange-400 rounded-full animate-spin"></div>
-          <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3" />
-            <path stroke-linecap="round" d="M12 2v2m0 16v2M2 12h2m16 0h2" />
-            <path stroke-linecap="round" d="M12 5a7 7 0 100 14A7 7 0 0012 5z" />
-          </svg>
-        </button>
-          </div>
+          <!-- Geolocate Button -->
+          <button
+            v-if="GEO_ENABLED"
+            @click="handleRetryGeo"
+            type="button"
+            :disabled="geo.status.value === 'loading'"
+            title="Определить моё местоположение"
+            class="w-10 h-10 rounded-xl bg-slate-900/95 border border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg mt-2 disabled:opacity-50"
+          >
+            <div v-if="geo.status.value === 'loading'" class="w-4 h-4 border border-orange-400/30 border-t-orange-400 rounded-full animate-spin"></div>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3" />
+              <path stroke-linecap="round" d="M12 2v2m0 16v2M2 12h2m16 0h2" />
+              <path stroke-linecap="round" d="M12 5a7 7 0 100 14A7 7 0 0012 5z" />
+            </svg>
+          </button>
+        </div>
+      </Teleport>
   </div>
 </template>
 
