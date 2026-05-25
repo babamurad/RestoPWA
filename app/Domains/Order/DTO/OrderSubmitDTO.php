@@ -18,6 +18,8 @@ final readonly class OrderSubmitDTO
         public ?string $idempotencyKey,
         public bool $isOffline,
         public string $traceId,
+        public string $customerName,
+        public string $customerPhone,
     ) {
     }
 
@@ -40,6 +42,8 @@ final readonly class OrderSubmitDTO
             idempotencyKey: isset($data['idempotency_key']) ? (string) $data['idempotency_key'] : null,
             isOffline: (bool) ($data['is_offline'] ?? false),
             traceId: $traceId,
+            customerName: (string) ($data['customer_name'] ?? ''),
+            customerPhone: (string) ($data['customer_phone'] ?? ''),
         );
     }
 
@@ -62,6 +66,8 @@ final readonly class OrderSubmitDTO
             'idempotency_key' => $this->idempotencyKey,
             'is_offline' => $this->isOffline,
             'trace_id' => $this->traceId,
+            'customer_name' => $this->customerName,
+            'customer_phone' => $this->customerPhone,
         ];
     }
 
@@ -72,10 +78,14 @@ final readonly class OrderSubmitDTO
             $items[] = $item->toArray();
         }
 
+        $address = $this->address;
+        $address['name'] = $this->customerName;
+        $address['phone'] = $this->customerPhone;
+
         return [
             'vendor_id' => $this->vendorId,
             'user_id' => $userId,
-            'address' => $this->address,
+            'address' => $address,
             'items' => $items,
             'total' => $this->total,
             'delivery_fee' => $this->deliveryFee,

@@ -292,9 +292,7 @@ class CheckoutWizard extends Component
             return false;
         }
 
-        // Save contacts to address for OrderService/OrderModel
-        $this->address['name'] = trim($this->name);
-        $this->address['phone'] = $this->phone;
+        // Contacts are now passed at the root level of the payload, not in address.
 
         return true;
     }
@@ -497,6 +495,8 @@ class CheckoutWizard extends Component
                 'created_via' => 'web',
                 'is_offline' => $this->isOffline,
                 'trace_id' => $this->traceId,
+                'customer_name' => trim($this->name),
+                'customer_phone' => $this->phone,
                 'metadata' => [
                     'address_source' => $this->address['source'] ?? 'unknown',
                     'geolocate_status' => $this->address['provider'] ?? ($this->address['source'] === 'gps' ? 'success' : null),
@@ -511,8 +511,8 @@ class CheckoutWizard extends Component
                     'vendor_id' => $orderData['vendor_id'],
                     'item_count' => count($orderData['items']),
                     'total' => $orderData['total'],
-                    'name' => $orderData['address']['name'] ?? '',
-                    'phone' => $orderData['address']['phone'] ?? '',
+                    'name' => $orderData['customer_name'] ?? '',
+                    'phone' => $orderData['customer_phone'] ?? '',
                     'address' => $orderData['address']['address'] ?? '',
                     'comment' => $orderData['comment'] ?? '',
                 ]),

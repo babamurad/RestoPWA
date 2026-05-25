@@ -393,17 +393,15 @@ document.addEventListener('alpine:init', () => {
         },
 
         validateOrderContacts(payload) {
-            const address = payload.address || {};
-
-            if (!address.name || address.name.trim() === '') {
+            if (!payload.customer_name || payload.customer_name.trim() === '') {
                 return { valid: false, reason: 'missing_name' };
             }
 
-            if (!address.phone || address.phone.trim() === '') {
+            if (!payload.customer_phone || payload.customer_phone.trim() === '') {
                 return { valid: false, reason: 'missing_phone' };
             }
 
-            const phone = address.phone.trim();
+            const phone = payload.customer_phone.trim();
             if (!phone.startsWith('+')) {
                 return { valid: false, reason: 'invalid_phone_format' };
             }

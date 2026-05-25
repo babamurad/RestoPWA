@@ -44,6 +44,9 @@ php artisan dusk --group=smoke
 ```
 Подробности см. в [docs/testing-e2e.md](docs/testing-e2e.md).
 
+> [!IMPORTANT]
+> **Правило Checkout/Order**: Любой bugfix или изменение в логике оформления заказа (`Checkout`, `Order`, `Payment`) НЕ мержится в главную ветку без покрытия автотестом (Unit или E2E). Подробнее в [Матрице критических тестов](docs/00_Active/checkout_test_matrix.md).
+
 ## Лицензия
 
 Проприетарное ПО. Все права защищены.

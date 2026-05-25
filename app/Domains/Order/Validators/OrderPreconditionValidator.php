@@ -181,18 +181,16 @@ final readonly class OrderPreconditionValidator
 
     private function validateContacts(array $data): ?OrderRejectReason
     {
-        $address = $data['address'] ?? [];
-
-        if (empty($address['name'])) {
+        if (empty($data['customer_name'])) {
             return OrderRejectReason::MISSING_NAME;
         }
 
-        if (empty($address['phone'])) {
+        if (empty($data['customer_phone'])) {
             return OrderRejectReason::INVALID_PHONE;
         }
 
         // Normalize phone using shared policy
-        $phone = PhoneNormalizer::normalize((string) $address['phone']);
+        $phone = PhoneNormalizer::normalize((string) $data['customer_phone']);
 
         // Validate phone using shared policy (same as CheckoutWizard)
         $result = PhoneNormalizer::validate($phone);
@@ -205,9 +203,6 @@ final readonly class OrderPreconditionValidator
 
             return OrderRejectReason::INVALID_PHONE;
         }
-
-        // Update the phone with normalized version for storage
-        $data['address']['phone'] = $phone;
 
         return null;
     }

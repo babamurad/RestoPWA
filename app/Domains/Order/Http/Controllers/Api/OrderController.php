@@ -37,8 +37,6 @@ class OrderController
             $addressData = [
                 'address' => $addressInput,
                 'manual_address' => $addressInput,
-                'name' => $request->input('name') ?? $request->user()?->name ?? 'Покупатель',
-                'phone' => $request->input('phone') ?? $request->user()?->phone ?? '',
                 'entrance' => $request->input('entrance'),
                 'floor' => $request->input('floor'),
                 'apartment' => $request->input('apartment'),
@@ -47,6 +45,13 @@ class OrderController
             $request->merge(['address' => $addressData]);
             $addressInput = $addressData;
         }
+
+        $customerName = $request->input('customer_name') ?? $request->user()?->name ?? 'Покупатель';
+        $customerPhone = $request->input('customer_phone') ?? $request->user()?->phone ?? '';
+        $request->merge([
+            'customer_name' => $customerName,
+            'customer_phone' => $customerPhone,
+        ]);
 
         // 2. Fallback coordinates & geocoding if missing lat/lon
         if (is_array($addressInput)) {
@@ -74,12 +79,6 @@ class OrderController
                 $addressInput['lon'] = $lon;
             }
 
-            if (!isset($addressInput['name'])) {
-                $addressInput['name'] = $request->user()?->name ?? 'Покупатель';
-            }
-
-            if (!isset($addressInput['phone'])) {
-                $addressInput['phone'] = $request->user()?->phone ?? '';
             }
 
             $request->merge(['address' => $addressInput]);
@@ -154,8 +153,8 @@ class OrderController
                 'address.lat' => 'required|numeric',
                 'address.lon' => 'required|numeric',
                 'address.address' => 'nullable|string',
-                'address.name' => 'required|string',
-                'address.phone' => 'required|string',
+                'customer_name' => 'required|string',
+                'customer_phone' => 'required|string',
                 'address.manual_address' => 'nullable|string',
                 'address.landmark' => 'nullable|string',
                 'address.entrance' => 'nullable|string',
@@ -238,6 +237,7 @@ class OrderController
                     'status' => $existingOrder->status,
                     'redirect_url' => route('order.success', $existingOrder->id),
                     'is_duplicate' => true,
+                    'trace_id' => $traceId,
                 ]);
             }
         }
@@ -260,6 +260,7 @@ class OrderController
                 'order_id' => $order->id,
                 'status' => $order->status,
                 'redirect_url' => url('/order/success/'.$order->id),
+                'trace_id' => $traceId,
             ], null, 201);
 
         } catch (\Exception $e) {
