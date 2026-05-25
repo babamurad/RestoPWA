@@ -140,8 +140,8 @@ final readonly class OrderPreconditionValidator
             Log::info('[OrderPreconditionValidator] Delivery zone check status', [
                 'trace_id' => $data['trace_id'] ?? 'unknown',
                 'vendor_id' => $restaurant->id,
-                'lat' => $address['lat'],
-                'lon' => $address['lon'],
+                'lat_masked' => round((float) $address['lat'], 2),
+                'lon_masked' => round((float) $address['lon'], 2),
                 'result_status' => $checkResult->status,
                 'allowed' => $checkResult->isAllowed(),
             ]);
