@@ -207,6 +207,7 @@ document.addEventListener('alpine:init', () => {
             try {
                 const response = await fetch('/api/v1/cart/sync', {
                     method: 'POST',
+                    credentials: 'same-origin',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
@@ -323,6 +324,7 @@ document.addEventListener('alpine:init', () => {
                 try {
                     const response = await fetch('/api/v1/orders', {
                         method: 'POST',
+                        credentials: 'same-origin',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
