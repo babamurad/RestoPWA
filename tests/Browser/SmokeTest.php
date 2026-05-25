@@ -220,5 +220,61 @@ class SmokeTest extends DuskTestCase
             $browser->assertSee('Корзина пуста');
         });
     }
+
+    /**
+     * SMK-08: Out of zone delivery
+     */
+    #[Group('smoke')]
+    public function test_out_of_zone_delivery(): void
+    {
+        $this->browse(function (Browser $browser) {
+            // Add item from first restaurant
+            $browser->visit('/restaurants/' . $this->restaurant->slug)
+                    ->waitForText($this->product->name, 20)
+                    ->click('@add-to-cart-'.$this->product->id)
+                    ->pause(1500);
+
+            // Go to checkout
+            $browser->visit('/checkout?vendor_id=' . $this->restaurant->id)
+                    ->waitForText('Адрес доставки', 20);
+
+            // Set address with completely out of bounds coordinates
+            $browser->setAddress('ул. Дальняя, д. 10', -90.0, -180.0)
+                    ->pause(3000)
+                    ->press('Продолжить');
+
+            // Expect error message about delivery zone
+            $browser->waitForText('вне зоны доставки', 10);
+            $browser->assertSee('вне зоны доставки');
+        });
+    }
+
+    /**
+     * SMK-09: Unauthorized recovery
+     */
+    #[Group('smoke')]
+    public function test_unauthorized_recovery(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/restaurants/' . $this->restaurant->slug)
+                    ->waitForText($this->product->name, 20)
+                    ->click('@add-to-cart-'.$this->product->id)
+                    ->pause(1500);
+            
+            $browser->visit('/checkout?vendor_id=' . $this->restaurant->id)
+                    ->waitForText('Адрес доставки', 20);
+
+            // Trigger auth required event from SW manually
+            $browser->script("window.dispatchEvent(new CustomEvent('auth-required-from-sw', { detail: { reason: '401' } }));");
+            
+            // Wait for SweetAlert and click Login
+            $browser->waitForText('Требуется вход', 10);
+            $browser->click('.swal2-confirm')
+                    ->pause(1500);
+            
+            // It should redirect to login page
+            $browser->assertPathBeginsWith('/login');
+        });
+    }
 }
 

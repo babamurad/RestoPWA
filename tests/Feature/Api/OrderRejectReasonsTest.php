@@ -59,12 +59,12 @@ class OrderRejectReasonsTest extends TestCase
             ],
             'total' => 2500,
             'delivery_fee' => 500,
+            'customer_name' => 'Test User',
+            'customer_phone' => '+99312345678',
             'address' => [
                 'lat' => 1.0,
                 'lon' => 1.0,
                 'address' => 'Test Street 1',
-                'name' => 'Test User',
-                'phone' => '+99312345678',
             ],
             'payment_method' => 'card',
         ], $overrides);
@@ -167,8 +167,6 @@ class OrderRejectReasonsTest extends TestCase
                     'lat' => 'not-numeric',
                     'lon' => 'not-numeric',
                     'address' => 'Test',
-                    'name' => 'Test',
-                    'phone' => '+99312345678',
                 ],
             ]));
 
@@ -180,13 +178,7 @@ class OrderRejectReasonsTest extends TestCase
     {
         $response = $this->actingAs($this->user)
             ->postJson('/api/v1/orders', $this->validOrderPayload([
-                'address' => [
-                    'lat' => 1.0,
-                    'lon' => 1.0,
-                    'address' => 'Test',
-                    'name' => 123,
-                    'phone' => '+99312345678',
-                ],
+                'customer_name' => 123,
             ]));
 
         // Laravel validation catches required name
@@ -197,13 +189,7 @@ class OrderRejectReasonsTest extends TestCase
     {
         $response = $this->actingAs($this->user)
             ->postJson('/api/v1/orders', $this->validOrderPayload([
-                'address' => [
-                    'lat' => 1.0,
-                    'lon' => 1.0,
-                    'address' => 'Test',
-                    'name' => 'Test User',
-                    'phone' => 'not-a-phone',
-                ],
+                'customer_phone' => 'not-a-phone',
             ]));
 
         $response->assertStatus(422)

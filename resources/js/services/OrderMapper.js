@@ -46,7 +46,9 @@ export function calculateOrderTotal(mappedItems, deliveryFee = 0) {
  * @param {Object} params
  * @param {Array} params.cartItems - from CartService
  * @param {string} params.vendorId
- * @param {Object} params.address - { lat, lon, address, name, phone, house, apartment, comment }
+ * @param {Object} params.address - { lat, lon, address, house, apartment }
+ * @param {string} params.customerName
+ * @param {string} params.customerPhone
  * @param {number} params.deliveryFee - in cents
  * @param {string} params.deliveryTime - 'asap' or ISO string
  * @param {string} params.paymentMethod
@@ -59,6 +61,8 @@ export function buildOrderPayload({
     cartItems,
     vendorId,
     address,
+    customerName = '',
+    customerPhone = '',
     deliveryFee = 0,
     deliveryTime = 'asap',
     paymentMethod = 'card',
@@ -77,12 +81,12 @@ export function buildOrderPayload({
         delivery_time: deliveryTime,
         payment_method: paymentMethod,
         comment: comment || null,
+        customer_name: customerName || address?.name || '',
+        customer_phone: customerPhone || address?.phone || '',
         address: {
             lat: address.lat,
             lon: address.lon,
             address: address.address || '',
-            name: address.name || '',
-            phone: address.phone || '',
             house: address.house || null,
             apartment: address.apartment || null,
         },

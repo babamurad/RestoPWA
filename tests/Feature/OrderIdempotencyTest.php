@@ -43,12 +43,12 @@ class OrderIdempotencyTest extends TestCase
             ],
             'total' => 2000,
             'payment_method' => 'card',
+            'customer_name' => 'John Doe',
+            'customer_phone' => '+99361234567',
             'address' => [
                 'address' => 'Main St 10',
                 'lat' => 39.0886,
                 'lon' => 63.5593,
-                'name' => 'John Doe',
-                'phone' => '+99361234567',
             ],
         ];
 
@@ -102,12 +102,12 @@ class OrderIdempotencyTest extends TestCase
             ],
             'total' => 1000,
             'payment_method' => 'card',
+            'customer_name' => 'John Doe',
+            'customer_phone' => '+99361234567',
             'address' => [
                 'address' => 'Main St 10',
                 'lat' => 39.0886,
                 'lon' => 63.5593,
-                'name' => 'John Doe',
-                'phone' => '+99361234567',
             ],
         ];
 
@@ -146,12 +146,12 @@ class OrderIdempotencyTest extends TestCase
             ],
             'total' => 1000,
             'payment_method' => 'card',
+            'customer_name' => 'John Doe',
+            'customer_phone' => '+99361234567',
             'address' => [
                 'address' => 'Main St 10',
                 'lat' => 39.0886,
                 'lon' => 63.5593,
-                'name' => 'John Doe',
-                'phone' => '+99361234567',
             ],
         ];
 
@@ -172,12 +172,12 @@ class OrderIdempotencyTest extends TestCase
                 'X-Vendor-ID' => $this->restaurant->id,
             ])
             ->postJson('/api/v1/orders', array_merge($payload, [
+                'customer_name' => 'Jane Doe',
+                'customer_phone' => '+99361234568',
                 'address' => [
                     'address' => 'Main St 10',
                     'lat' => 39.0886,
                     'lon' => 63.5593,
-                    'name' => 'Jane Doe',
-                    'phone' => '+99361234568',
                 ]
             ]));
 

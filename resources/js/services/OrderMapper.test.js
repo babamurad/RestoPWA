@@ -91,9 +91,9 @@ describe('OrderMapper', () => {
                     lat: 55.7558,
                     lon: 37.6173,
                     address: 'Test Street 1',
-                    name: 'John Doe',
-                    phone: '+99312345678',
                 },
+                customerName: 'John Doe',
+                customerPhone: '+99312345678',
                 deliveryFee: 500,
                 deliveryTime: 'asap',
                 paymentMethod: 'card',
@@ -111,6 +111,8 @@ describe('OrderMapper', () => {
                 comment: 'No spicy',
                 idempotency_key: 'key-123',
                 trace_id: 'trace-abc',
+                customer_name: 'John Doe',
+                customer_phone: '+99312345678',
             });
 
             expect(payload.items).toHaveLength(1);
@@ -119,8 +121,6 @@ describe('OrderMapper', () => {
             expect(payload.address).toMatchObject({
                 lat: 55.7558,
                 lon: 37.6173,
-                name: 'John Doe',
-                phone: '+99312345678',
             });
         });
 
@@ -128,7 +128,9 @@ describe('OrderMapper', () => {
             const payload = buildOrderPayload({
                 cartItems: [{ productId: 'p1', productName: 'A', price: 100, quantity: 1 }],
                 vendorId: 'v1',
-                address: { lat: 1, lon: 1, address: 'Test', name: 'Test', phone: '+123' },
+                address: { lat: 1, lon: 1, address: 'Test' },
+                customerName: 'Test',
+                customerPhone: '+123',
             });
 
             expect(payload.delivery_fee).toBe(0);

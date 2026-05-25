@@ -58,12 +58,12 @@ class OrderSubmissionTest extends TestCase
             ],
             'total' => 10000,
             'delivery_fee' => 0,
+            'customer_name' => 'Test User',
+            'customer_phone' => '+99312345678',
             'address' => [
                 'lat' => 1.0,
                 'lon' => 1.0,
                 'address' => 'Test Street 1',
-                'name' => 'Test User',
-                'phone' => '+99312345678',
             ],
             'payment_method' => 'card',
         ], $overrides);

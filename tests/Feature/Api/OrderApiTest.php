@@ -72,12 +72,12 @@ class OrderApiTest extends TestCase
                 ],
                 'total' => 20000,
                 'payment_method' => 'card',
+                'customer_name' => 'John Doe',
+                'customer_phone' => '+99361234567',
                 'address' => [
                     'address' => 'Main St 10',
                     'lat' => 39.0886,
                     'lon' => 63.5593,
-                    'name' => 'John Doe',
-                    'phone' => '+99361234567',
                 ],
             ]);
 
@@ -103,12 +103,12 @@ class OrderApiTest extends TestCase
             ],
             'total' => 2000,
             'payment_method' => 'card',
+            'customer_name' => 'John Doe',
+            'customer_phone' => '+99361234567',
             'address' => [
                 'address' => 'Abashidze 1',
                 'lat' => 39.0886,
                 'lon' => 63.5593,
-                'name' => 'John Doe',
-                'phone' => '+99361234567',
             ],
         ];
 
@@ -154,12 +154,12 @@ class OrderApiTest extends TestCase
             ],
             'total' => 1000,
             'payment_method' => 'card',
+            'customer_name' => 'John Doe',
+            'customer_phone' => '+99361234567',
             'address' => [
                 'address' => 'Main St 10',
                 'lat' => 39.0886,
                 'lon' => 63.5593,
-                'name' => 'John Doe',
-                'phone' => '+99361234567',
             ],
         ];
 
@@ -229,12 +229,12 @@ class OrderApiTest extends TestCase
             ],
             'total' => 1000,
             'payment_method' => 'card',
+            'customer_name' => 'John Doe',
+            'customer_phone' => '+99361234567',
             'address' => [
                 'address' => 'Main St 10',
                 'lat' => 39.0886,
                 'lon' => 63.5593,
-                'name' => 'John Doe',
-                'phone' => '+99361234567',
             ],
         ];
 
