@@ -19,10 +19,12 @@ return Application::configure(basePath: dirname(__DIR__))
             SetTenantContext::class,
         ]);
 
-        $middleware->appendToGroup('api', [
+        $middleware->prependToGroup('api', [
             \Illuminate\Cookie\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
+        ]);
+        $middleware->appendToGroup('api', [
             SetTenantContext::class,
         ]);
 
