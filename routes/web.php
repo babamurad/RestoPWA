@@ -56,9 +56,6 @@ Route::match(['get', 'head'], '/api/ping', function () {
     ]);
 })->name('api.ping');
 
-Route::middleware([SetTenantContext::class, 'auth'])->group(function () {
-    Route::post('/api/v1/orders', [ApiOrderController::class, 'store'])->name('api.orders.store');
-});
 
 
 // Vendor orders kanban board
