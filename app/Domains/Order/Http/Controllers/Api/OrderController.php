@@ -79,8 +79,6 @@ class OrderController
                 $addressInput['lon'] = $lon;
             }
 
-            }
-
             $request->merge(['address' => $addressInput]);
         }
 
