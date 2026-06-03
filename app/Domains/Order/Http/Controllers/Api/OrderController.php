@@ -187,6 +187,14 @@ class OrderController
         $user = $request->user();
 
         if (! $user) {
+            \Illuminate\Support\Facades\Log::error('Order Auth Failed', [
+                'has_session' => $request->hasSession(),
+                'session_id' => $request->hasSession() ? $request->session()->getId() : 'none',
+                'cookies' => $request->cookies->all(),
+                'session_all' => $request->hasSession() ? $request->session()->all() : [],
+                'headers' => $request->headers->all(),
+            ]);
+
             return $this->errorResponse(
                 reason: OrderRejectReason::UNAUTHORIZED,
                 traceId: $traceId,
