@@ -23,8 +23,8 @@ describe('OrderMapper', () => {
                     product_id: 'prod-1',
                     product_name: 'Pizza',
                     quantity: 2,
-                    unit_price: 1000,
-                    total_price: 2000,
+                    unit_price: 100000,
+                    total_price: 200000,
                     modifiers: { extra_cheese: true },
                     image: '/img.jpg',
                 },
@@ -37,7 +37,7 @@ describe('OrderMapper', () => {
             ];
 
             const result = mapCartItemsToApiFormat(cartItems);
-            expect(result[0].total_price).toBe(1500);
+            expect(result[0].total_price).toBe(150000);
         });
 
         it('handles missing optional fields', () => {
@@ -56,7 +56,7 @@ describe('OrderMapper', () => {
             ];
 
             const result = mapCartItemsToApiFormat(cartItems);
-            expect(result[0].unit_price).toBe(1000);
+            expect(result[0].unit_price).toBe(100000);
         });
     });
 
@@ -104,7 +104,7 @@ describe('OrderMapper', () => {
 
             expect(payload).toMatchObject({
                 vendor_id: 'v1',
-                total: 2500,
+                total: 250500,
                 delivery_fee: 500,
                 delivery_time: 'asap',
                 payment_method: 'card',
@@ -116,8 +116,8 @@ describe('OrderMapper', () => {
             });
 
             expect(payload.items).toHaveLength(1);
-            expect(payload.items[0].unit_price).toBe(1000);
-            expect(payload.items[0].total_price).toBe(2000);
+            expect(payload.items[0].unit_price).toBe(100000);
+            expect(payload.items[0].total_price).toBe(200000);
             expect(payload.address).toMatchObject({
                 lat: 55.7558,
                 lon: 37.6173,

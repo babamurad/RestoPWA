@@ -14,7 +14,8 @@
  */
 export function mapCartItemsToApiFormat(cartItems) {
     return cartItems.map(item => {
-        const unitPrice = typeof item.price === 'number' ? item.price : parseInt(item.price, 10);
+        const priceInRubles = typeof item.price === 'number' ? item.price : parseFloat(item.price);
+        const unitPrice = Math.round(priceInRubles * 100);
         const quantity = typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity, 10);
         const totalPrice = unitPrice * quantity;
 

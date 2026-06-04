@@ -35,7 +35,7 @@
       <h4 class="text-base font-bold text-slate-100 mb-4 font-outfit tracking-wide">Параметры и настройки</h4>
       <div class="bg-slate-800/40 border border-slate-800/80 rounded-2xl overflow-hidden divide-y divide-slate-800/50 shadow-md">
         <!-- Addresses link -->
-        <div class="p-4 hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between">
+        <div @click="showDevelopmentNotification" class="p-4 hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between">
           <div class="flex items-center gap-3">
             <span class="text-lg">📍</span>
             <span class="text-xs font-bold text-slate-200">Адреса доставки</span>
@@ -46,7 +46,7 @@
         </div>
 
         <!-- Payments link -->
-        <div class="p-4 hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between">
+        <div @click="showDevelopmentNotification" class="p-4 hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between">
           <div class="flex items-center gap-3">
             <span class="text-lg">💳</span>
             <span class="text-xs font-bold text-slate-200">Способы оплаты</span>
@@ -72,7 +72,7 @@
         </div>
 
         <!-- Support link -->
-        <div class="p-4 hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between">
+        <div @click="showDevelopmentNotification" class="p-4 hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between">
           <div class="flex items-center gap-3">
             <span class="text-lg">💬</span>
             <span class="text-xs font-bold text-slate-200">Служба поддержки</span>
@@ -152,6 +152,24 @@ const handleLogout = async () => {
       await authStore.logout();
       router.push('/login');
     }
+  }
+};
+
+// Show notification for features in development
+const showDevelopmentNotification = () => {
+  if (window.Swal) {
+    window.Swal.fire({
+      title: 'В разработке',
+      text: 'Эта функция появится в ближайших обновлениях!',
+      icon: 'info',
+      confirmButtonText: 'Понятно',
+      confirmButtonColor: '#f97316',
+      background: '#0f172a',
+      color: '#f8fafc',
+      customClass: { popup: 'rounded-3xl border border-slate-800 shadow-2xl' }
+    });
+  } else {
+    alert('Эта функция появится в ближайших обновлениях!');
   }
 };
 </script>

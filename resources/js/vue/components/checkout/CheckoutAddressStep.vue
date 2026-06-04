@@ -232,8 +232,12 @@
         v-model="localData.phone" 
         type="tel" 
         placeholder="+993 6X XXXXXX"
-        class="w-full bg-slate-900 border border-slate-800 focus:border-orange-500/50 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none transition-all placeholder:text-slate-600 font-medium tracking-wide"
+        class="w-full bg-slate-900 border focus:border-orange-500/50 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none transition-all placeholder:text-slate-600 font-medium tracking-wide"
+        :class="localData.phone && localData.phone.length > 5 && !isValidPhone ? 'border-red-500/50 focus:border-red-500' : 'border-slate-800'"
       />
+      <div v-if="localData.phone && localData.phone.length > 5 && !isValidPhone" class="text-[10px] text-red-400 mt-1.5 ml-1 font-medium animate-fade-in">
+        Укажите корректный номер телефона (например, +993 65 123456)
+      </div>
     </div>
 
     <button 
@@ -845,10 +849,23 @@ const updateType = (type) => {
   localData.value.delivery_type = type;
 };
 
+const isValidPhone = computed(() => {
+  if (!localData.value.phone) return false;
+  let rawPhone = localData.value.phone || '';
+  let cleanPhone = rawPhone.replace(/\D/g, '');
+  if (cleanPhone.length === 8 && !cleanPhone.startsWith('993')) {
+    cleanPhone = '993' + cleanPhone;
+  }
+  if (cleanPhone.length > 0 && !cleanPhone.startsWith('+')) {
+    cleanPhone = '+' + cleanPhone;
+  }
+  return /^\+993\d{8}$/.test(cleanPhone);
+});
+
 // Валидация: телефон + не вне зоны (если pickup — зона не проверяется)
 // Блокируем «Далее» только если пользователь явно выбрал точку и она вне зоны
 const isValid = computed(() => {
-  if (!localData.value.phone || localData.value.phone.length < 8) return false;
+  if (!isValidPhone.value) return false;
   if (localData.value.delivery_type === 'delivery' && hasSelectedPoint.value && zoneStatus.value === 'outside') return false;
   return true;
 });

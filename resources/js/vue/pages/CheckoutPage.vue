@@ -14,7 +14,10 @@
     <div class="flex items-center justify-between mb-8 relative">
       <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 bg-slate-800 -z-10"></div>
       
-      <div v-for="(step, index) in steps" :key="index" class="flex flex-col items-center gap-2 bg-slate-950 px-2">
+      <div v-for="(step, index) in steps" :key="index" 
+           class="flex flex-col items-center gap-2 bg-slate-950 px-2"
+           :class="{ 'cursor-pointer hover:opacity-80 active:scale-95 transition-all': index < currentStep }"
+           @click="index < currentStep && (currentStep = index)">
         <div 
           class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all duration-300"
           :class="[
@@ -26,7 +29,7 @@
           <span v-if="currentStep > index">✓</span>
           <span v-else>{{ index + 1 }}</span>
         </div>
-        <span class="text-[10px] font-black uppercase tracking-wider" :class="currentStep >= index ? 'text-slate-300' : 'text-slate-500'">{{ step.title }}</span>
+        <span class="text-[10px] font-black uppercase tracking-wider select-none" :class="currentStep >= index ? 'text-slate-300' : 'text-slate-500'">{{ step.title }}</span>
       </div>
     </div>
 
@@ -237,6 +240,13 @@ const submitOrder = async () => {
       } catch (dbError) {
         console.error('Failed to queue offline order:', dbError);
       }
+    }
+
+    // Check if it's a validation error
+    if (error.response && error.response.status === 422) {
+      const errors = error.response.data?.errors || {};
+      const hasStep2Error = Object.keys(errors).some(key => key.includes('payment'));
+      currentStep.value = hasStep2Error ? 1 : 0;
     }
 
     // Fallback: normal error handling
