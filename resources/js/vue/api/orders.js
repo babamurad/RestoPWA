@@ -8,8 +8,11 @@ export default {
         const headers = {
             'X-Vendor-ID': payload.vendor_id,
         };
-        if (idempotencyKey) {
-            headers['X-Idempotency-Key'] = idempotencyKey;
+        if (idempotencyKey || payload.idempotency_key) {
+            headers['X-Idempotency-Key'] = idempotencyKey || payload.idempotency_key;
+        }
+        if (payload.trace_id) {
+            headers['X-Trace-Id'] = payload.trace_id;
         }
 
         const response = await apiClient.post('/orders', payload, { headers });

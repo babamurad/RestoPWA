@@ -199,6 +199,7 @@ async function syncOrders() {
                         'X-CSRF-TOKEN': csrfToken,
                         'X-Vendor-ID': order.payload.vendor_id,
                         'X-Idempotency-Key': order.payload.idempotency_key,
+                        ...(order.payload.trace_id ? { 'X-Trace-Id': order.payload.trace_id } : {}),
                     },
                     body: JSON.stringify({
                         ...order.payload,

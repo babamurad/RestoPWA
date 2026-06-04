@@ -9,24 +9,40 @@
 
 ```json
 {
-  "vendor_id": "integer, required",
+  "vendor_id": "string, required",
   "items": [
     {
-      "id": "integer, required",
+      "product_id": "string, required",
+      "product_name": "string, required",
       "quantity": "integer, required, min:1",
-      "price": "numeric, required",
-      "options": "array, optional"
+      "unit_price": "integer, required (в центах)",
+      "total_price": "integer, required (в центах)",
+      "modifiers": "array, optional",
+      "image": "string, optional"
     }
   ],
-  "total_price": "numeric, required",
-  "delivery_address": "string, required",
-  "coordinates": {
+  "total": "integer, required (в центах)",
+  "delivery_fee": "integer, required (в центах)",
+  "address": {
     "lat": "numeric, required",
-    "lng": "numeric, required"
+    "lon": "numeric, required",
+    "address": "string, optional",
+    "house": "string, optional",
+    "apartment": "string, optional",
+    "entrance": "string, optional",
+    "floor": "string, optional",
+    "manual_address": "string, optional",
+    "landmark": "string, optional",
+    "courier_comment": "string, optional",
+    "address_source": "string, optional",
+    "geolocate_attempted": "boolean, optional",
+    "geolocate_status": "string, optional",
+    "geolocate_accuracy_m": "numeric, optional"
   },
   "customer_name": "string, required",
   "customer_phone": "string, required",
-  "payment_method": "string, required (cash | card | online)",
+  "payment_method": "string, required (cash | card | sbp)",
+  "delivery_time": "string, optional (asap)",
   "comment": "string, optional",
   "trace_id": "string, required, uuid (для логов)",
   "idempotency_key": "string, required, uuid (для оффлайн синхронизации)"
@@ -34,9 +50,9 @@
 ```
 
 ### Правила маппинга
-- **Цены**: Поля `price` (цена за 1 единицу товара) и `total_price` (общая сумма всего заказа) передаются в числовом формате (float/numeric), без символов валюты.
-- **Trace ID**: Генерируется на Frontend в момент начала оформления заказа и передается во всех API-запросах для сквозного логирования (end-to-end trace).
-- **Idempotency Key**: Уникальный ключ транзакции. Если Frontend отправляет запрос с существующим `idempotency_key`, Backend возвращает успешный ответ (если заказ уже был создан) без дублирования.
+- **Цены**: Поля `unit_price`, `total_price` (на уровне товара), `delivery_fee` и `total` передаются в **целочисленном формате (в центах / минимальных единицах)**.
+- **Trace ID**: Генерируется на Frontend в момент начала оформления заказа и передается в `trace_id` body и заголовке `X-Trace-Id` во всех API-запросах для сквозного логирования.
+- **Idempotency Key**: Уникальный ключ транзакции. Передается в `idempotency_key` body и заголовке `X-Idempotency-Key`. Если Frontend отправляет запрос с существующим ключом, Backend возвращает успешный ответ (если заказ уже был создан) без дублирования.
 
 ## 2. Структура ответа (Response)
 

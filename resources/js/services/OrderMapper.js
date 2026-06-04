@@ -61,6 +61,7 @@ export function buildOrderPayload({
     cartItems,
     vendorId,
     address,
+    deliveryType = 'delivery',
     customerName = '',
     customerPhone = '',
     deliveryFee = 0,
@@ -75,6 +76,7 @@ export function buildOrderPayload({
 
     return {
         vendor_id: String(vendorId),
+        delivery_type: deliveryType,
         items: mappedItems,
         total: total,
         delivery_fee: deliveryFee,
@@ -89,6 +91,15 @@ export function buildOrderPayload({
             address: address.address || '',
             house: address.house || null,
             apartment: address.apartment || null,
+            entrance: address.entrance || null,
+            floor: address.floor || null,
+            manual_address: address.manual_address || address.address || null,
+            landmark: address.landmark || null,
+            courier_comment: address.courier_comment || comment || null,
+            address_source: address.address_source || null,
+            geolocate_attempted: address.geolocate_attempted || false,
+            geolocate_status: address.geolocate_status || null,
+            geolocate_accuracy_m: address.geolocate_accuracy_m || null
         },
         idempotency_key: idempotencyKey,
         trace_id: traceId,

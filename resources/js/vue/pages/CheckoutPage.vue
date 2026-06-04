@@ -57,6 +57,7 @@ import { useRouter } from 'vue-router';
 import { useCartStore } from '../stores/cart';
 import { useOrdersStore } from '../stores/orders';
 import { useAuthStore } from '../stores/auth';
+import { buildOrderPayload } from '../../services/OrderMapper';
 
 import CheckoutAddressStep from '../components/checkout/CheckoutAddressStep.vue';
 import CheckoutPaymentStep from '../components/checkout/CheckoutPaymentStep.vue';
@@ -68,6 +69,7 @@ const ordersStore = useOrdersStore();
 const authStore = useAuthStore();
 
 const currentStep = ref(0);
+const traceId = ref(self.crypto.randomUUID());
 
 const steps = [
   { title: 'Доставка', component: CheckoutAddressStep },
@@ -91,6 +93,8 @@ const orderData = ref({
   geolocate_attempted: false,
   geolocate_status: null,
   geolocate_accuracy_m: null,
+  lat: null,
+  lon: null,
 });
 
 onMounted(async () => {
@@ -140,17 +144,22 @@ const submitOrder = async () => {
 
   const finalSubtotal = cartStore.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const finalDeliveryFee = orderData.value.delivery_type === 'delivery' ? cartStore.deliveryFee : 0;
-  const finalTotal = finalSubtotal + finalDeliveryFee;
-
-  const payload = {
-    vendor_id: cartStore.vendorId,
-    delivery_type: orderData.value.delivery_type,
+  
+  const payload = buildOrderPayload({
+    cartItems: cartStore.items.map(item => ({
+      productId: item.id,
+      productName: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      modifiers: item.modifiers || [],
+      image: item.image_url || null
+    })),
+    vendorId: cartStore.vendorId,
+    deliveryType: orderData.value.delivery_type,
     address: {
       lat: orderData.value.lat || 39.0886,
       lon: orderData.value.lon || 63.5593,
       address: orderData.value.address ? orderData.value.address : (orderData.value.delivery_type === 'delivery' ? 'Точка на карте' : 'Самовывоз'),
-      name: authStore.user?.name || 'Покупатель',
-      phone: cleanPhone,
       entrance: orderData.value.entrance || null,
       floor: orderData.value.floor || null,
       apartment: orderData.value.apartment || null,
@@ -162,22 +171,15 @@ const submitOrder = async () => {
       geolocate_status: orderData.value.geolocate_status || null,
       geolocate_accuracy_m: orderData.value.geolocate_accuracy_m || null
     },
-    total: Math.round(finalTotal * 100),
-    delivery_fee: Math.round(finalDeliveryFee * 100),
-    delivery_time: 'asap',
-    payment_method: orderData.value.payment_method,
+    customerName: authStore.user?.name || 'Покупатель',
+    customerPhone: cleanPhone,
+    deliveryFee: Math.round(finalDeliveryFee * 100),
+    deliveryTime: 'asap',
+    paymentMethod: orderData.value.payment_method,
     comment: orderData.value.comment,
-    items: cartStore.items.map(item => ({
-      product_id: item.id,
-      product_name: item.name,
-      quantity: item.quantity,
-      unit_price: Math.round(item.price * 100),
-      total_price: Math.round(item.price * item.quantity * 100),
-      modifiers: item.modifiers || [],
-      image: item.image_url || null
-    })),
-    idempotency_key: self.crypto.randomUUID()
-  };
+    idempotencyKey: self.crypto.randomUUID(),
+    traceId: traceId.value
+  });
 
   try {
     const result = await ordersStore.submitOrder(payload);
