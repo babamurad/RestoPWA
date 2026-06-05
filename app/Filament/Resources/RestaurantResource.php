@@ -81,7 +81,7 @@ class RestaurantResource extends Resource
                             ->view('filament.forms.components.delivery-zone-map')
                             ->columnSpanFull(),
 
-                        Forms\Components\Section::make('Просмотр координат (GeoJSON)')
+                        Section::make('Просмотр координат (GeoJSON)')
                             ->collapsed()
                             ->compact()
                             ->schema([
@@ -106,10 +106,10 @@ class RestaurantResource extends Resource
                                 return '✅ Зона доставки настроена.';
                             }),
 
-                        Forms\Components\Fieldset::make('check_point_fieldset')
+                        \Filament\Schemas\Components\Fieldset::make('check_point_fieldset')
                             ->label('Проверить точку на карте')
                             ->schema([
-                                Forms\Components\Grid::make(3)
+                                \Filament\Schemas\Components\Grid::make(3)
                                     ->schema([
                                         Forms\Components\TextInput::make('check_lat')
                                             ->label('Широта (Latitude)')
@@ -119,8 +119,8 @@ class RestaurantResource extends Resource
                                             ->label('Долгота (Longitude)')
                                             ->numeric()
                                             ->placeholder('63.5593'),
-                                        Forms\Components\Actions::make([
-                                            Forms\Components\Actions\Action::make('check_point')
+                                        \Filament\Schemas\Components\Actions::make([
+                                            Actions\Action::make('check_point')
                                                 ->label('Проверить')
                                                 ->button()
                                                 ->color('warning')
