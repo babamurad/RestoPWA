@@ -2,39 +2,39 @@
   <div class="px-4 py-6 max-w-lg mx-auto md:max-w-4xl pb-24 font-inter">
     <!-- Header -->
     <div class="flex items-center gap-3 mb-8">
-      <button @click="goBack" class="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700/50 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-orange-400 hover:border-orange-500/30 transition-all active:scale-95">
+      <button @click="goBack" class="w-10 h-10 rounded-xl dark:bg-slate-800 border dark:border-slate-700/50 flex items-center justify-center dark:text-slate-300 hover:text-orange-400 hover:border-orange-500/30 transition-all active:scale-95 bg-white border-slate-300 text-slate-700">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
         </svg>
       </button>
-      <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 font-outfit tracking-wide">Оформление заказа</h2>
+      <h2 class="text-xl font-bold dark:text-slate-100 font-outfit tracking-wide text-slate-900">Оформление заказа</h2>
     </div>
 
     <!-- Steps Indicator -->
     <div class="flex items-center justify-between mb-8 relative">
-      <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 bg-white dark:bg-slate-800 -z-10"></div>
+      <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 dark:bg-slate-800 -z-10 bg-white"></div>
       
       <div v-for="(step, index) in steps" :key="index" 
-           class="flex flex-col items-center gap-2 bg-slate-50 dark:bg-slate-950 px-2"
+           class="flex flex-col items-center gap-2 dark:bg-slate-950 px-2 bg-slate-50"
            :class="{ 'cursor-pointer hover:opacity-80 active:scale-95 transition-all': index < currentStep }"
            @click="index < currentStep && (currentStep = index)">
         <div 
           class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all duration-300"
           :class="[
             currentStep > index ? 'bg-orange-500 border-orange-500 text-white' : 
-            currentStep === index ? 'bg-white dark:bg-slate-900 border-orange-500 text-orange-400 shadow-lg shadow-orange-500/20' : 
-            'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-500'
+            currentStep === index ? 'dark:bg-slate-900 border-orange-500 text-orange-400 shadow-lg shadow-orange-500/20 bg-slate-50' : 
+            'dark:bg-slate-900 dark:border-slate-800 dark:text-slate-500 bg-slate-50 border-slate-200 text-slate-500'
           ]"
         >
           <span v-if="currentStep > index">✓</span>
           <span v-else>{{ index + 1 }}</span>
         </div>
-        <span class="text-[10px] font-black uppercase tracking-wider select-none" :class="currentStep >= index ? 'text-slate-700 dark:text-slate-300' : 'text-slate-500 dark:text-slate-500'">{{ step.title }}</span>
+        <span class="text-[10px] font-black uppercase tracking-wider select-none" :class="currentStep >= index ? 'dark:text-slate-300 text-slate-700' : 'dark:text-slate-500 text-slate-500'">{{ step.title }}</span>
       </div>
     </div>
 
     <!-- Step Components -->
-    <div class="bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800/80 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+    <div class="dark:bg-slate-800/50 border dark:border-slate-800/80 rounded-3xl p-6 shadow-xl relative overflow-hidden bg-white border-slate-200">
       <transition name="step-fade" mode="out-in">
         <component 
           :is="currentStepComponent" 
@@ -46,9 +46,9 @@
       </transition>
 
       <!-- Loading overlay during submission -->
-      <div v-if="ordersStore.isLoading" class="absolute inset-0 bg-white dark:bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+      <div v-if="ordersStore.isLoading" class="absolute inset-0 dark:bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center bg-slate-50">
         <div class="w-12 h-12 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mb-4"></div>
-        <p class="text-sm font-bold text-slate-800 dark:text-slate-200 animate-pulse">Отправка заказа...</p>
+        <p class="text-sm font-bold dark:text-slate-200 animate-pulse text-slate-800">Отправка заказа...</p>
       </div>
     </div>
   </div>
@@ -256,7 +256,7 @@ const submitOrder = async () => {
         text: ordersStore.error || 'Не удалось оформить заказ. Попробуйте позже.',
         icon: 'error',
         confirmButtonColor: '#f97316',
-        customClass: { popup: 'rounded-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100' },
+        customClass: { popup: 'rounded-2xl dark:bg-slate-900 dark:text-slate-100 bg-slate-50 text-slate-900' },
       });
     } else {
       alert(ordersStore.error || 'Ошибка оформления заказа');

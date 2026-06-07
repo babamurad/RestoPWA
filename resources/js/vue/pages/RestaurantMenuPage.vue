@@ -5,32 +5,32 @@
   >
     <!-- Back Navigation Bar -->
     <div class="flex items-center gap-3 mb-6">
-      <router-link to="/" class="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700/50 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-orange-400 hover:border-orange-500/30 transition-all active:scale-95">
+      <router-link to="/" class="w-10 h-10 rounded-xl dark:bg-slate-800 border dark:border-slate-700/50 flex items-center justify-center dark:text-slate-300 hover:text-orange-400 hover:border-orange-500/30 transition-all active:scale-95 bg-white border-slate-300 text-slate-700">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
         </svg>
       </router-link>
-      <span class="text-xs text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider">Назад к списку</span>
+      <span class="text-xs dark:text-slate-400 font-bold uppercase tracking-wider text-slate-600">Назад к списку</span>
     </div>
 
     <!-- Loading Skeleton for Header -->
-    <div v-if="store.loading && !store.currentRestaurant" class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 mb-8 animate-pulse">
-      <div class="h-8 bg-white dark:bg-slate-800 rounded-lg w-2/3 mb-4"></div>
-      <div class="h-4 bg-white dark:bg-slate-800 rounded-lg w-1/2 mb-6"></div>
+    <div v-if="store.loading && !store.currentRestaurant" class="dark:bg-slate-800/30 border dark:border-slate-800 rounded-3xl p-6 mb-8 animate-pulse bg-white border-slate-200">
+      <div class="h-8 dark:bg-slate-800 rounded-lg w-2/3 mb-4 bg-white"></div>
+      <div class="h-4 dark:bg-slate-800 rounded-lg w-1/2 mb-6 bg-white"></div>
       <div class="flex gap-4">
-        <div class="h-4 bg-white dark:bg-slate-800 rounded-lg w-16"></div>
-        <div class="h-4 bg-white dark:bg-slate-800 rounded-lg w-16"></div>
+        <div class="h-4 dark:bg-slate-800 rounded-lg w-16 bg-white"></div>
+        <div class="h-4 dark:bg-slate-800 rounded-lg w-16 bg-white"></div>
       </div>
     </div>
 
     <!-- Restaurant Cover & General Info -->
-    <div v-else-if="store.currentRestaurant" class="relative overflow-hidden rounded-3xl mb-8 bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 p-6 shadow-xl group select-none">
+    <div v-else-if="store.currentRestaurant" class="relative overflow-hidden rounded-3xl mb-8 dark:bg-slate-800/40 border dark:border-slate-800/80 p-6 shadow-xl group select-none bg-white border-slate-200">
       <!-- Ambient backing glow -->
       <div class="absolute -right-16 -top-16 w-52 h-52 rounded-full bg-orange-500/5 blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
 
       <div class="flex flex-col md:flex-row gap-6 items-start md:items-center">
         <!-- Thumbnail -->
-        <div class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex-shrink-0 shadow-md">
+        <div class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden dark:bg-slate-900 border dark:border-slate-800 flex-shrink-0 shadow-md bg-slate-50 border-slate-200">
           <img 
             :src="store.currentRestaurant.image ? (store.currentRestaurant.image.startsWith('http') ? store.currentRestaurant.image : '/storage/' + store.currentRestaurant.image) : 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=600&auto=format&fit=crop&q=80'" 
             :alt="store.currentRestaurant.name"
@@ -42,25 +42,25 @@
         <!-- Info details -->
         <div class="flex-1 min-w-0">
           <div class="flex flex-wrap items-center gap-3">
-            <h2 class="text-xl md:text-2xl font-black text-slate-900 dark:text-slate-100 font-outfit tracking-wide leading-tight">{{ store.currentRestaurant.name }}</h2>
+            <h2 class="text-xl md:text-2xl font-black dark:text-slate-100 font-outfit tracking-wide leading-tight text-slate-900">{{ store.currentRestaurant.name }}</h2>
             <div class="px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-black flex items-center gap-1">
               ★ {{ store.currentRestaurant.rating || '4.5' }}
             </div>
           </div>
-          <p class="text-xs text-slate-600 dark:text-slate-400 mt-2 font-medium leading-relaxed max-w-xl">{{ store.currentRestaurant.description || 'Изысканные фирменные блюда из свежих ингредиентов с быстрой доставкой.' }}</p>
+          <p class="text-xs dark:text-slate-400 mt-2 font-medium leading-relaxed max-w-xl text-slate-600">{{ store.currentRestaurant.description || 'Изысканные фирменные блюда из свежих ингредиентов с быстрой доставкой.' }}</p>
           
           <!-- Key Delivery params -->
-          <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 pt-4 border-t border-slate-300 dark:border-slate-700/20 text-xs text-slate-600 dark:text-slate-400 font-semibold">
+          <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 pt-4 border-t dark:border-slate-700/20 text-xs dark:text-slate-400 font-semibold border-slate-300 text-slate-600">
             <span class="flex items-center gap-1.5">
-              ⏱ Время: <strong class="text-slate-800 dark:text-slate-200">{{ store.currentRestaurant.delivery_time || '20-30' }} мин</strong>
+              ⏱ Время: <strong class="dark:text-slate-200 text-slate-800">{{ store.currentRestaurant.delivery_time || '20-30' }} мин</strong>
             </span>
-            <span class="w-1.5 h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 hidden sm:inline"></span>
+            <span class="w-1.5 h-1.5 rounded-full dark:bg-slate-700 hidden sm:inline bg-slate-100"></span>
             <span class="flex items-center gap-1.5">
-              🚲 Доставка: <strong class="text-slate-800 dark:text-slate-200">{{ parseFloat(store.currentRestaurant.delivery_fee) === 0 ? 'Бесплатно' : store.currentRestaurant.delivery_fee + ' TMT' }}</strong>
+              🚲 Доставка: <strong class="dark:text-slate-200 text-slate-800">{{ parseFloat(store.currentRestaurant.delivery_fee) === 0 ? 'Бесплатно' : store.currentRestaurant.delivery_fee + ' TMT' }}</strong>
             </span>
-            <span class="w-1.5 h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 hidden sm:inline"></span>
+            <span class="w-1.5 h-1.5 rounded-full dark:bg-slate-700 hidden sm:inline bg-slate-100"></span>
             <span class="flex items-center gap-1.5">
-              💰 Мин. заказ: <strong class="text-slate-800 dark:text-slate-200">{{ store.currentRestaurant.min_order || '15' }} TMT</strong>
+              💰 Мин. заказ: <strong class="dark:text-slate-200 text-slate-800">{{ store.currentRestaurant.min_order || '15' }} TMT</strong>
             </span>
           </div>
         </div>
@@ -72,25 +72,25 @@
       <!-- Search & Filters Sidebar (Desktop) -->
       <div class="lg:col-span-1 space-y-6">
         <!-- Search bar -->
-        <div class="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 p-4 rounded-2xl shadow-md space-y-3">
-          <h4 class="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 font-outfit">Поиск блюд</h4>
+        <div class="dark:bg-slate-800/40 border dark:border-slate-800/80 p-4 rounded-2xl shadow-md space-y-3 bg-white border-slate-200">
+          <h4 class="text-xs font-black uppercase tracking-wider dark:text-slate-400 font-outfit text-slate-600">Поиск блюд</h4>
           <div class="relative">
             <input 
               v-model="searchQuery" 
               type="text" 
               placeholder="Поиск по меню..." 
-              class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-800 dark:text-slate-200 font-bold focus:outline-none focus:border-orange-500/50 transition-colors placeholder:text-slate-650 dark:text-slate-650"
+              class="w-full dark:bg-slate-900 border dark:border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs dark:text-slate-200 font-bold focus:outline-none focus:border-orange-500/50 transition-colors placeholder:text-slate-650 dark:text-slate-600 bg-slate-50 border-slate-200 text-slate-800 text-slate-400"
             />
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 text-slate-500 dark:text-slate-500 absolute left-3 top-3">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 dark:text-slate-500 absolute left-3 top-3 text-slate-500">
               <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
             </svg>
           </div>
         </div>
 
         <!-- Price Range local filter -->
-        <div class="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 p-4 rounded-2xl shadow-md space-y-3.5 select-none">
+        <div class="dark:bg-slate-800/40 border dark:border-slate-800/80 p-4 rounded-2xl shadow-md space-y-3.5 select-none bg-white border-slate-200">
           <div class="flex justify-between items-baseline">
-            <h4 class="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 font-outfit">Диапазон цены</h4>
+            <h4 class="text-xs font-black uppercase tracking-wider dark:text-slate-400 font-outfit text-slate-600">Диапазон цены</h4>
             <span class="text-[10px] text-orange-400 font-black">{{ maxPriceLimit }} TMT</span>
           </div>
           <input 
@@ -98,9 +98,9 @@
             type="range" 
             :min="store.priceFilters.min || 0" 
             :max="store.priceFilters.max || 1000" 
-            class="w-full h-1 bg-slate-100 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
+            class="w-full h-1 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500 bg-slate-100"
           />
-          <div class="flex justify-between text-[10px] text-slate-500 dark:text-slate-500 font-bold">
+          <div class="flex justify-between text-[10px] dark:text-slate-500 font-bold text-slate-500">
             <span>Мин: {{ store.priceFilters.min }} TMT</span>
             <span>Макс: {{ store.priceFilters.max }} TMT</span>
           </div>
@@ -110,14 +110,14 @@
       <!-- Categories & Products Area (Takes 3 columns) -->
       <div class="lg:col-span-3 space-y-6">
         <!-- Categories Tabs Header -->
-        <div class="bg-white dark:bg-slate-800/20 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800/80 flex gap-2 overflow-x-auto scrollbar-hide select-none">
+        <div class="dark:bg-slate-800/20 p-1.5 rounded-2xl border dark:border-slate-800/80 flex gap-2 overflow-x-auto scrollbar-hide select-none bg-white border-slate-200">
           <button 
             @click="selectCategory(null)"
             :class="[
               'px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap active:scale-95 duration-200',
               activeCategory === null 
                 ? 'bg-orange-500 text-white shadow-md shadow-orange-500/10' 
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-800/40'
+                : 'dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/40 text-slate-600 hover:text-slate-800 hover:bg-white'
             ]"
           >
             🍽️ Все меню
@@ -131,7 +131,7 @@
               'px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap active:scale-95 duration-200',
               activeCategory === cat.id 
                 ? 'bg-orange-500 text-white shadow-md shadow-orange-500/10' 
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-800/40'
+                : 'dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/40 text-slate-600 hover:text-slate-800 hover:bg-white'
             ]"
           >
             {{ cat.name }}
@@ -140,21 +140,21 @@
 
         <!-- Products Loading skeletons -->
         <div v-if="store.loading" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div v-for="n in 4" :key="n" class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-800/60 rounded-3xl p-4 animate-pulse flex gap-4">
-            <div class="w-24 h-24 bg-white dark:bg-slate-800 rounded-2xl flex-shrink-0"></div>
+          <div v-for="n in 4" :key="n" class="dark:bg-slate-800/30 border dark:border-slate-800/60 rounded-3xl p-4 animate-pulse flex gap-4 bg-white border-slate-200">
+            <div class="w-24 h-24 dark:bg-slate-800 rounded-2xl flex-shrink-0 bg-white"></div>
             <div class="flex-1 space-y-2">
-              <div class="h-4 bg-white dark:bg-slate-800 rounded-lg w-2/3"></div>
-              <div class="h-3 bg-white dark:bg-slate-800 rounded-lg w-1/3"></div>
-              <div class="h-4 bg-white dark:bg-slate-800 rounded-lg w-1/4 mt-4"></div>
+              <div class="h-4 dark:bg-slate-800 rounded-lg w-2/3 bg-white"></div>
+              <div class="h-3 dark:bg-slate-800 rounded-lg w-1/3 bg-white"></div>
+              <div class="h-4 dark:bg-slate-800 rounded-lg w-1/4 mt-4 bg-white"></div>
             </div>
           </div>
         </div>
 
         <!-- Empty Menu State -->
-        <div v-else-if="filteredProducts.length === 0" class="text-center py-16 bg-white dark:bg-slate-800/10 border border-slate-200 dark:border-slate-800/60 rounded-3xl select-none">
+        <div v-else-if="filteredProducts.length === 0" class="text-center py-16 dark:bg-slate-800/10 border dark:border-slate-800/60 rounded-3xl select-none bg-white border-slate-200">
           <span class="text-4xl mb-3 block">🍽️</span>
-          <h4 class="text-sm font-extrabold text-slate-700 dark:text-slate-300 mb-1 font-outfit">В этой категории пока пусто</h4>
-          <p class="text-xs text-slate-500 dark:text-slate-500">Попробуйте заглянуть в другие вкладки или изменить фильтры.</p>
+          <h4 class="text-sm font-extrabold dark:text-slate-300 mb-1 font-outfit text-slate-700">В этой категории пока пусто</h4>
+          <p class="text-xs dark:text-slate-500 text-slate-500">Попробуйте заглянуть в другие вкладки или изменить фильтры.</p>
         </div>
 
         <!-- Products List -->
@@ -163,17 +163,17 @@
             v-for="product in filteredProducts" 
             :key="product.id"
             @click="openProductModal(product)"
-            class="bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-800/80 rounded-2xl p-4 hover:border-slate-300 dark:hover:border-slate-700/40 hover:bg-white dark:hover:bg-slate-800/65 transition-all duration-300 shadow-md flex gap-4 items-center group cursor-pointer"
+            class="dark:bg-slate-800/40 backdrop-blur-sm border dark:border-slate-800/80 rounded-2xl p-4 dark:hover:border-slate-700/40 dark:hover:bg-slate-800/65 transition-all duration-300 shadow-md flex gap-4 items-center group cursor-pointer bg-white border-slate-200 hover:border-slate-300 hover:bg-white"
           >
             <!-- Product image -->
-            <div class="w-24 h-24 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex-shrink-0 shadow-sm relative">
+            <div class="w-24 h-24 rounded-2xl overflow-hidden dark:bg-slate-900 border dark:border-slate-800 flex-shrink-0 shadow-sm relative bg-slate-50 border-slate-200">
               <img 
                 :src="product.image_url || 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=600&auto=format&fit=crop&q=80'" 
                 :alt="product.name"
                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 @error="handleImageError"
               />
-              <div v-if="!product.is_available" class="absolute inset-0 bg-slate-50 dark:bg-slate-950/70 flex items-center justify-center text-[8px] font-black text-rose-400 uppercase tracking-widest text-center px-1">
+              <div v-if="!product.is_available" class="absolute inset-0 dark:bg-slate-950/70 flex items-center justify-center text-[8px] font-black text-rose-400 uppercase tracking-widest text-center px-1 bg-slate-50">
                 Нет в наличии
               </div>
             </div>
@@ -181,11 +181,11 @@
             <!-- Product info -->
             <div class="flex-1 min-w-0 flex flex-col justify-between h-24">
               <div>
-                <h5 class="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-orange-400 transition-colors truncate">
+                <h5 class="text-sm font-bold dark:text-slate-100 group-hover:text-orange-400 transition-colors truncate text-slate-900">
                   {{ product.name }}
                 </h5>
-                <p v-if="product.weight_g" class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-bold">Вес: {{ product.weight_g }} г</p>
-                <p v-if="product.description" class="text-xs text-slate-600 dark:text-slate-400 mt-1.5 line-clamp-2 leading-relaxed font-medium">
+                <p v-if="product.weight_g" class="text-[10px] dark:text-slate-400 mt-0.5 font-bold text-slate-600">Вес: {{ product.weight_g }} г</p>
+                <p v-if="product.description" class="text-xs dark:text-slate-400 mt-1.5 line-clamp-2 leading-relaxed font-medium text-slate-600">
                   {{ product.description }}
                 </p>
               </div>
@@ -195,7 +195,7 @@
                 <span class="text-sm font-black text-orange-400 font-outfit">{{ product.price }} TMT</span>
                 <button 
                   :disabled="!product.is_available"
-                  class="px-3.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 hover:bg-orange-500 hover:text-white disabled:hover:bg-white dark:hover:bg-slate-900 disabled:hover:text-slate-500 dark:hover:text-slate-500 disabled:opacity-40 hover:border-transparent text-[11px] font-extrabold rounded-xl transition-all active:scale-90"
+                  class="px-3.5 py-1.5 dark:bg-slate-900 border dark:border-slate-800/80 hover:bg-orange-500 disabled:hover:bg-white dark:hover:bg-slate-900 disabled:hover:text-slate-500 dark:hover:text-slate-500 disabled:opacity-40 hover:border-transparent text-[11px] font-extrabold rounded-xl transition-all active:scale-90 bg-slate-50 border-slate-200 hover:bg-slate-50 hover:text-slate-500"
                 >
                   Выбрать
                 </button>
@@ -226,8 +226,8 @@
             <span class="text-lg">🛒</span>
           </div>
           <div>
-            <span class="text-[10px] text-slate-500 dark:text-slate-400 block font-black uppercase tracking-wider">Корзина</span>
-            <span class="text-xs text-slate-800 dark:text-slate-200 font-extrabold">
+            <span class="text-[10px] dark:text-slate-400 block font-black uppercase tracking-wider text-slate-600">Корзина</span>
+            <span class="text-xs dark:text-slate-200 font-extrabold text-slate-800">
               {{ cartStore.totalItemsCount }} блюда на сумму <strong class="text-orange-400 ml-0.5 font-black">{{ cartStore.subtotal }} TMT</strong>
             </span>
           </div>

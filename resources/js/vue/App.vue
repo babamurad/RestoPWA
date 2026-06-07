@@ -1,51 +1,51 @@
 <template>
-  <div class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-inter antialiased selection:bg-orange-500/30 selection:text-orange-300">
+  <div class="min-h-screen dark:bg-slate-950 dark:text-slate-100 flex flex-col font-inter antialiased selection:bg-orange-500/30 selection:text-orange-300 bg-slate-50 text-slate-900">
     <!-- Desktop Top Navigation Header with Premium Glassmorphism -->
-    <header class="sticky top-0 z-50 w-full bg-white dark:bg-slate-900/60 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800/40 shadow-sm transition-all hidden md:block">
+    <header class="sticky top-0 z-50 w-full dark:bg-slate-900/60 backdrop-blur-xl border-b dark:border-slate-800/40 shadow-sm transition-all hidden md:block bg-slate-50 border-slate-200">
       <div class="max-w-6xl mx-auto px-6 h-18 flex items-center justify-between">
         <!-- Logo -->
         <router-link to="/" class="flex items-center gap-2 group">
           <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:rotate-6 transition-transform duration-300">
             <span class="text-xl font-black text-white">R</span>
           </div>
-          <span class="text-lg font-black tracking-wider text-slate-900 dark:text-slate-100 font-outfit">
+          <span class="text-lg font-black tracking-wider dark:text-slate-100 font-outfit text-slate-900">
             Resto<span class="text-orange-500">PWA</span>
           </span>
         </router-link>
 
         <!-- Nav Links -->
-        <nav class="flex items-center gap-1.5 text-sm font-bold text-slate-700 dark:text-slate-300">
+        <nav class="flex items-center gap-1.5 text-sm font-bold dark:text-slate-300 text-slate-700">
           <router-link 
             to="/" 
-            active-class="bg-white dark:bg-slate-800/50 text-orange-400 border-slate-300 dark:border-slate-700/40"
-            class="px-4 py-2.5 rounded-xl border border-transparent hover:bg-white dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-100 transition-all flex items-center gap-2"
+            active-class="dark:bg-slate-800/50 text-orange-400 dark:border-slate-700/40 bg-white border-slate-300"
+            class="px-4 py-2.5 rounded-xl border border-transparent dark:hover:bg-slate-800/40 dark:hover:text-slate-100 transition-all flex items-center gap-2 hover:bg-white hover:text-slate-900"
           >
             <span>🍔</span> Каталог
           </router-link>
           
           <router-link 
             to="/cart" 
-            active-class="bg-white dark:bg-slate-800/50 text-orange-400 border-slate-300 dark:border-slate-700/40"
-            class="px-4 py-2.5 rounded-xl border border-transparent hover:bg-white dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-100 transition-all flex items-center gap-2 relative"
+            active-class="dark:bg-slate-800/50 text-orange-400 dark:border-slate-700/40 bg-white border-slate-300"
+            class="px-4 py-2.5 rounded-xl border border-transparent dark:hover:bg-slate-800/40 dark:hover:text-slate-100 transition-all flex items-center gap-2 relative hover:bg-white hover:text-slate-900"
           >
             <span>🛒</span> Корзина
-            <span v-if="cartStore.totalItemsCount > 0" class="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] font-black flex items-center justify-center border border-slate-200 dark:border-slate-950 shadow-md">
+            <span v-if="cartStore.totalItemsCount > 0" class="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] font-black flex items-center justify-center border dark:border-slate-950 shadow-md border-slate-200">
               {{ cartStore.totalItemsCount }}
             </span>
           </router-link>
 
           <router-link 
             to="/orders" 
-            active-class="bg-white dark:bg-slate-800/50 text-orange-400 border-slate-300 dark:border-slate-700/40"
-            class="px-4 py-2.5 rounded-xl border border-transparent hover:bg-white dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-100 transition-all flex items-center gap-2"
+            active-class="dark:bg-slate-800/50 text-orange-400 dark:border-slate-700/40 bg-white border-slate-300"
+            class="px-4 py-2.5 rounded-xl border border-transparent dark:hover:bg-slate-800/40 dark:hover:text-slate-100 transition-all flex items-center gap-2 hover:bg-white hover:text-slate-900"
           >
             <span>📋</span> Заказы
           </router-link>
 
           <router-link 
             to="/profile" 
-            active-class="bg-white dark:bg-slate-800/50 text-orange-400 border-slate-300 dark:border-slate-700/40"
-            class="px-4 py-2.5 rounded-xl border border-transparent hover:bg-white dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-100 transition-all flex items-center gap-2"
+            active-class="dark:bg-slate-800/50 text-orange-400 dark:border-slate-700/40 bg-white border-slate-300"
+            class="px-4 py-2.5 rounded-xl border border-transparent dark:hover:bg-slate-800/40 dark:hover:text-slate-100 transition-all flex items-center gap-2 hover:bg-white hover:text-slate-900"
           >
             <span>👤</span> Профиль
           </router-link>
@@ -63,12 +63,12 @@
     </main>
 
     <!-- Mobile Bottom Tab Bar with glassmorphism -->
-    <nav class="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900/75 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800/40 py-2.5 px-6 flex items-center justify-around md:hidden shadow-2xl">
+    <nav class="fixed bottom-0 left-0 right-0 z-50 dark:bg-slate-900/75 backdrop-blur-xl border-t dark:border-slate-800/40 py-2.5 px-6 flex items-center justify-around md:hidden shadow-2xl bg-slate-50 border-slate-200">
       <!-- Home tab -->
       <router-link 
         to="/" 
         active-class="text-orange-500 scale-105"
-        class="flex flex-col items-center gap-1 text-slate-600 dark:text-slate-400 transition-all duration-200"
+        class="flex flex-col items-center gap-1 dark:text-slate-400 transition-all duration-200 text-slate-600"
       >
         <span class="text-xl">🍔</span>
         <span class="text-[9px] font-black uppercase tracking-wider">Каталог</span>
@@ -78,11 +78,11 @@
       <router-link 
         to="/cart" 
         active-class="text-orange-500 scale-105"
-        class="flex flex-col items-center gap-1 text-slate-600 dark:text-slate-400 transition-all duration-200 relative"
+        class="flex flex-col items-center gap-1 dark:text-slate-400 transition-all duration-200 relative text-slate-600"
       >
         <span class="text-xl">🛒</span>
         <span class="text-[9px] font-black uppercase tracking-wider">Корзина</span>
-        <span v-if="cartStore.totalItemsCount > 0" class="absolute -top-1.5 -right-2.5 w-4 h-4 rounded-full bg-orange-500 text-white text-[9px] font-black flex items-center justify-center border border-slate-200 dark:border-slate-950 shadow-md">
+        <span v-if="cartStore.totalItemsCount > 0" class="absolute -top-1.5 -right-2.5 w-4 h-4 rounded-full bg-orange-500 text-white text-[9px] font-black flex items-center justify-center border dark:border-slate-950 shadow-md border-slate-200">
           {{ cartStore.totalItemsCount }}
         </span>
       </router-link>
@@ -91,7 +91,7 @@
       <router-link 
         to="/orders" 
         active-class="text-orange-500 scale-105"
-        class="flex flex-col items-center gap-1 text-slate-600 dark:text-slate-400 transition-all duration-200"
+        class="flex flex-col items-center gap-1 dark:text-slate-400 transition-all duration-200 text-slate-600"
       >
         <span class="text-xl">📋</span>
         <span class="text-[9px] font-black uppercase tracking-wider">Заказы</span>
@@ -101,7 +101,7 @@
       <router-link 
         to="/profile" 
         active-class="text-orange-500 scale-105"
-        class="flex flex-col items-center gap-1 text-slate-600 dark:text-slate-400 transition-all duration-200"
+        class="flex flex-col items-center gap-1 dark:text-slate-400 transition-all duration-200 text-slate-600"
       >
         <span class="text-xl">👤</span>
         <span class="text-[9px] font-black uppercase tracking-wider">Профиль</span>

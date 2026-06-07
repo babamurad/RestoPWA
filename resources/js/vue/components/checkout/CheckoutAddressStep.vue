@@ -1,20 +1,20 @@
 <template>
   <div class="space-y-6 select-none">
-    <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100 font-outfit">Куда доставить?</h3>
+    <h3 class="text-lg font-bold dark:text-slate-100 font-outfit text-slate-900">Куда доставить?</h3>
     
     <!-- Delivery Type Toggle -->
-    <div class="flex p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+    <div class="flex p-1 dark:bg-slate-900 border dark:border-slate-800 rounded-xl bg-slate-50 border-slate-200">
       <button 
         @click="updateType('delivery')"
         class="flex-1 py-2 text-xs font-bold rounded-lg transition-all"
-        :class="localData.delivery_type === 'delivery' ? 'bg-white dark:bg-slate-800 text-orange-400 shadow-sm' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+        :class="localData.delivery_type === 'delivery' ? 'dark:bg-slate-800 text-orange-400 shadow-sm bg-white' : 'dark:text-slate-500 dark:hover:text-slate-300 text-slate-500 hover:text-slate-700'"
       >
         Доставка
       </button>
       <button 
         @click="updateType('pickup')"
         class="flex-1 py-2 text-xs font-bold rounded-lg transition-all"
-        :class="localData.delivery_type === 'pickup' ? 'bg-white dark:bg-slate-800 text-orange-400 shadow-sm' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+        :class="localData.delivery_type === 'pickup' ? 'dark:bg-slate-800 text-orange-400 shadow-sm bg-white' : 'dark:text-slate-500 dark:hover:text-slate-300 text-slate-500 hover:text-slate-700'"
       >
         Самовывоз
       </button>
@@ -26,7 +26,7 @@
       <!-- Mini Map for Delivery -->
       <div v-show="localData.delivery_type === 'delivery'" class="relative h-48 shrink-0 group">
         <!-- Inner container with overflow-hidden for rounded corners -->
-        <div class="absolute inset-0 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-inner">
+        <div class="absolute inset-0 rounded-2xl overflow-hidden border dark:border-slate-800 shadow-inner border-slate-200">
           <div id="checkout-map" class="absolute inset-0 z-10"></div>
         </div>
         
@@ -45,19 +45,19 @@
         <!-- Loading Overlay -->
         <div 
           v-if="!mapLoaded"
-          class="absolute inset-0 flex flex-col items-center justify-center bg-white dark:bg-slate-900/80 backdrop-blur-sm z-20 rounded-2xl"
+          class="absolute inset-0 flex flex-col items-center justify-center dark:bg-slate-900/80 backdrop-blur-sm z-20 rounded-2xl bg-slate-50"
         >
           <div class="w-8 h-8 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mb-3"></div>
-          <p class="text-xs text-slate-600 dark:text-slate-400 font-medium tracking-wide">Загрузка карты...</p>
+          <p class="text-xs dark:text-slate-400 font-medium tracking-wide text-slate-600">Загрузка карты...</p>
         </div>
 
         <!-- Geolocation loading overlay -->
         <div
           v-if="mapLoaded && geo.status.value === 'loading'"
-          class="absolute inset-0 flex flex-col items-center justify-center bg-white dark:bg-slate-900/80 backdrop-blur-sm z-20 rounded-2xl"
+          class="absolute inset-0 flex flex-col items-center justify-center dark:bg-slate-900/80 backdrop-blur-sm z-20 rounded-2xl bg-slate-50"
         >
           <div class="w-6 h-6 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mb-2"></div>
-          <span class="text-xs text-slate-700 dark:text-slate-300 font-semibold">Определяем ваше местоположение…</span>
+          <span class="text-xs dark:text-slate-300 font-semibold text-slate-700">Определяем ваше местоположение…</span>
         </div>
 
         <!-- Zone check badge (top-left) -->
@@ -68,7 +68,7 @@
           :class="{
             'bg-green-500/20 border border-green-500/40 text-green-400': zoneStatus === 'inside',
             'bg-red-500/20 border border-red-500/40 text-red-400': zoneStatus === 'outside',
-            'bg-slate-100 dark:bg-slate-700/80 border border-slate-300 dark:border-slate-600/50 text-slate-700 dark:text-slate-300': zoneStatus === 'zone_missing' || zoneStatus === 'error',
+            'dark:bg-slate-700/80 border dark:border-slate-600/50 dark:text-slate-300 bg-slate-100 border-slate-400 text-slate-700': zoneStatus === 'zone_missing' || zoneStatus === 'error',
           }"
         >
           <span v-if="zoneStatus === 'inside'">✓ Доставляем</span>
@@ -79,7 +79,7 @@
         <!-- Zone check loading spinner (top-left) -->
         <div
           v-if="mapLoaded && zoneStatus === 'loading'"
-          class="absolute top-2 left-2 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/80 border border-slate-300 dark:border-slate-600/50"
+          class="absolute top-2 left-2 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-lg dark:bg-slate-700/80 border dark:border-slate-600/50 bg-slate-100 border-slate-400"
           style="transform: translateZ(100px);"
         >
           <div class="w-3 h-3 border border-slate-400 dark:border-slate-400/30 border-t-slate-300 rounded-full animate-spin"></div>
@@ -90,7 +90,7 @@
           v-if="mapLoaded"
           @click="enterFullscreen"
           title="Открыть карту на весь экран"
-          class="absolute top-2 right-2 z-20 w-8 h-8 rounded-lg bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg"
+          class="absolute top-2 right-2 z-20 w-8 h-8 rounded-lg dark:bg-slate-900/90 border dark:border-slate-700 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg bg-slate-50 border-slate-300"
           style="transform: translateZ(100px);"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -106,7 +106,7 @@
           v-if="mapLoaded && GEO_ENABLED && geo.status.value !== 'loading'"
           @click="handleRetryGeo"
           title="Определить моё местоположение"
-          class="absolute bottom-2 right-2 z-20 w-8 h-8 rounded-lg bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg"
+          class="absolute bottom-2 right-2 z-20 w-8 h-8 rounded-lg dark:bg-slate-900/90 border dark:border-slate-700 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg bg-slate-50 border-slate-300"
           style="transform: translateZ(100px);"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -134,7 +134,7 @@
       <!-- Geo error / denied banner -->
       <div
         v-if="geoError"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl dark:bg-slate-800/80 border dark:border-slate-700/60 text-xs dark:text-slate-300 bg-white border-slate-300 text-slate-700"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-orange-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
@@ -165,8 +165,8 @@
         v-if="reverseAddr && confidence"
         class="flex items-start gap-2 px-3 py-2.5 rounded-xl border text-xs"
         :class="{
-          'bg-green-500/5 border-green-500/20 text-slate-700 dark:text-slate-300': confidence === 'high',
-          'bg-white dark:bg-slate-800/60 border-slate-300 dark:border-slate-700/50 text-slate-700 dark:text-slate-300': confidence === 'medium',
+          'bg-green-500/5 border-green-500/20 dark:text-slate-300 text-slate-700': confidence === 'high',
+          'dark:bg-slate-800/60 dark:border-slate-700/50 dark:text-slate-300 bg-white border-slate-300 text-slate-700': confidence === 'medium',
           'bg-amber-500/5 border-amber-500/20 text-amber-400/80': confidence === 'low',
         }"
       >
@@ -180,41 +180,41 @@
       </div>
 
       <div>
-        <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5 ml-1">Улица, дом (необязательно)</label>
+        <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">Улица, дом (необязательно)</label>
         <input 
           v-model="localData.address" 
           type="text" 
           placeholder="ул. Азади, д. 45"
-          class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:border-orange-500/50 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-200 outline-none transition-all placeholder:text-slate-400 dark:text-slate-600"
+          class="w-full dark:bg-slate-900 border dark:border-slate-800 focus:border-orange-500/50 rounded-xl px-4 py-3 text-sm dark:text-slate-200 outline-none transition-all placeholder:text-slate-400 dark:text-slate-600 bg-slate-50 border-slate-200 text-slate-800 text-slate-400"
         />
       </div>
 
       <div class="grid grid-cols-3 gap-3">
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5 ml-1">Подъезд</label>
+          <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">Подъезд</label>
           <input 
             v-model="localData.entrance" 
             type="text" 
             placeholder="1"
-            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:border-orange-500/50 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-200 outline-none transition-all placeholder:text-slate-400 dark:text-slate-600 text-center"
+            class="w-full dark:bg-slate-900 border dark:border-slate-800 focus:border-orange-500/50 rounded-xl px-4 py-3 text-sm dark:text-slate-200 outline-none transition-all placeholder:text-slate-400 dark:text-slate-600 text-center bg-slate-50 border-slate-200 text-slate-800 text-slate-400"
           />
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5 ml-1">Этаж</label>
+          <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">Этаж</label>
           <input 
             v-model="localData.floor" 
             type="text" 
             placeholder="5"
-            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:border-orange-500/50 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-200 outline-none transition-all placeholder:text-slate-400 dark:text-slate-600 text-center"
+            class="w-full dark:bg-slate-900 border dark:border-slate-800 focus:border-orange-500/50 rounded-xl px-4 py-3 text-sm dark:text-slate-200 outline-none transition-all placeholder:text-slate-400 dark:text-slate-600 text-center bg-slate-50 border-slate-200 text-slate-800 text-slate-400"
           />
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5 ml-1">Квартира</label>
+          <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">Квартира</label>
           <input 
             v-model="localData.apartment" 
             type="text" 
             placeholder="25"
-            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:border-orange-500/50 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-200 outline-none transition-all placeholder:text-slate-400 dark:text-slate-600 text-center"
+            class="w-full dark:bg-slate-900 border dark:border-slate-800 focus:border-orange-500/50 rounded-xl px-4 py-3 text-sm dark:text-slate-200 outline-none transition-all placeholder:text-slate-400 dark:text-slate-600 text-center bg-slate-50 border-slate-200 text-slate-800 text-slate-400"
           />
         </div>
       </div>
@@ -227,13 +227,13 @@
 
     <!-- Phone Number (Required) -->
     <div>
-      <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5 ml-1">Контактный телефон</label>
+      <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">Контактный телефон</label>
       <input 
         v-model="localData.phone" 
         type="tel" 
         placeholder="+993 6X XXXXXX"
-        class="w-full bg-white dark:bg-slate-900 border focus:border-orange-500/50 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-200 outline-none transition-all placeholder:text-slate-400 dark:text-slate-600 font-medium tracking-wide"
-        :class="localData.phone && localData.phone.length > 5 && !isValidPhone ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-slate-800'"
+        class="w-full dark:bg-slate-900 border focus:border-orange-500/50 rounded-xl px-4 py-3 text-sm dark:text-slate-200 outline-none transition-all placeholder:text-slate-400 dark:text-slate-600 font-medium tracking-wide bg-slate-50 text-slate-800 text-slate-400"
+        :class="localData.phone && localData.phone.length > 5 && !isValidPhone ? 'border-red-500/50 focus:border-red-500' : 'dark:border-slate-800 border-slate-200'"
       />
       <div v-if="localData.phone && localData.phone.length > 5 && !isValidPhone" class="text-[10px] text-red-400 mt-1.5 ml-1 font-medium animate-fade-in">
         Укажите корректный номер телефона (например, +993 65 123456)
@@ -243,7 +243,7 @@
     <button 
       @click="handleNext"
       :disabled="!isValid"
-      class="w-full mt-6 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-white dark:disabled:from-slate-800 disabled:to-slate-50 dark:disabled:to-slate-800 disabled:text-slate-500 dark:disabled:text-slate-500 disabled:cursor-not-allowed text-white font-extrabold text-sm rounded-xl shadow-lg transition-all active:scale-[0.98]"
+      class="w-full mt-6 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:disabled:from-slate-800 dark:disabled:to-slate-800 dark:disabled:text-slate-500 disabled:cursor-not-allowed text-white font-extrabold text-sm rounded-xl shadow-lg transition-all active:scale-[0.98] disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-500"
     >
       Продолжить
     </button>
@@ -251,10 +251,10 @@
     <!-- Fullscreen Map Overlay -->
     <div 
       v-if="isFullscreen"
-      class="fixed inset-0 z-[60] bg-slate-50 dark:bg-slate-950 flex flex-col select-none overflow-hidden"
+      class="fixed inset-0 z-[60] dark:bg-slate-950 flex flex-col select-none overflow-hidden bg-slate-50"
     >
       <!-- Header with safe-area top padding for premium mobile UX -->
-      <div class="flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 relative z-[2000]" style="height: calc(4rem + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top);">
+      <div class="flex items-center justify-between px-4 border-b dark:border-slate-800 shrink-0 dark:bg-slate-900 relative z-[2000] border-slate-200 bg-slate-50" style="height: calc(4rem + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top);">
         <div class="flex items-center gap-2.5">
           <div class="w-8 h-8 bg-orange-500/10 rounded-xl flex items-center justify-center border border-orange-500/20">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -262,9 +262,9 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
-          <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100 font-outfit tracking-wide">Укажите точку на карте</h2>
+          <h2 class="text-sm font-bold dark:text-slate-100 font-outfit tracking-wide text-slate-900">Укажите точку на карте</h2>
         </div>
-        <button @click="exitFullscreen" class="p-2 hover:bg-white dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95">
+        <button @click="exitFullscreen" class="p-2 dark:hover:bg-slate-800 rounded-full transition-colors dark:text-slate-400 dark:hover:text-slate-200 active:scale-95 hover:bg-white text-slate-600 hover:text-slate-800">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
           </svg>
@@ -272,7 +272,7 @@
       </div>
 
       <!-- Map Container -->
-      <div class="flex-1 min-h-0 h-0 relative overflow-hidden bg-white dark:bg-slate-900">
+      <div class="flex-1 min-h-0 h-0 relative overflow-hidden dark:bg-slate-900 bg-slate-50">
         <div id="checkout-map-fullscreen" class="absolute inset-0"></div>
         
         <!-- Fixed Pin in Center -->
@@ -287,22 +287,22 @@
           </svg>
         </div>
 
-        <div v-show="!fullscreenMapLoaded" class="absolute inset-0 bg-white dark:bg-slate-900 flex flex-col items-center justify-center gap-3 z-[2000]">
+        <div v-show="!fullscreenMapLoaded" class="absolute inset-0 dark:bg-slate-900 flex flex-col items-center justify-center gap-3 z-[2000] bg-slate-50">
           <div class="w-8 h-8 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
-          <p class="text-xs text-slate-600 dark:text-slate-400 font-medium">Загрузка...</p>
+          <p class="text-xs dark:text-slate-400 font-medium text-slate-600">Загрузка...</p>
         </div>
         
-        <div v-show="fullscreenMapLoaded" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-[10px] uppercase font-black tracking-wider text-slate-700 dark:text-slate-300 whitespace-nowrap pointer-events-none z-[2000]">
+        <div v-show="fullscreenMapLoaded" class="absolute bottom-4 left-1/2 -translate-x-1/2 dark:bg-slate-900/90 border dark:border-slate-800 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-[10px] uppercase font-black tracking-wider dark:text-slate-300 whitespace-nowrap pointer-events-none z-[2000] bg-slate-50 border-slate-200 text-slate-700">
           Перетащите карту под маркер
         </div>
       </div>
 
       <!-- Actions with safe-area bottom padding -->
-      <div class="px-4 border-t border-slate-200 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 relative z-[2000]" style="padding-top: 1rem; padding-left: 1rem; padding-right: 1rem; padding-bottom: max(1rem, env(safe-area-inset-bottom));">
+      <div class="px-4 border-t dark:border-slate-800 shrink-0 dark:bg-slate-900 relative z-[2000] border-slate-200 bg-slate-50" style="padding-top: 1rem; padding-left: 1rem; padding-right: 1rem; padding-bottom: max(1rem, env(safe-area-inset-bottom));">
         <div class="flex gap-3">
           <button 
             @click="exitFullscreen"
-            class="flex-1 py-3.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:bg-slate-50 dark:active:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all active:scale-[0.98] text-sm font-inter"
+            class="flex-1 py-3.5 dark:bg-slate-800 dark:hover:bg-slate-700 dark:active:bg-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all active:scale-[0.98] text-sm font-inter bg-white hover:bg-slate-100 active:bg-slate-100 text-slate-700"
           >
             Отмена
           </button>
@@ -324,7 +324,7 @@
             @click="zoomInFullscreen"
             type="button"
             title="Приблизить"
-            class="w-10 h-10 rounded-xl bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg"
+            class="w-10 h-10 rounded-xl dark:bg-slate-900/95 border dark:border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg bg-slate-50 border-slate-200"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -336,7 +336,7 @@
             @click="zoomOutFullscreen"
             type="button"
             title="Отдалить"
-            class="w-10 h-10 rounded-xl bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg"
+            class="w-10 h-10 rounded-xl dark:bg-slate-900/95 border dark:border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg bg-slate-50 border-slate-200"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" />
@@ -350,7 +350,7 @@
             type="button"
             :disabled="geo.status.value === 'loading'"
             title="Определить моё местоположение"
-            class="w-10 h-10 rounded-xl bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg mt-2 disabled:opacity-50"
+            class="w-10 h-10 rounded-xl dark:bg-slate-900/95 border dark:border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg mt-2 disabled:opacity-50 bg-slate-50 border-slate-200"
           >
             <div v-if="geo.status.value === 'loading'" class="w-4 h-4 border border-orange-400/30 border-t-orange-400 rounded-full animate-spin"></div>
             <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
