@@ -1,12 +1,12 @@
 <template>
   <div class="px-4 py-12 max-w-md mx-auto min-h-[80vh] flex flex-col justify-center font-inter">
-    <div class="bg-gradient-to-tr from-slate-800 to-slate-900 border border-slate-700/40 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
+    <div class="bg-gradient-to-tr from-white dark:from-slate-800 to-slate-900 dark:to-slate-900 border border-slate-300 dark:border-slate-700/40 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
       <!-- Decorative radial gradient background glow -->
       <div class="absolute -right-24 -top-24 w-64 h-64 rounded-full bg-orange-500/10 blur-3xl group-hover:bg-orange-500/15 transition-colors duration-500"></div>
       
       <div class="text-center mb-8 relative z-10">
-        <h2 class="text-2xl font-black text-slate-100 font-outfit tracking-wide mb-2">Создать аккаунт</h2>
-        <p class="text-xs text-slate-400 font-medium">Зарегистрируйтесь, чтобы сохранять адреса и накапливать скидки</p>
+        <h2 class="text-2xl font-black text-slate-900 dark:text-slate-100 font-outfit tracking-wide mb-2">Создать аккаунт</h2>
+        <p class="text-xs text-slate-600 dark:text-slate-400 font-medium">Зарегистрируйтесь, чтобы сохранять адреса и накапливать скидки</p>
       </div>
 
       <form @submit.prevent="handleRegister" class="space-y-4 relative z-10">
@@ -18,66 +18,66 @@
 
         <!-- Name Field -->
         <div class="space-y-1">
-          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">Ваше имя</label>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Ваше имя</label>
           <input 
             v-model="form.name" 
             type="text" 
             required
             placeholder="Иван Иванов"
-            class="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold"
+            class="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold"
           />
         </div>
 
         <!-- Email Field -->
         <div class="space-y-1">
-          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">Email</label>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Email</label>
           <input 
             v-model="form.email" 
             type="email" 
             required
             placeholder="example@mail.com"
-            class="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold"
+            class="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold"
           />
         </div>
 
         <!-- Phone Field -->
         <div class="space-y-1">
-          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">Номер телефона (8 цифр)</label>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Номер телефона (8 цифр)</label>
           <div class="relative flex items-center">
-            <span class="absolute left-4 text-slate-400 font-bold text-sm">+993</span>
+            <span class="absolute left-4 text-slate-600 dark:text-slate-400 font-bold text-sm">+993</span>
             <input 
               v-model="phoneInput" 
               type="tel" 
               required
               maxlength="8"
               placeholder="65123456"
-              class="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl pl-[60px] pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold"
+              class="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700/50 rounded-xl pl-[60px] pr-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold"
             />
           </div>
-          <p class="text-[10px] text-slate-500 font-semibold pl-1">Код оператора и номер, например: 65123456</p>
+          <p class="text-[10px] text-slate-500 dark:text-slate-500 font-semibold pl-1">Код оператора и номер, например: 65123456</p>
         </div>
 
         <!-- Password Field -->
         <div class="space-y-1">
-          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">Пароль</label>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Пароль</label>
           <input 
             v-model="form.password" 
             type="password" 
             required
             placeholder="Минимум 8 символов"
-            class="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold"
+            class="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold"
           />
         </div>
 
         <!-- Password Confirmation Field -->
         <div class="space-y-1">
-          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">Подтверждение пароля</label>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Подтверждение пароля</label>
           <input 
             v-model="form.password_confirmation" 
             type="password" 
             required
             placeholder="Повторите пароль"
-            class="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold"
+            class="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold"
           />
         </div>
 
@@ -93,8 +93,8 @@
       </form>
 
       <!-- Footer navigation -->
-      <div class="mt-8 text-center relative z-10 border-t border-slate-800 pt-6">
-        <p class="text-xs text-slate-400 font-semibold">
+      <div class="mt-8 text-center relative z-10 border-t border-slate-200 dark:border-slate-800 pt-6">
+        <p class="text-xs text-slate-600 dark:text-slate-400 font-semibold">
           Уже зарегистрированы? 
           <router-link :to="{ name: 'login', query: { redirect: $route.query.redirect } }" class="text-orange-400 hover:text-orange-350 transition-colors ml-1 font-bold">
             Войти в аккаунт
