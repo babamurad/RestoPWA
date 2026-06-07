@@ -9,6 +9,7 @@ use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 
 class GeocodingLogResource extends Resource
 {
@@ -111,7 +112,7 @@ class GeocodingLogResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                Actions\ViewAction::make(),
             ])
             ->defaultSort('created_at', 'desc');
     }
