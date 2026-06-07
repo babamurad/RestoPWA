@@ -27,7 +27,7 @@
     </style>
 </head>
 
-<body class="bg-slate-900 overflow-x-hidden antialiased text-slate-100">
+<body class="bg-gray-50 dark:bg-slate-950 overflow-x-hidden antialiased text-slate-900 dark:text-slate-100">
     <script>
         window.vapidPublicKey = '{{ config('services.push.public_key') }}';
         window.apiPingUrl = '{{ route('api.ping') }}';
