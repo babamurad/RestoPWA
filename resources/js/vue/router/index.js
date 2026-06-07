@@ -49,6 +49,24 @@ const routes = [
         meta: { title: 'Профиль', requiresAuth: true }
     },
     {
+        path: '/profile/addresses',
+        name: 'profile-addresses',
+        component: () => import('../pages/profile/AddressesPage.vue'),
+        meta: { title: 'Мои адреса', requiresAuth: true }
+    },
+    {
+        path: '/profile/payments',
+        name: 'profile-payments',
+        component: () => import('../pages/profile/PaymentsPage.vue'),
+        meta: { title: 'Способы оплаты', requiresAuth: true }
+    },
+    {
+        path: '/profile/support',
+        name: 'profile-support',
+        component: () => import('../pages/profile/SupportPage.vue'),
+        meta: { title: 'Служба поддержки', requiresAuth: true }
+    },
+    {
         path: '/orders',
         name: 'orders',
         component: () => import('../pages/OrdersPage.vue'),

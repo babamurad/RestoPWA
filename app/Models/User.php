@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use App\Domains\Vendor\Models\Restaurant;
 use Filament\Models\Contracts\FilamentUser;
@@ -94,6 +95,21 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     public function restaurant(): HasOne
     {
         return $this->hasOne(Restaurant::class, 'vendor_id');
+    }
+
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(UserAddress::class);
+    }
+
+    public function paymentMethods(): HasMany
+    {
+        return $this->hasMany(UserPaymentMethod::class);
+    }
+
+    public function supportTickets(): HasMany
+    {
+        return $this->hasMany(SupportTicket::class);
     }
 
     protected function phone(): Attribute

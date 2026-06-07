@@ -50,5 +50,12 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->gro
         Route::get('orders/{id}', [OrderController::class, 'show'])->name('api.v1.orders.show');
         Route::post('push/subscribe', [PushController::class, 'subscribe'])->name('api.push.subscribe');
         Route::post('push/unsubscribe', [PushController::class, 'unsubscribe'])->name('api.push.unsubscribe');
+
+        // Profile features
+        Route::prefix('profile')->group(function () {
+            Route::apiResource('addresses', \App\Http\Controllers\Api\Profile\AddressController::class)->except(['show']);
+            Route::apiResource('payments', \App\Http\Controllers\Api\Profile\PaymentMethodController::class)->only(['index', 'store', 'destroy']);
+            Route::apiResource('support', \App\Http\Controllers\Api\Profile\SupportController::class)->only(['index', 'store']);
+        });
     });
 });

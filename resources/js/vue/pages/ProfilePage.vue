@@ -51,7 +51,7 @@
         </div>
 
         <!-- Addresses link -->
-        <div @click="showDevelopmentNotification" class="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between">
+        <router-link to="/profile/addresses" class="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between block">
           <div class="flex items-center gap-3">
             <span class="text-lg">📍</span>
             <span class="text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors duration-300">Адреса доставки</span>
@@ -59,10 +59,10 @@
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 transition-colors duration-300">
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
           </svg>
-        </div>
+        </router-link>
 
         <!-- Payments link -->
-        <div @click="showDevelopmentNotification" class="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between">
+        <router-link to="/profile/payments" class="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between block">
           <div class="flex items-center gap-3">
             <span class="text-lg">💳</span>
             <span class="text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors duration-300">Способы оплаты</span>
@@ -70,7 +70,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 transition-colors duration-300">
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
           </svg>
-        </div>
+        </router-link>
 
         <!-- Push settings selector -->
         <div class="p-4 flex items-center justify-between">
@@ -88,7 +88,7 @@
         </div>
 
         <!-- Support link -->
-        <div @click="showDevelopmentNotification" class="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between">
+        <router-link to="/profile/support" class="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between block">
           <div class="flex items-center gap-3">
             <span class="text-lg">💬</span>
             <span class="text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors duration-300">Служба поддержки</span>
@@ -96,7 +96,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 transition-colors duration-300">
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
           </svg>
-        </div>
+        </router-link>
 
         <!-- Logout option -->
         <div @click="handleLogout" class="p-4 hover:bg-rose-50 dark:hover:bg-rose-500/5 transition-colors cursor-pointer flex items-center justify-between text-rose-500 dark:text-rose-400 group">

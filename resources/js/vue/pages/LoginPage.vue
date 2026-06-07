@@ -1,6 +1,6 @@
 <template>
   <div class="px-4 py-12 max-w-md mx-auto min-h-[80vh] flex flex-col justify-center font-inter">
-    <div class="bg-gradient-to-tr dark:from-slate-800 to-slate-900 dark:to-slate-900 border dark:border-slate-700/40 rounded-3xl p-8 shadow-2xl relative overflow-hidden group from-slate-200 border-slate-300">
+    <div class="bg-gradient-to-tr from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700/40 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
       <!-- Decorative radial gradient background glow -->
       <div class="absolute -right-24 -top-24 w-64 h-64 rounded-full bg-orange-500/10 blur-3xl group-hover:bg-orange-500/15 transition-colors duration-500"></div>
       
