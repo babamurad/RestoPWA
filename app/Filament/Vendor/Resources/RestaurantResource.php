@@ -24,7 +24,7 @@ class RestaurantResource extends Resource
     {
         return $schema
             ->components([
-                Forms\Components\Section::make('Основная информация')
+                \Filament\Schemas\Components\Section::make('Основная информация')
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->label('Название')
@@ -45,7 +45,7 @@ class RestaurantResource extends Resource
                             ->default(true),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Условия доставки')
+                \Filament\Schemas\Components\Section::make('Условия доставки')
                     ->schema([
                         Forms\Components\TextInput::make('delivery_time')
                             ->label('Среднее время доставки (мин)')
@@ -60,7 +60,7 @@ class RestaurantResource extends Resource
                             ->prefix('₽'),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Зона доставки')
+                \Filament\Schemas\Components\Section::make('Зона доставки')
                     ->description('Настройте полигон доставки в формате GeoJSON')
                     ->schema([
                         Forms\Components\Textarea::make('delivery_zones')
@@ -98,10 +98,10 @@ class RestaurantResource extends Resource
                                 return '✅ Зона настроена ('.$polygonCount.' полигонов).';
                             }),
 
-                        Forms\Components\Fieldset::make('check_point_fieldset')
+                        \Filament\Schemas\Components\Fieldset::make('check_point_fieldset')
                             ->label('Проверить точку на карте')
                             ->schema([
-                                Forms\Components\Grid::make(3)
+                                \Filament\Schemas\Components\Grid::make(3)
                                     ->schema([
                                         Forms\Components\TextInput::make('check_lat')
                                             ->label('Широта (Latitude)')
@@ -111,8 +111,8 @@ class RestaurantResource extends Resource
                                             ->label('Долгота (Longitude)')
                                             ->numeric()
                                             ->placeholder('63.5593'),
-                                        Forms\Components\Actions::make([
-                                            Forms\Components\Actions\Action::make('check_point')
+                                        \Filament\Schemas\Components\Actions::make([
+                                            \Filament\Actions\Action::make('check_point')
                                                 ->label('Проверить')
                                                 ->button()
                                                 ->color('warning')
