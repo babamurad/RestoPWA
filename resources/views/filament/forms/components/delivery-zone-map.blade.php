@@ -25,7 +25,7 @@
                 controls: ['zoomControl', 'fullscreenControl']
             });
 
-            this.polygon = new ymaps.Polygon([], {
+            this.polygon = new ymaps.Polygon([[]], {
                 hintContent: 'Зона доставки'
             }, {
                 fillColor: '#FF6B3555',
@@ -44,9 +44,13 @@
                 this.updateState();
             });
             
-            // Если полигон уже есть, центрируем карту по нему
-            if (this.polygon.geometry.getCoordinates().length > 0) {
-                this.map.setBounds(this.polygon.geometry.getBounds());
+            // Если полигон уже есть и содержит точки, центрируем карту по нему
+            const coords = this.polygon.geometry.getCoordinates();
+            if (coords && coords.length > 0 && coords[0] && coords[0].length > 0) {
+                const bounds = this.polygon.geometry.getBounds();
+                if (bounds) {
+                    this.map.setBounds(bounds);
+                }
             }
         });
     },
@@ -112,7 +116,7 @@
     clearMap() {
         if (!this.polygon) return;
         if (confirm('Очистить зону доставки?')) {
-            this.polygon.geometry.setCoordinates([]);
+            this.polygon.geometry.setCoordinates([[]]);
             this.state = null;
         }
     }
