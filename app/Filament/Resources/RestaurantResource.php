@@ -59,6 +59,15 @@ class RestaurantResource extends Resource
                     ])->columns(2),
                 Section::make('Настройки')
                     ->schema([
+                        Forms\Components\Select::make('owner_id')
+                            ->label('Владелец (Пользователь)')
+                            ->relationship('owner', 'name', function ($query) {
+                                return $query->where('role', 'restaurateur')->orWhere('role', 'admin');
+                            })
+                            ->searchable()
+                            ->preload()
+                            ->nullable()
+                            ->columnSpanFull(),
                         Forms\Components\Toggle::make('is_active')
                             ->label('Активен')
                             ->default(true),

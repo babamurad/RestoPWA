@@ -269,4 +269,12 @@ class Restaurant extends Model
     {
         return $this->hasMany(Product::class, 'vendor_id');
     }
+
+    /**
+     * Get the owner of the restaurant.
+     */
+    public function owner(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'owner_id');
+    }
 }
