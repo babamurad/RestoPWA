@@ -34,12 +34,22 @@ class RestaurantResource extends Resource
                         Forms\Components\TextInput::make('name')
                             ->label('Название')
                             ->required()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function (string $operation, $state, \Filament\Forms\Set $set) {
+                                if ($operation !== 'create') {
+                                    return;
+                                }
+                                $set('slug', \Illuminate\Support\Str::slug($state));
+                            }),
                         Forms\Components\TextInput::make('slug')
-                            ->label('Slug')
+                            ->label('Slug (URL)')
                             ->required()
                             ->unique(ignoreRecord: true)
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->readOnly()
+                            ->dehydrated()
+                            ->helperText('Генерируется автоматически'),
                         Forms\Components\FileUpload::make('image')
                             ->label('Изображение (Логотип)')
                             ->image()

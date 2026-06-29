@@ -30,7 +30,8 @@ class VendorPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Orange,
             ])
-            ->tenant(Restaurant::class, slugAttribute: 'id') // Using ID as slug for now, can change to actual slug if desired
+            ->tenant(\App\Domains\Vendor\Models\Restaurant::class, slugAttribute: 'id') // Using ID as slug for now, can change to actual slug if desired
+            ->tenantRegistration(\App\Filament\Vendor\Pages\RegisterRestaurant::class)
             ->discoverResources(in: app_path('Filament/Vendor/Resources'), for: 'App\\Filament\\Vendor\\Resources')
             ->discoverPages(in: app_path('Filament/Vendor/Pages'), for: 'App\\Filament\\Vendor\\Pages')
             ->pages([
