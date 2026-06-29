@@ -49,10 +49,12 @@
         <h3 class="text-lg font-semibold mb-2">Зоны доставки</h3>
         <p class="text-gray-600 text-sm mb-4">Нарисуйте область доставки на карте. Координаты будут сохранены автоматически.</p>
         
+        {{-- Обёртка с position:relative. Внутри: loading-заглушка и чистый div для карты --}}
         <div id="delivery-map-wrapper" style="height: 450px; width: 100%; margin-bottom: 1rem; position: relative;" class="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
             <div id="delivery-map-loading" style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f9fafb; color: #9ca3af; font-size: 0.875rem;">
                 Загрузка карты...
             </div>
+            {{-- Карта рендерится в этот чистый div (без flex/bg классов) --}}
             <div id="delivery-map" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></div>
         </div>
         
@@ -78,33 +80,43 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            @push('scripts')
+            <span>Текущая комиссия платформы: <strong>15%</strong> от каждого заказа</span>
+        </div>
+    </div>
+    
+    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded">Сохранить настройки</button>
+</form>
+
+@push('scripts')
 <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey={{ config('services.yandex_maps.js_key') }}"></script>
 <script>
-window.addEventListener('load', function() {
+window.addEventListener('load', function () {
     if (typeof ymaps === 'undefined') {
         console.error('Yandex Maps API не загружен');
         return;
     }
-    
-    ymaps.ready(function() {
-        const mapContainer = document.getElementById('delivery-map');
-        const loadingDiv   = document.getElementById('delivery-map-loading');
-        const zonesInput   = document.getElementById('delivery_zones');
+
+    ymaps.ready(function () {
+        var mapContainer = document.getElementById('delivery-map');
+        var loadingDiv   = document.getElementById('delivery-map-loading');
+        var zonesInput   = document.getElementById('delivery_zones');
 
         if (!mapContainer) return;
 
         // Скрываем заглушку "Загрузка..."
         if (loadingDiv) loadingDiv.style.display = 'none';
 
-        const map = new ymaps.Map(mapContainer, {
+        // Инициализируем карту
+        var map = new ymaps.Map(mapContainer, {
             center: [39.0886, 63.5593], // Туркменабат
             zoom: 12,
             controls: ['zoomControl', 'fullscreenControl']
         });
 
-        // Создаём полигон, но НЕ добавляем сразу — ждём пока карта отрендерится
-        const polygon = new ymaps.Polygon([[]], {
+        // Создаём полигон, но НЕ добавляем на карту сразу.
+        // Это критично: ymaps 2.1 выбрасывает "o.calculate is not a function"
+        // если geoObjects.add() вызван до первого рендер-цикла карты.
+        var polygon = new ymaps.Polygon([[]], {
             hintContent: 'Зона доставки'
         }, {
             fillColor: '#FF6B3555',
@@ -113,26 +125,26 @@ window.addEventListener('load', function() {
             editorDrawingCursor: 'crosshair'
         });
 
-        // Добавляем полигон только после первого события boundschange
-        // (это гарантирует что проекция карты полностью инициализирована)
-        map.events.once('boundschange', function() {
+        // Добавляем полигон только ПОСЛЕ первого boundschange —
+        // в этот момент проекция карты гарантированно инициализирована.
+        map.events.once('boundschange', function () {
             map.geoObjects.add(polygon);
 
-            // Загружаем существующую зону доставки
+            // Загружаем сохранённую зону доставки
             if (zonesInput && zonesInput.value) {
                 try {
-                    const data = JSON.parse(zonesInput.value);
-                    let coords = null;
-                    if (data && data.type === 'MultiPolygon' && data.coordinates[0]) {
-                        coords = data.coordinates[0][0].map(p => [p[1], p[0]]);
-                    } else if (data && data.type === 'Polygon' && data.coordinates[0]) {
-                        coords = data.coordinates[0].map(p => [p[1], p[0]]);
+                    var data = JSON.parse(zonesInput.value);
+                    var coords = null;
+                    if (data && data.type === 'MultiPolygon' && data.coordinates && data.coordinates[0]) {
+                        coords = data.coordinates[0][0].map(function (p) { return [p[1], p[0]]; });
+                    } else if (data && data.type === 'Polygon' && data.coordinates && data.coordinates[0]) {
+                        coords = data.coordinates[0].map(function (p) { return [p[1], p[0]]; });
                     }
 
                     if (coords && coords.length > 0) {
                         polygon.geometry.setCoordinates([coords]);
-                        const loadedCoords = polygon.geometry.getCoordinates();
-                        if (loadedCoords && loadedCoords[0] && loadedCoords[0].length > 0) {
+                        var loaded = polygon.geometry.getCoordinates();
+                        if (loaded && loaded[0] && loaded[0].length > 0) {
                             map.setBounds(polygon.geometry.getBounds(), { checkZoomRange: true });
                         }
                     }
@@ -142,62 +154,49 @@ window.addEventListener('load', function() {
             }
 
             // Сохраняем координаты при изменении полигона
-            polygon.events.add('geometrychange', function() {
-                const coords = polygon.geometry.getCoordinates()[0];
+            polygon.events.add('geometrychange', function () {
+                var coords = polygon.geometry.getCoordinates()[0];
                 if (!coords || coords.length < 3) {
-                    zonesInput.value = '';
+                    if (zonesInput) zonesInput.value = '';
                     return;
                 }
 
-                const geojsonCoords = coords.map(p => [p[1], p[0]]);
-                const first = geojsonCoords[0];
-                const last = geojsonCoords[geojsonCoords.length - 1];
+                var geojsonCoords = coords.map(function (p) { return [p[1], p[0]]; });
+                var first = geojsonCoords[0];
+                var last  = geojsonCoords[geojsonCoords.length - 1];
                 if (first[0] !== last[0] || first[1] !== last[1]) {
                     geojsonCoords.push([first[0], first[1]]);
                 }
 
-                zonesInput.value = JSON.stringify({
-                    type: 'MultiPolygon',
-                    coordinates: [[geojsonCoords]]
-                });
+                if (zonesInput) {
+                    zonesInput.value = JSON.stringify({
+                        type: 'MultiPolygon',
+                        coordinates: [[geojsonCoords]]
+                    });
+                }
             });
         });
 
         // Кнопки управления
-        document.getElementById('start-draw').addEventListener('click', function() {
-            polygon.editor.startDrawing();
-        });
+        var btnDraw  = document.getElementById('start-draw');
+        var btnEdit  = document.getElementById('edit-points');
+        var btnClear = document.getElementById('clear-map');
 
-        document.getElementById('edit-points').addEventListener('click', function() {
-            polygon.editor.startEditing();
-        });
-
-        document.getElementById('clear-map').addEventListener('click', function() {
+        if (btnDraw)  btnDraw.addEventListener('click',  function () { polygon.editor.startDrawing(); });
+        if (btnEdit)  btnEdit.addEventListener('click',  function () { polygon.editor.startEditing(); });
+        if (btnClear) btnClear.addEventListener('click', function () {
             if (confirm('Очистить зону доставки?')) {
-                polygon.geometry.setCoordinates([[  ]]);
+                polygon.geometry.setCoordinates([[]]);
                 if (zonesInput) zonesInput.value = '';
             }
         });
     });
 
     // Чекбоксы "Выходной"
-    document.querySelectorAll('.day-off-checkbox').forEach(function(checkbox) {
-        checkbox.addEventListener('change', function() {
-            const inputs = this.closest('div').querySelectorAll('input[type="time"]');
-            inputs.forEach(function(input) {
-                input.disabled = this.checked;
-            }.bind(this));
-        });
-    });
-});
-</script>
-@endpush
-@endsection
-) {
-        checkbox.addEventListener('change', function() {
-            const index = this.dataset.index;
-            const inputs = this.closest('div').querySelectorAll('input[type="time"]');
-            inputs.forEach(function(input) {
+    document.querySelectorAll('.day-off-checkbox').forEach(function (checkbox) {
+        checkbox.addEventListener('change', function () {
+            var inputs = this.closest('div').querySelectorAll('input[type="time"]');
+            inputs.forEach(function (input) {
                 input.disabled = this.checked;
             }.bind(this));
         });
