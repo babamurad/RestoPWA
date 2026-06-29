@@ -25,7 +25,7 @@
                 controls: ['zoomControl', 'fullscreenControl']
             });
 
-            this.polygon = new ymaps.Polygon([], {
+            this.polygon = new ymaps.Polygon([[]], {
                 hintContent: 'Зона доставки'
             }, {
                 fillColor: '#FF6B3555',
@@ -112,7 +112,7 @@
     clearMap() {
         if (!this.polygon) return;
         if (confirm('Очистить зону доставки?')) {
-            this.polygon.geometry.setCoordinates([]);
+            this.polygon.geometry.setCoordinates([[]]);
             this.state = null;
         }
     }
