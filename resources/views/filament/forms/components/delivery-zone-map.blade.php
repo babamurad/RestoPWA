@@ -18,6 +18,7 @@
     initMap() {
         ymaps.ready(() => {
             const mapContainer = this.$refs.map;
+            mapContainer.innerHTML = ''; // Очищаем надпись "Загрузка карты..."
             this.map = new ymaps.Map(mapContainer, {
                 center: [39.0886, 63.5593], // Туркменабат
                 zoom: 12,
