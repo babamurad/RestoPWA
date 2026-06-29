@@ -36,7 +36,7 @@ class RestaurantResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function (string $operation, $state, \Filament\Forms\Set $set) {
+                            ->afterStateUpdated(function (string $operation, $state, \Filament\Schemas\Components\Utilities\Set $set) {
                                 if ($operation !== 'create') {
                                     return;
                                 }
