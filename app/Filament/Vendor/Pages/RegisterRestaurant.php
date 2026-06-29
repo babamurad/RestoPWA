@@ -6,7 +6,7 @@ use App\Domains\Vendor\Models\Restaurant;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Pages\Tenancy\RegisterTenant;
 use Illuminate\Support\Str;
 
@@ -17,10 +17,10 @@ class RegisterRestaurant extends RegisterTenant
         return 'Создать ресторан';
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 TextInput::make('name')
                     ->label('Название ресторана')
                     ->required()
