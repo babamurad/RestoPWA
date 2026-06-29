@@ -24,41 +24,57 @@ class RestaurantResource extends Resource
     {
         return $schema
             ->components([
-                \Filament\Schemas\Components\Section::make('Основная информация')
+                \Filament\Schemas\Components\Group::make()
                     ->schema([
-                        Forms\Components\TextInput::make('name')
-                            ->label('Название')
-                            ->required()
-                            ->maxLength(255),
-                        Forms\Components\FileUpload::make('image')
-                            ->label('Логотип')
-                            ->image()
-                            ->disk('public')
-                            ->directory('restaurants/images'),
-                        Forms\Components\FileUpload::make('cover_image')
-                            ->label('Обложка')
-                            ->image()
-                            ->disk('public')
-                            ->directory('restaurants/covers'),
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Заведение открыто')
-                            ->default(true),
-                    ])->columns(2),
+                        \Filament\Schemas\Components\Section::make('Основная информация')
+                            ->schema([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Название')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->columnSpanFull(),
+                                Forms\Components\Textarea::make('description')
+                                    ->label('Описание')
+                                    ->maxLength(65535)
+                                    ->columnSpanFull(),
+                            ]),
+                            
+                        \Filament\Schemas\Components\Section::make('Медиа и статус')
+                            ->schema([
+                                Forms\Components\FileUpload::make('image')
+                                    ->label('Логотип')
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory('restaurants/images'),
+                                Forms\Components\FileUpload::make('cover_image')
+                                    ->label('Обложка')
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory('restaurants/covers'),
+                                Forms\Components\Toggle::make('is_active')
+                                    ->label('Заведение открыто')
+                                    ->default(true)
+                                    ->columnSpanFull(),
+                            ])->columns(2),
+                    ])->columnSpan(['lg' => 2]),
 
-                \Filament\Schemas\Components\Section::make('Условия доставки')
+                \Filament\Schemas\Components\Group::make()
                     ->schema([
-                        Forms\Components\TextInput::make('delivery_time')
-                            ->label('Среднее время доставки (мин)')
-                            ->placeholder('20-30'),
-                        Forms\Components\TextInput::make('delivery_fee')
-                            ->label('Стоимость доставки')
-                            ->numeric()
-                            ->prefix('₽'),
-                        Forms\Components\TextInput::make('min_order')
-                            ->label('Минимальная сумма заказа')
-                            ->numeric()
-                            ->prefix('₽'),
-                    ])->columns(3),
+                        \Filament\Schemas\Components\Section::make('Условия доставки')
+                            ->schema([
+                                Forms\Components\TextInput::make('delivery_time')
+                                    ->label('Среднее время доставки (мин)')
+                                    ->placeholder('20-30'),
+                                Forms\Components\TextInput::make('delivery_fee')
+                                    ->label('Стоимость доставки')
+                                    ->numeric()
+                                    ->prefix('₽'),
+                                Forms\Components\TextInput::make('min_order')
+                                    ->label('Минимальная сумма заказа')
+                                    ->numeric()
+                                    ->prefix('₽'),
+                            ])->columns(1),
+                    ])->columnSpan(['lg' => 1]),
 
                 \Filament\Schemas\Components\Section::make('Зона доставки')
                     ->description('Настройте полигон доставки в формате GeoJSON')
@@ -159,8 +175,8 @@ class RestaurantResource extends Resource
                                         ])->alignEnd()
                                     ]),
                             ]),
-                    ]),
-            ]);
+                    ])->columnSpanFull(),
+            ])->columns(3);
     }
 
     public static function table(Table $table): Table
