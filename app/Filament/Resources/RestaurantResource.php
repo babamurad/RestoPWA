@@ -194,7 +194,8 @@ class RestaurantResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('image')
                     ->label('Логотип')
-                    ->circular(),
+                    ->circular()
+                    ->defaultImageUrl(fn ($record) => $record->image_url),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Название')
                     ->searchable()
