@@ -79,22 +79,22 @@ class RestaurantResource extends Resource
                 \Filament\Schemas\Components\Section::make('Зона доставки')
                     ->description('Настройте полигон доставки в формате GeoJSON')
                     ->schema([
-                        Forms\Components\Textarea::make('delivery_zones')
-                            ->label('GeoJSON MULTIPOLYGON')
-                            ->placeholder('{"type":"MultiPolygon","coordinates":[[[[lon,lat],[lon,lat],[lon,lat],[lon,lat],[lon,lat]]]]}')
-                            ->rows(6)
-                            ->formatStateUsing(function ($state) {
-                                if (is_array($state) || is_object($state)) {
-                                    return json_encode($state, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-                                }
-                                return $state;
-                            })
-                            ->dehydrateStateUsing(function ($state) {
-                                $decoded = json_decode($state, true);
-                                return json_decode($state) ? $decoded : $state;
-                            })
-                            ->helperText('Используйте http://geojson.io для создания полигона. Координаты в формате [lon, lat]. Сохраните изменения после редактирования.')
+                        Forms\Components\ViewField::make('delivery_zones')
+                            ->label('Карта зоны доставки')
+                            ->view('filament.forms.components.delivery-zone-map')
                             ->columnSpanFull(),
+
+                        \Filament\Schemas\Components\Section::make('Просмотр координат (GeoJSON)')
+                            ->collapsed()
+                            ->compact()
+                            ->schema([
+                                Forms\Components\Placeholder::make('delivery_zones_json')
+                                    ->label('Текущий GeoJSON')
+                                    ->content(function ($record) {
+                                        if (!$record || !$record->delivery_zones) return 'Пусто';
+                                        return json_encode($record->delivery_zones, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                                    })
+                            ]),
                         Forms\Components\Placeholder::make('delivery_zone_status')
                             ->label('Статус зоны')
                             ->content(function ($record) {
