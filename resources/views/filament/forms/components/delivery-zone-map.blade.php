@@ -116,33 +116,45 @@
         }
     }
 }" class="delivery-zone-map-wrapper">
-    <div x-ref="map" style="height: 450px; width: 100%;" class="rounded-2xl border border-gray-200 shadow-sm overflow-hidden" wire:ignore>
-        <div class="flex items-center justify-center h-full bg-gray-50 text-gray-400 text-sm">
+    <div x-ref="map" style="height: 450px; width: 100%; border-radius: 0.75rem; border: 1px solid rgba(156, 163, 175, 0.3); overflow: hidden; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);" wire:ignore>
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background-color: #f9fafb; color: #9ca3af; font-size: 0.875rem;">
             Загрузка карты...
         </div>
     </div>
     
-    <div class="mt-3 flex flex-wrap gap-2">
-        <button type="button" @click="startDrawing()" 
-                class="inline-flex items-center px-4 py-2 bg-orange-500 text-white text-xs font-bold rounded-xl hover:bg-orange-600 transition-all shadow-sm shadow-orange-100">
-            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+    <div style="margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+        <x-filament::button 
+            type="button" 
+            color="warning" 
+            size="sm" 
+            icon="heroicon-m-pencil-square" 
+            x-on:click="startDrawing()"
+        >
             Нарисовать зону
-        </button>
+        </x-filament::button>
         
-        <button type="button" @click="editPoints()" 
-                class="inline-flex items-center px-4 py-2 bg-white text-gray-700 text-xs font-bold rounded-xl border border-gray-200 hover:bg-gray-50 transition-all">
-            <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        <x-filament::button 
+            type="button" 
+            color="gray" 
+            size="sm" 
+            icon="heroicon-m-pencil" 
+            x-on:click="editPoints()"
+        >
             Редактировать точки
-        </button>
+        </x-filament::button>
 
-        <button type="button" @click="clearMap()" 
-                class="inline-flex items-center px-4 py-2 bg-white text-red-600 text-xs font-bold rounded-xl border border-red-100 hover:bg-red-50 transition-all ml-auto">
-            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        <x-filament::button 
+            type="button" 
+            color="danger" 
+            size="sm" 
+            icon="heroicon-m-trash" 
+            x-on:click="clearMap()"
+        >
             Очистить
-        </button>
+        </x-filament::button>
     </div>
     
-    <div class="mt-2 text-[10px] text-gray-400 font-medium bg-gray-50 p-2 rounded-lg border border-gray-100">
+    <div style="margin-top: 0.5rem; font-size: 0.75rem; font-weight: 500; color: #9ca3af; background-color: #f9fafb; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid #f3f4f6;">
         <p>💡 <b>Совет:</b> Нажмите «Нарисовать зону», кликайте на карте для создания углов. Завершите двойным кликом на последней точке. <br>
         Вы можете перетаскивать существующие точки в режиме «Редактировать».</p>
     </div>

@@ -117,66 +117,64 @@ class RestaurantResource extends Resource
 
                         \Filament\Schemas\Components\Fieldset::make('check_point_fieldset')
                             ->label('Проверить точку на карте')
+                            ->columns(2)
                             ->schema([
-                                \Filament\Schemas\Components\Grid::make(3)
-                                    ->schema([
-                                        Forms\Components\TextInput::make('check_lat')
-                                            ->label('Широта (Latitude)')
-                                            ->numeric()
-                                            ->placeholder('39.0886'),
-                                        Forms\Components\TextInput::make('check_lon')
-                                            ->label('Долгота (Longitude)')
-                                            ->numeric()
-                                            ->placeholder('63.5593'),
-                                        \Filament\Schemas\Components\Actions::make([
-                                            Actions\Action::make('check_point')
-                                                ->label('Проверить')
-                                                ->button()
-                                                ->color('warning')
-                                                ->action(function ($get, ?Restaurant $record) {
-                                                    $lat = $get('check_lat');
-                                                    $lon = $get('check_lon');
-                                                    if (!$lat || !$lon) {
-                                                        \Filament\Notifications\Notification::make()
-                                                            ->title('Ошибка')
-                                                            ->body('Пожалуйста, введите широту и долготу.')
-                                                            ->danger()
-                                                            ->send();
-                                                        return;
-                                                    }
-                                                    if (!$record) {
-                                                        \Filament\Notifications\Notification::make()
-                                                            ->title('Ошибка')
-                                                            ->body('Пожалуйста, сохраните ресторан перед проверкой точки.')
-                                                            ->danger()
-                                                            ->send();
-                                                        return;
-                                                    }
+                                Forms\Components\TextInput::make('check_lat')
+                                    ->label('Широта')
+                                    ->numeric()
+                                    ->placeholder('39.0886'),
+                                Forms\Components\TextInput::make('check_lon')
+                                    ->label('Долгота')
+                                    ->numeric()
+                                    ->placeholder('63.5593'),
+                                \Filament\Schemas\Components\Actions::make([
+                                    Actions\Action::make('check_point')
+                                        ->label('Проверить')
+                                        ->button()
+                                        ->color('warning')
+                                        ->action(function ($get, ?Restaurant $record) {
+                                            $lat = $get('check_lat');
+                                            $lon = $get('check_lon');
+                                            if (!$lat || !$lon) {
+                                                \Filament\Notifications\Notification::make()
+                                                    ->title('Ошибка')
+                                                    ->body('Пожалуйста, введите широту и долготу.')
+                                                    ->danger()
+                                                    ->send();
+                                                return;
+                                            }
+                                            if (!$record) {
+                                                \Filament\Notifications\Notification::make()
+                                                    ->title('Ошибка')
+                                                    ->body('Пожалуйста, сохраните ресторан перед проверкой точки.')
+                                                    ->danger()
+                                                    ->send();
+                                                return;
+                                            }
 
-                                                    $geoService = app(\App\Domains\Geo\Services\GeoService::class);
-                                                    $result = $geoService->checkDeliveryZone((float) $lat, (float) $lon, $record->id);
-                                                    
-                                                    $color = $result->isAllowed() ? 'success' : 'danger';
-                                                    $statusLabel = match($result->status) {
-                                                        'inside' => 'Внутри зоны доставки',
-                                                        'outside' => 'Вне зоны доставки',
-                                                        'zone_missing' => 'Зона доставки не настроена',
-                                                        'invalid_geometry' => 'Некорректная геометрия зоны',
-                                                        'postgis_error' => 'Ошибка PostGIS',
-                                                        default => $result->status,
-                                                    };
+                                            $geoService = app(\App\Domains\Geo\Services\GeoService::class);
+                                            $result = $geoService->checkDeliveryZone((float) $lat, (float) $lon, $record->id);
+                                            
+                                            $color = $result->isAllowed() ? 'success' : 'danger';
+                                            $statusLabel = match($result->status) {
+                                                'inside' => 'Внутри зоны доставки',
+                                                'outside' => 'Вне зоны доставки',
+                                                'zone_missing' => 'Зона доставки не настроена',
+                                                'invalid_geometry' => 'Некорректная геометрия зоны',
+                                                'postgis_error' => 'Ошибка PostGIS',
+                                                default => $result->status,
+                                            };
 
-                                                    \Filament\Notifications\Notification::make()
-                                                        ->title('Результат проверки')
-                                                        ->body("Статус: **{$statusLabel}**\n\nСообщение: {$result->messageForUser()}")
-                                                        ->color($color)
-                                                        ->persistent()
-                                                        ->send();
-                                                })
-                                        ])->alignEnd()
-                                    ]),
+                                            \Filament\Notifications\Notification::make()
+                                                ->title('Результат проверки')
+                                                ->body("Статус: **{$statusLabel}**\n\nСообщение: {$result->messageForUser()}")
+                                                ->color($color)
+                                                ->persistent()
+                                                ->send();
+                                        })
+                                ])->columnSpanFull()
                             ]),
-                    ]),
+                    ])->columnSpanFull(),
             ]);
     }
 
