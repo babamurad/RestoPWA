@@ -26,7 +26,7 @@ class RegisterRestaurant extends RegisterTenant
                     ->required()
                     ->maxLength(255)
                     ->live(onBlur: true)
-                    ->afterStateUpdated(function (string $operation, $state, \Filament\Forms\Set $set) {
+                    ->afterStateUpdated(function (?string $state, \Filament\Forms\Set $set) {
                         $set('slug', Str::slug($state));
                     }),
 
