@@ -35,6 +35,28 @@
       <h4 class="text-base font-bold text-slate-800 dark:text-slate-100 mb-4 font-outfit tracking-wide transition-colors duration-300">Параметры и настройки</h4>
       <div class="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/50 shadow-md transition-colors duration-300">
         
+        <!-- Vendor Panel link -->
+        <a v-if="authStore.user?.role === 'restaurateur' || authStore.user?.role === 'admin'" href="/vendor" class="p-4 bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors cursor-pointer flex items-center justify-between block border-l-4 border-l-orange-500">
+          <div class="flex items-center gap-3">
+            <span class="text-lg">🏪</span>
+            <span class="text-xs font-bold text-orange-700 dark:text-orange-400 transition-colors duration-300">Панель управления рестораном</span>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-orange-400 dark:text-orange-500 transition-colors duration-300">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+          </svg>
+        </a>
+
+        <!-- Admin Panel link -->
+        <a v-if="authStore.user?.role === 'admin'" href="/admin" class="p-4 bg-sky-50 dark:bg-sky-900/20 hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors cursor-pointer flex items-center justify-between block border-l-4 border-l-sky-500">
+          <div class="flex items-center gap-3">
+            <span class="text-lg">⚙️</span>
+            <span class="text-xs font-bold text-sky-700 dark:text-sky-400 transition-colors duration-300">Панель администратора</span>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-sky-400 dark:text-sky-500 transition-colors duration-300">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+          </svg>
+        </a>
+
         <!-- Theme selector -->
         <div class="p-4 flex items-center justify-between">
           <div class="flex items-center gap-3">
