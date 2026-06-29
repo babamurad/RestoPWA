@@ -49,8 +49,11 @@
         <h3 class="text-lg font-semibold mb-2">Зоны доставки</h3>
         <p class="text-gray-600 text-sm mb-4">Нарисуйте область доставки на карте. Координаты будут сохранены автоматически.</p>
         
-        <div id="delivery-map" style="height: 450px; width: 100%; margin-bottom: 1rem;" class="rounded-lg border border-gray-200 shadow-sm overflow-hidden flex items-center justify-center bg-gray-50 text-gray-400">
-            Загрузка карты...
+        <div id="delivery-map-wrapper" style="height: 450px; width: 100%; margin-bottom: 1rem; position: relative;" class="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <div id="delivery-map-loading" style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f9fafb; color: #9ca3af; font-size: 0.875rem;">
+                Загрузка карты...
+            </div>
+            <div id="delivery-map" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></div>
         </div>
         
         <input type="hidden" name="delivery_zones" id="delivery_zones" value="{{ is_array($restaurant->delivery_zones) ? json_encode($restaurant->delivery_zones) : $restaurant->delivery_zones }}">
@@ -88,7 +91,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     ymaps.ready(function() {
         const mapContainer = document.getElementById('delivery-map');
-        mapContainer.innerHTML = '';
+        const loadingDiv = document.getElementById('delivery-map-loading');
+        
+        // Скрываем заглушку "Загрузка..."
+        if (loadingDiv) loadingDiv.style.display = 'none';
         
         const map = new ymaps.Map(mapContainer, {
             center: [39.0886, 63.5593], // Туркменабат
