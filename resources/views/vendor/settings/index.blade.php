@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
             controls: ['zoomControl', 'fullscreenControl']
         });
 
-        const polygon = new ymaps.Polygon([], {
+        const polygon = new ymaps.Polygon([[]], {
             hintContent: 'Зона доставки'
         }, {
             fillColor: '#FF6B3555',
@@ -121,8 +121,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     polygon.geometry.setCoordinates([coords]);
                 }
                 
-                if (polygon.geometry.getCoordinates().length > 0) {
-                    map.setBounds(polygon.geometry.getBounds());
+                const loadedCoords = polygon.geometry.getCoordinates();
+                if (loadedCoords && loadedCoords[0] && loadedCoords[0].length > 0) {
+                    map.setBounds(polygon.geometry.getBounds(), { checkZoomRange: true });
                 }
             } catch (e) {
                 console.error('Failed to parse existing delivery zones:', e);
@@ -164,7 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('clear-map').addEventListener('click', function() {
             if (confirm('Очистить зону доставки?')) {
-                polygon.geometry.setCoordinates([]);
+                polygon.geometry.setCoordinates([[]]);
                 zonesInput.value = '';
             }
         });
