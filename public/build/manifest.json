@@ -1,0 +1,104 @@
+{
+  "_orders-BraXN4Cf.js": {
+    "file": "assets/orders-BraXN4Cf.js",
+    "name": "orders",
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-CdAnf1i9.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-BJOxnva2.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/vue/pages/CheckoutPage.vue",
+      "resources/js/vue/pages/LoginPage.vue",
+      "resources/js/vue/pages/RegisterPage.vue",
+      "resources/js/vue/pages/profile/AddressesPage.vue",
+      "resources/js/vue/pages/profile/PaymentsPage.vue",
+      "resources/js/vue/pages/profile/SupportPage.vue",
+      "resources/js/vue/pages/OrdersPage.vue"
+    ],
+    "css": [
+      "assets/app-H_7JXk5P.css"
+    ]
+  },
+  "resources/js/vue/pages/CheckoutPage.vue": {
+    "file": "assets/CheckoutPage-DOhNTMxb.js",
+    "name": "CheckoutPage",
+    "src": "resources/js/vue/pages/CheckoutPage.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_orders-BraXN4Cf.js"
+    ],
+    "css": [
+      "assets/CheckoutPage-C5gXgtY_.css"
+    ]
+  },
+  "resources/js/vue/pages/LoginPage.vue": {
+    "file": "assets/LoginPage-CVcjerXM.js",
+    "name": "LoginPage",
+    "src": "resources/js/vue/pages/LoginPage.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/vue/pages/OrdersPage.vue": {
+    "file": "assets/OrdersPage-DjIpKQYk.js",
+    "name": "OrdersPage",
+    "src": "resources/js/vue/pages/OrdersPage.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_orders-BraXN4Cf.js"
+    ]
+  },
+  "resources/js/vue/pages/RegisterPage.vue": {
+    "file": "assets/RegisterPage-MUqW-bDM.js",
+    "name": "RegisterPage",
+    "src": "resources/js/vue/pages/RegisterPage.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/vue/pages/profile/AddressesPage.vue": {
+    "file": "assets/AddressesPage-D5otuTM4.js",
+    "name": "AddressesPage",
+    "src": "resources/js/vue/pages/profile/AddressesPage.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/vue/pages/profile/PaymentsPage.vue": {
+    "file": "assets/PaymentsPage-Dj0ay-yx.js",
+    "name": "PaymentsPage",
+    "src": "resources/js/vue/pages/profile/PaymentsPage.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/vue/pages/profile/SupportPage.vue": {
+    "file": "assets/SupportPage-B9Uu75av.js",
+    "name": "SupportPage",
+    "src": "resources/js/vue/pages/profile/SupportPage.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  }
+}
