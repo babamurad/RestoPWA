@@ -15,6 +15,17 @@ class KanbanBoard extends Component
 {
     public string $vendorId = '';
 
+    protected function getListeners(): array
+    {
+        if (empty($this->vendorId)) {
+            return [];
+        }
+
+        return [
+            "echo-private:restaurant.{$this->vendorId},OrderStatusUpdated" => 'loadOrders',
+        ];
+    }
+
     public array $columns = [
         'pending' => [
             'id' => 'pending',
