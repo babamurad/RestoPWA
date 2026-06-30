@@ -120,11 +120,11 @@ class RestaurantResource extends Resource
                                 \Filament\Schemas\Components\Grid::make(3)
                                     ->schema([
                                         Forms\Components\TextInput::make('check_lat')
-                                            ->label('Широта (Latitude)')
+                                            ->label('Широта')
                                             ->numeric()
                                             ->placeholder('39.0886'),
                                         Forms\Components\TextInput::make('check_lon')
-                                            ->label('Долгота (Longitude)')
+                                            ->label('Долгота')
                                             ->numeric()
                                             ->placeholder('63.5593'),
                                         \Filament\Schemas\Components\Actions::make([
