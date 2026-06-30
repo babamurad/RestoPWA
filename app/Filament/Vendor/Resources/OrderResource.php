@@ -5,6 +5,7 @@ namespace App\Filament\Vendor\Resources;
 use App\Domains\Order\Models\Order;
 use Filament\Forms;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -25,7 +26,7 @@ class OrderResource extends Resource
     {
         return $schema
             ->components([
-                Forms\Components\Section::make('Статус заказа')
+                Section::make('Статус заказа')
                     ->schema([
                         Forms\Components\Select::make('status')
                             ->label('Статус')
@@ -51,7 +52,7 @@ class OrderResource extends Resource
                             ->required(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Детали заказа')
+                Section::make('Детали заказа')
                     ->schema([
                         Forms\Components\TextInput::make('id')
                             ->label('ID заказа')
@@ -72,7 +73,7 @@ class OrderResource extends Resource
     {
         return $schema
             ->components([
-                \Filament\Schemas\Components\Section::make('Основная информация')
+                Section::make('Основная информация')
                     ->schema([
                         \Filament\Infolists\Components\TextEntry::make('id')
                             ->label('ID заказа')
@@ -97,7 +98,7 @@ class OrderResource extends Resource
                             ->dateTime(),
                     ])->columns(2),
 
-                \Filament\Schemas\Components\Section::make('Адрес и контакт')
+                Section::make('Адрес и контакт')
                     ->schema([
                         \Filament\Infolists\Components\TextEntry::make('user.name')
                             ->label('Клиент')
@@ -111,7 +112,7 @@ class OrderResource extends Resource
                             ->columnSpanFull(),
                     ])->columns(3),
 
-                \Filament\Schemas\Components\Section::make('Товары')
+                Section::make('Товары')
                     ->schema([
                         \Filament\Infolists\Components\RepeatableEntry::make('items')
                             ->label('')
