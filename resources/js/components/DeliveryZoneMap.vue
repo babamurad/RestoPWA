@@ -17,7 +17,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const mapContainer = ref(null)
 let map = null
-let polygon = null
+let polygons = []
 let drawingManager = null
 
 onMounted(() => {
@@ -70,45 +70,68 @@ function createPolygon(coords) {
     };
   }
 
-  p.events.add('geometrychange', () => {
-    const allContours = p.geometry.getCoordinates()
-    if (!allContours?.[0] || allContours[0].length < 3) {
-      emit('update:modelValue', null)
-      return
-    }
-    const coordinates = allContours[0]
-    const geojsonCoords = coordinates.map(pt => [pt[1], pt[0]])
-    const first = geojsonCoords[0]
-    const last = geojsonCoords[geojsonCoords.length - 1]
-    if (first[0] !== last[0] || first[1] !== last[1]) {
-      geojsonCoords.push([first[0], first[1]])
-    }
-    emit('update:modelValue', JSON.stringify({
-      type: 'MultiPolygon',
-      coordinates: [[geojsonCoords]]
-    }))
-  })
+  p.events.add('geometrychange', updateModel)
 
   return p
+}
+
+function updateModel() {
+  const multiCoords = []
+  
+  polygons.forEach(p => {
+    const allContours = p.geometry.getCoordinates()
+    if (allContours?.[0] && allContours[0].length >= 3) {
+      const coordinates = allContours[0]
+      const geojsonCoords = coordinates.map(pt => [pt[1], pt[0]])
+      const first = geojsonCoords[0]
+      const last = geojsonCoords[geojsonCoords.length - 1]
+      if (first[0] !== last[0] || first[1] !== last[1]) {
+        geojsonCoords.push([first[0], first[1]])
+      }
+      multiCoords.push([geojsonCoords])
+    }
+  })
+
+  if (multiCoords.length === 0) {
+    emit('update:modelValue', null)
+  } else {
+    emit('update:modelValue', JSON.stringify({
+      type: 'MultiPolygon',
+      coordinates: multiCoords
+    }))
+  }
 }
 
 function loadFromState(state) {
   try {
     const data = typeof state === 'string' ? JSON.parse(state) : state
-    let coords = []
-    if (data?.type === 'MultiPolygon' && data.coordinates?.[0]) {
-      coords = data.coordinates[0][0].map(p => [p[1], p[0]])
-    } else if (data?.type === 'Polygon' && data.coordinates?.[0]) {
-      coords = data.coordinates[0].map(p => [p[1], p[0]])
+    if (!data) return;
+
+    if (data.type === 'MultiPolygon' && data.coordinates) {
+      data.coordinates.forEach(polyCoords => {
+        const coords = polyCoords[0].map(p => [p[1], p[0]])
+        if (coords.length > 0) {
+          const p = createPolygon([coords])
+          map.geoObjects.add(p)
+          polygons.push(p)
+        }
+      })
+    } else if (data.type === 'Polygon' && data.coordinates) {
+      const coords = data.coordinates[0].map(p => [p[1], p[0]])
+      if (coords.length > 0) {
+        const p = createPolygon([coords])
+        map.geoObjects.add(p)
+        polygons.push(p)
+      }
     }
-    if (coords.length > 0) {
-      polygon = createPolygon([coords])
-      map.geoObjects.add(polygon)
-      setTimeout(() => {
-        const bounds = polygon.geometry.getBounds()
+    
+    setTimeout(() => {
+      if (polygons.length > 0) {
+        // Use map.geoObjects.getBounds() to encompass all polygons
+        const bounds = map.geoObjects.getBounds()
         if (bounds) map.setBounds(bounds)
-      }, 100)
-    }
+      }
+    }, 100)
   } catch (e) {
     console.error('Failed to parse delivery zone', e)
   }
@@ -117,43 +140,41 @@ function loadFromState(state) {
 function startDrawing() {
   if (!map) return
 
-  // Полностью удаляем старый полигон
-  if (polygon) {
-    try { polygon.editor.stopDrawing() } catch(e) {}
-    try { polygon.editor.stopEditing() } catch(e) {}
-    if (polygon.getMap()) map.geoObjects.remove(polygon)
-  }
+  // Останавливаем редактирование и рисование всех текущих полигонов
+  polygons.forEach(p => {
+    try { p.editor.stopDrawing() } catch(e) {}
+    try { p.editor.stopEditing() } catch(e) {}
+  })
 
-  // Создаем чистый полигон для рисования
-  polygon = createPolygon([])
-  map.geoObjects.add(polygon)
+  // Создаем новый чистый полигон для рисования
+  const newPolygon = createPolygon([])
+  map.geoObjects.add(newPolygon)
+  polygons.push(newPolygon)
   
   // Даем Yandex Maps время на инициализацию проекции
   setTimeout(() => {
-    if (polygon) {
-      polygon.editor.startDrawing()
+    if (newPolygon) {
+      newPolygon.editor.startDrawing()
     }
   }, 150)
 }
 
 function editPoints() {
-  if (polygon?.getMap()) {
-    polygon.editor.startEditing()
-  }
+  polygons.forEach(p => {
+    if (p.getMap()) {
+      p.editor.startEditing()
+    }
+  })
 }
 
 function clearMap() {
-  if (!confirm('Очистить зону доставки?')) return
-  if (polygon) {
-    try { polygon.editor.stopDrawing() } catch(e) {}
-    try { polygon.editor.stopEditing() } catch(e) {}
-    if (polygon.getMap()) map.geoObjects.remove(polygon)
-    polygon = null
-  }
-  if (drawingManager) {
-    try { drawingManager.stopDrawing() } catch(e) {}
-    drawingManager = null
-  }
+  if (!confirm('Очистить все зоны доставки?')) return
+  polygons.forEach(p => {
+    try { p.editor.stopDrawing() } catch(e) {}
+    try { p.editor.stopEditing() } catch(e) {}
+    if (p.getMap()) map.geoObjects.remove(p)
+  })
+  polygons = []
   emit('update:modelValue', null)
 }
 </script>

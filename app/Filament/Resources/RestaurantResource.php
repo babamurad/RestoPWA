@@ -142,6 +142,7 @@ class RestaurantResource extends Resource
                                         ->label('Проверить')
                                         ->button()
                                         ->color('warning')
+                                        ->extraAttributes(['class' => 'mt-8'])
                                         ->action(function ($get, ?Restaurant $record) {
                                             $lat = $get('check_lat');
                                             $lon = $get('check_lon');
