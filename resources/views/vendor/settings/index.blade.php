@@ -49,12 +49,10 @@
         <h3 class="text-lg font-semibold mb-2">Зоны доставки</h3>
         <p class="text-gray-600 text-sm mb-4">Нарисуйте область доставки на карте. Координаты будут сохранены автоматически.</p>
         
-        {{-- Обёртка с position:relative. Внутри: loading-заглушка и чистый div для карты --}}
         <div id="delivery-map-wrapper" style="height: 450px; width: 100%; margin-bottom: 1rem; position: relative;" class="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
             <div id="delivery-map-loading" style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f9fafb; color: #9ca3af; font-size: 0.875rem;">
                 Загрузка карты...
             </div>
-            {{-- Карта рендерится в этот чистый div (без flex/bg классов) --}}
             <div id="delivery-map" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></div>
         </div>
         
@@ -99,38 +97,71 @@ window.addEventListener('load', function () {
     ymaps.ready(function () {
         var mapContainer = document.getElementById('delivery-map');
         var loadingDiv   = document.getElementById('delivery-map-loading');
-        var zonesInput   = document.getElementById('delivery_zones');
+        ymaps.ready(function () {
+            var mapContainer = document.getElementById('map');
+            var zonesInput   = document.getElementById('delivery_zones');
 
-        if (!mapContainer) return;
+            if (!mapContainer) return;
 
-        // Скрываем заглушку "Загрузка..."
-        if (loadingDiv) loadingDiv.style.display = 'none';
+            if (loadingDiv) loadingDiv.style.display = 'none';
 
-        // Инициализируем карту
-        var map = new ymaps.Map(mapContainer, {
-            center: [39.0886, 63.5593], // Туркменабат
-            zoom: 12,
-            controls: ['zoomControl', 'fullscreenControl']
-        });
+            var map = new ymaps.Map(mapContainer, {
+                center: [39.0886, 63.5593],
+                zoom: 12,
+                controls: ['zoomControl', 'fullscreenControl']
+            });
 
-        // Создаём полигон, но НЕ добавляем на карту сразу.
-        // Это критично: ymaps 2.1 выбрасывает "o.calculate is not a function"
-        // если geoObjects.add() вызван до первого рендер-цикла карты.
-        var polygon = new ymaps.Polygon([[]], {
-            hintContent: 'Зона доставки'
-        }, {
-            fillColor: '#FF6B3555',
-            strokeColor: '#FF6B35',
-            strokeWidth: 3,
-            editorDrawingCursor: 'crosshair'
-        });
+            var polygon = null;
 
-        // Добавляем полигон только ПОСЛЕ первого boundschange —
-        // в этот момент проекция карты гарантированно инициализирована.
-        map.events.once('boundschange', function () {
-            map.geoObjects.add(polygon);
+            function createPolygon(coords) {
+                var p = new ymaps.Polygon(coords, {
+                    hintContent: 'Зона доставки'
+                }, {
+                    fillColor: '#FF6B3555',
+                    strokeColor: '#FF6B35',
+                    strokeWidth: 3,
+                    editorDrawingCursor: 'crosshair'
+                });
+                
+                // ПАТЧ YANDEX MAPS:
+                // Предотвращаем вычисление границ пустого полигона ядром, что вызывает краш.
+                if (p.geometry && p.geometry.getBounds) {
+                    var origGetBounds = p.geometry.getBounds;
+                    p.geometry.getBounds = function() {
+                        var c = this.getCoordinates();
+                        if (!c || c.length === 0 || !c[0] || c[0].length === 0) {
+                            return null;
+                        }
+                        return origGetBounds.apply(this, arguments);
+                    };
+                }
+                
+                p.events.add('geometrychange', function () {
+                    var coordinates = p.geometry.getCoordinates()[0];
+                    if (!coordinates || coordinates.length < 3) {
+                        if (zonesInput) zonesInput.value = '';
+                        return;
+                    }
+                    var geojsonCoords = coordinates.map(function (pt) { return [pt[1], pt[0]]; });
+                    if (geojsonCoords.length > 0) {
+                        var first = geojsonCoords[0];
+                        var last  = geojsonCoords[geojsonCoords.length - 1];
+                        if (first[0] !== last[0] || first[1] !== last[1]) {
+                            geojsonCoords.push([first[0], first[1]]);
+                        }
+                    }
+                    if (zonesInput) {
+                        zonesInput.value = JSON.stringify({
+                            type: 'MultiPolygon',
+                            coordinates: [[geojsonCoords]]
+                        });
+                    }
+                });
+                
+                return p;
+            }
 
-            // Загружаем сохранённую зону доставки
+            // Загружаем существующую зону доставки
             if (zonesInput && zonesInput.value) {
                 try {
                     var data = JSON.parse(zonesInput.value);
@@ -140,57 +171,66 @@ window.addEventListener('load', function () {
                     } else if (data && data.type === 'Polygon' && data.coordinates && data.coordinates[0]) {
                         coords = data.coordinates[0].map(function (p) { return [p[1], p[0]]; });
                     }
-
                     if (coords && coords.length > 0) {
-                        polygon.geometry.setCoordinates([coords]);
-                        var loaded = polygon.geometry.getCoordinates();
-                        if (loaded && loaded[0] && loaded[0].length > 0) {
-                            map.setBounds(polygon.geometry.getBounds(), { checkZoomRange: true });
-                        }
+                        polygon = createPolygon([coords]);
+                        map.geoObjects.add(polygon);
+                        setTimeout(function() {
+                            var bounds = polygon.geometry.getBounds();
+                            if (bounds) map.setBounds(bounds, { checkZoomRange: true });
+                        }, 100);
                     }
                 } catch (e) {
                     console.error('Ошибка при загрузке зоны доставки:', e);
                 }
             }
 
-            // Сохраняем координаты при изменении полигона
-            polygon.events.add('geometrychange', function () {
-                var coords = polygon.geometry.getCoordinates()[0];
-                if (!coords || coords.length < 3) {
+            // Кнопки управления
+            var btnDraw  = document.getElementById('start-draw');
+            var btnEdit  = document.getElementById('edit-points');
+            var btnClear = document.getElementById('clear-map');
+
+            if (btnDraw) btnDraw.addEventListener('click', function () {
+                // Полностью удаляем старый полигон перед новым рисованием
+                if (polygon) {
+                    try { polygon.editor.stopDrawing(); } catch(e) {}
+                    try { polygon.editor.stopEditing(); } catch(e) {}
+                    if (polygon.getMap()) {
+                        map.geoObjects.remove(polygon);
+                    }
+                }
+                
+                // Создаем чистый полигон
+                polygon = createPolygon([]);
+                map.geoObjects.add(polygon);
+                
+                // Ждем рендеринга проекции перед включением редактора
+                setTimeout(function() {
+                    if (polygon) {
+                        polygon.editor.startDrawing();
+                    }
+                }, 150);
+            });
+            
+            if (btnEdit) btnEdit.addEventListener('click', function () {
+                if (polygon && polygon.getMap()) {
+                    polygon.editor.startEditing();
+                }
+            });
+            
+            if (btnClear) btnClear.addEventListener('click', function () {
+                if (confirm('Очистить зону доставки?')) {
+                    if (polygon) {
+                        try { polygon.editor.stopDrawing(); } catch(e) {}
+                        try { polygon.editor.stopEditing(); } catch(e) {}
+                        if (polygon.getMap()) {
+                            map.geoObjects.remove(polygon);
+                        }
+                        polygon = null;
+                    }
                     if (zonesInput) zonesInput.value = '';
-                    return;
-                }
-
-                var geojsonCoords = coords.map(function (p) { return [p[1], p[0]]; });
-                var first = geojsonCoords[0];
-                var last  = geojsonCoords[geojsonCoords.length - 1];
-                if (first[0] !== last[0] || first[1] !== last[1]) {
-                    geojsonCoords.push([first[0], first[1]]);
-                }
-
-                if (zonesInput) {
-                    zonesInput.value = JSON.stringify({
-                        type: 'MultiPolygon',
-                        coordinates: [[geojsonCoords]]
-                    });
                 }
             });
         });
-
-        // Кнопки управления
-        var btnDraw  = document.getElementById('start-draw');
-        var btnEdit  = document.getElementById('edit-points');
-        var btnClear = document.getElementById('clear-map');
-
-        if (btnDraw)  btnDraw.addEventListener('click',  function () { polygon.editor.startDrawing(); });
-        if (btnEdit)  btnEdit.addEventListener('click',  function () { polygon.editor.startEditing(); });
-        if (btnClear) btnClear.addEventListener('click', function () {
-            if (confirm('Очистить зону доставки?')) {
-                polygon.geometry.setCoordinates([[]]);
-                if (zonesInput) zonesInput.value = '';
-            }
-        });
-    });
 
     // Чекбоксы "Выходной"
     document.querySelectorAll('.day-off-checkbox').forEach(function (checkbox) {
