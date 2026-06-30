@@ -5,7 +5,6 @@ namespace App\Filament\Vendor\Resources;
 use App\Domains\Menu\Models\Product;
 use Filament\Forms;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -25,7 +24,7 @@ class ProductResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('Основная информация')
+                Forms\Components\Section::make('Основная информация')
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->label('Название')
@@ -35,7 +34,6 @@ class ProductResource extends Resource
                             ->label('Категория')
                             ->relationship('category', 'name')
                             ->searchable()
-                            ->preload()
                             ->required(),
                         Forms\Components\Textarea::make('description')
                             ->label('Описание')
@@ -59,7 +57,7 @@ class ProductResource extends Resource
                             ->default(true),
                     ])->columns(2),
 
-                Section::make('Модификаторы')
+                Forms\Components\Section::make('Модификаторы')
                     ->schema([
                         Forms\Components\Repeater::make('modifiers')
                             ->label('Модификаторы')

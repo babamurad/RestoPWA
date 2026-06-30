@@ -1,4 +1,4 @@
-cd /var/www/restopwa.tmtourism.com
+cd /home/u960938720/domains/tmtourism.com/public_html/restopwa
 git pull
 chmod -R 755 storage bootstrap/cache
 php artisan cache:clear 

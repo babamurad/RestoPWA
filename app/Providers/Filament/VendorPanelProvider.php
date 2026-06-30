@@ -3,7 +3,6 @@
 namespace App\Providers\Filament;
 
 use App\Domains\Vendor\Models\Restaurant;
-use App\Http\Middleware\SyncFilamentTenant;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -33,9 +32,6 @@ class VendorPanelProvider extends PanelProvider
             ])
             ->tenant(\App\Domains\Vendor\Models\Restaurant::class, slugAttribute: 'id') // Using ID as slug for now, can change to actual slug if desired
             ->tenantRegistration(\App\Filament\Vendor\Pages\RegisterRestaurant::class)
-            ->tenantMiddleware([
-                SyncFilamentTenant::class,
-            ])
             ->discoverResources(in: app_path('Filament/Vendor/Resources'), for: 'App\\Filament\\Vendor\\Resources')
             ->discoverPages(in: app_path('Filament/Vendor/Pages'), for: 'App\\Filament\\Vendor\\Pages')
             ->pages([

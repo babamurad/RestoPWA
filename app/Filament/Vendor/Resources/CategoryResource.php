@@ -32,6 +32,7 @@ class CategoryResource extends Resource
                     ->label('Родительская категория')
                     ->relationship('parent', 'name')
                     ->searchable()
+                    ->preload()
                     ->placeholder('Нет'),
                 Forms\Components\TextInput::make('sort_order')
                     ->label('Порядок сортировки')

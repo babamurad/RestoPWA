@@ -8,7 +8,6 @@ use App\Domains\Geo\Models\LocalPlace;
 use App\Filament\Resources\LocalPlaceResource\Pages;
 use BackedEnum;
 use Filament\Forms;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -31,7 +30,7 @@ class LocalPlaceResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('Основная информация')
+                Forms\Components\Section::make('Основная информация')
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->label('Название')
@@ -60,7 +59,7 @@ class LocalPlaceResource extends Resource
                             ->label('Алиасы (синонимы)')
                             ->placeholder('Добавить синоним'),
                     ])->columns(2),
-                Section::make('Координаты')
+                Forms\Components\Section::make('Координаты')
                     ->schema([
                         Forms\Components\TextInput::make('lat')
                             ->label('Широта')
@@ -73,7 +72,7 @@ class LocalPlaceResource extends Resource
                             ->step(0.0000001)
                             ->required(),
                     ])->columns(2),
-                Section::make('Модерация')
+                Forms\Components\Section::make('Модерация')
                     ->schema([
                         Forms\Components\Toggle::make('is_verified')
                             ->label('Верифицировано')
