@@ -3,6 +3,7 @@
 use App\Domains\Order\Http\Controllers\OrderTrackingController;
 use App\Domains\Order\Models\Order;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\OrderSuccessController;
 use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\Vendor\KanbanController;
@@ -17,6 +18,11 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', fn () => view('app'))->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+Route::prefix('auth/google')->name('auth.google.')->group(function () {
+    Route::get('redirect', [SocialAuthController::class, 'redirectToGoogle'])->name('redirect');
+    Route::get('callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('callback');
+});
 
 Route::get('/restaurants', fn () => view('app'))->name('restaurants.index');
 Route::get('/restaurants/{slug}', fn () => view('app'))->name('restaurants.show');

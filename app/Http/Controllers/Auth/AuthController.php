@@ -131,6 +131,7 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'role' => $user->role?->value ?? $user->role,
+                'avatar' => $user->avatar,
             ],
         ]);
     }

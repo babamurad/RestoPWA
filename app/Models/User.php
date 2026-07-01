@@ -21,8 +21,8 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use App\Enums\UserRole;
 
-#[Fillable(['name', 'email', 'password', 'phone', 'role'])]
-#[Hidden(['password', 'remember_token'])]
+#[Fillable(['name', 'email', 'password', 'phone', 'role', 'google_id', 'avatar'])]
+#[Hidden(['password', 'remember_token', 'google_id'])]
 class User extends Authenticatable implements FilamentUser, HasTenants
 {
     /** @use HasFactory<UserFactory> */
