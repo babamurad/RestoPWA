@@ -42,6 +42,8 @@
 
     <!-- Vue mount element -->
     <div id="app"></div>
+
+    <x-pwa.installer />
 </body>
 
 </html>

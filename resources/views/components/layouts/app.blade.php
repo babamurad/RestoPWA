@@ -53,6 +53,8 @@
         <livewire:geo.address-selector />
     </div>
 
+    <x-pwa.installer />
+
     @livewireScripts
 </body>
 
