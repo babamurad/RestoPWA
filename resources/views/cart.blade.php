@@ -156,6 +156,25 @@
                     </div>
                 </template>
 
+                {{-- Multi-Vendor Conflict Banner --}}
+                <template x-if="!isLoading && hasMultiVendorConflict">
+                    <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-3xl space-y-3 animate-shake">
+                        <div class="flex items-start gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0 text-amber-600 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <div class="flex-1">
+                                <p class="text-base font-bold text-amber-800">Разные рестораны в корзине</p>
+                                <p class="text-sm text-amber-600 mt-1">Оформить заказ можно только из одного ресторана за раз.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button @click="confirmClear()"
+                                class="flex-1 py-3 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 transition-all touch-feedback active:scale-95">
+                                Очистить корзину
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
                 {{-- Cart Items List --}}
                 <template x-if="!isLoading && items.length > 0">
                     <div class="relative space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
@@ -236,8 +255,8 @@
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                         </svg>
 
-                        <span x-text="checkoutError || (isSubmitting ? 'Обработка...' : 'Оформить заказ')" class="uppercase tracking-widest text-sm"></span>
-                        <svg x-show="!isSubmitting && !checkoutError" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                        <span x-text="isSubmitting ? 'Обработка...' : 'Оформить заказ'" class="uppercase tracking-widest text-sm"></span>
+                        <svg x-show="!isSubmitting" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                     </button>
                 </div>
             </div>
