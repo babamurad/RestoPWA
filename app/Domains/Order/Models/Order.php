@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Domains\Logistics\Models\Courier;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -48,6 +49,8 @@ class Order extends Model
 
     public const STATUS_PREPARING = 'preparing';
 
+    public const STATUS_READY_FOR_PICKUP = 'ready_for_pickup';
+
     public const STATUS_DELIVERING = 'delivering';
 
     public const STATUS_DELIVERED = 'delivered';
@@ -58,6 +61,7 @@ class Order extends Model
         self::STATUS_PENDING => ['label' => 'Новый', 'color' => 'yellow', 'icon' => 'clock'],
         self::STATUS_CONFIRMED => ['label' => 'Подтверждён', 'color' => 'blue', 'icon' => 'check'],
         self::STATUS_PREPARING => ['label' => 'Готовится', 'color' => 'orange', 'icon' => 'fire'],
+        self::STATUS_READY_FOR_PICKUP => ['label' => 'Ожидает курьера', 'color' => 'indigo', 'icon' => 'box'],
         self::STATUS_DELIVERING => ['label' => 'Доставляется', 'color' => 'purple', 'icon' => 'truck'],
         self::STATUS_DELIVERED => ['label' => 'Доставлен', 'color' => 'green', 'icon' => 'check-circle'],
         self::STATUS_CANCELLED => ['label' => 'Отменён', 'color' => 'red', 'icon' => 'x'],
@@ -75,7 +79,7 @@ class Order extends Model
 
     public const FILTERS = [
         self::FILTER_NEW => ['statuses' => [self::STATUS_PENDING], 'label' => 'Новые'],
-        self::FILTER_IN_PROGRESS => ['statuses' => [self::STATUS_CONFIRMED, self::STATUS_PREPARING], 'label' => 'В работе'],
+        self::FILTER_IN_PROGRESS => ['statuses' => [self::STATUS_CONFIRMED, self::STATUS_PREPARING, self::STATUS_READY_FOR_PICKUP], 'label' => 'В работе'],
         self::FILTER_DELIVERING => ['statuses' => [self::STATUS_DELIVERING], 'label' => 'Доставляются'],
         self::FILTER_COMPLETED => ['statuses' => [self::STATUS_DELIVERED], 'label' => 'Завершённые'],
         self::FILTER_CANCELLED => ['statuses' => [self::STATUS_CANCELLED], 'label' => 'Отменённые'],
@@ -87,6 +91,7 @@ class Order extends Model
     protected $fillable = [
         'vendor_id',
         'user_id',
+        'courier_id',
         'idempotency_key',
         'status',
         'payment_status',
@@ -126,6 +131,11 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function courier(): BelongsTo
+    {
+        return $this->belongsTo(Courier::class);
+    }
+
     /**
      * @return HasMany<OrderStatusHistory, static>
      */
@@ -149,7 +159,8 @@ class Order extends Model
         $transitions = [
             self::STATUS_PENDING => [self::STATUS_CONFIRMED, self::STATUS_CANCELLED],
             self::STATUS_CONFIRMED => [self::STATUS_PREPARING, self::STATUS_CANCELLED],
-            self::STATUS_PREPARING => [self::STATUS_DELIVERING, self::STATUS_CANCELLED],
+            self::STATUS_PREPARING => [self::STATUS_READY_FOR_PICKUP, self::STATUS_CANCELLED],
+            self::STATUS_READY_FOR_PICKUP => [self::STATUS_DELIVERING, self::STATUS_CANCELLED],
             self::STATUS_DELIVERING => [self::STATUS_DELIVERED],
         ];
 

@@ -57,5 +57,13 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->gro
             Route::apiResource('payments', \App\Http\Controllers\Api\Profile\PaymentMethodController::class)->only(['index', 'store', 'destroy']);
             Route::apiResource('support', \App\Http\Controllers\Api\Profile\SupportController::class)->only(['index', 'store']);
         });
+
+        // Courier API
+        Route::prefix('courier')->group(function () {
+            Route::get('orders', [\App\Domains\Logistics\Http\Controllers\Api\CourierOrderController::class, 'index'])->name('api.courier.orders');
+            Route::post('orders/{id}/accept', [\App\Domains\Logistics\Http\Controllers\Api\CourierOrderController::class, 'accept'])->name('api.courier.accept');
+            Route::post('orders/{id}/status', [\App\Domains\Logistics\Http\Controllers\Api\CourierOrderController::class, 'updateStatus'])->name('api.courier.status');
+            Route::post('location', [\App\Domains\Logistics\Http\Controllers\Api\CourierOrderController::class, 'updateLocation'])->name('api.courier.location');
+        });
     });
 });

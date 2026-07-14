@@ -7,12 +7,3 @@ php artisan view:clear
 php artisan route:clear 
 php artisan optimize:clear
 
-
-#Bobo#857707
-VPS Hostinger
-
-Полная ссылка (Access URL): http://31.97.72.215:2525/4TpNoEBZ7Mwg38nqFj
-
-Логин (Username): gqmahWP8fS
-
-Пароль (Password): JB8pyNmfor

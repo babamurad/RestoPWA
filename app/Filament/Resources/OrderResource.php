@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Domains\Logistics\Models\Courier;
 use App\Domains\Order\Models\Order;
 use App\Filament\Resources\OrderResource\Pages;
 use BackedEnum;
@@ -37,6 +38,9 @@ class OrderResource extends Resource
                         Forms\Components\TextInput::make('payment_status')
                             ->label('Оплата')
                             ->disabled(),
+                        Forms\Components\TextInput::make('courier.user.name')
+                            ->label('Курьер')
+                            ->disabled(),
                     ])->columns(2),
                 Section::make('Клиент')
                     ->schema([
@@ -67,6 +71,9 @@ class OrderResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('address.name')
                     ->label('Клиент')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('courier.user.name')
+                    ->label('Курьер')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total')
                     ->label('Сумма')
@@ -114,6 +121,30 @@ class OrderResource extends Resource
                         $order->update(['status' => $data['new_status']]);
                     })
                     ->icon('heroicon-m-pencil'),
+                Actions\Action::make('assignCourier')
+                    ->label('Назначить курьера')
+                    ->form([
+                        Forms\Components\Select::make('courier_id')
+                            ->label('Курьер')
+                            ->options(function (Order $record) {
+                                return Courier::with('user')
+                                    ->where(function ($query) use ($record) {
+                                        $query->where('vendor_id', $record->vendor_id)
+                                              ->orWhereNull('vendor_id');
+                                    })
+                                    ->get()
+                                    ->pluck('user.name', 'id');
+                            })
+                            ->required(),
+                    ])
+                    ->action(function (Order $order, array $data) {
+                        $order->update([
+                            'courier_id' => $data['courier_id'],
+                            'status' => Order::STATUS_READY_FOR_PICKUP,
+                        ]);
+                    })
+                    ->icon('heroicon-m-truck')
+                    ->visible(fn (Order $record) => in_array($record->status, [Order::STATUS_CONFIRMED, Order::STATUS_PREPARING, Order::STATUS_READY_FOR_PICKUP])),
                 Actions\ViewAction::make(),
             ])
             ->bulkActions([

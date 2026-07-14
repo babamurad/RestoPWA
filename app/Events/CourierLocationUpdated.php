@@ -1,58 +1,43 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Broadcasting\ShouldBroadcastNow;
+use App\Domains\Logistics\Models\Courier;
+use App\Domains\Order\Models\Order;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class CourierLocationUpdated implements ShouldBroadcastNow
+class CourierLocationUpdated implements ShouldBroadcast
 {
-    use Dispatchable;
-    use SerializesModels;
+    use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public string $orderId;
-
-    public float $lat;
-
-    public float $lon;
-
-    public ?float $heading;
-
-    public string $timestamp;
-
-    public function __construct(string $orderId, float $lat, float $lon, ?float $heading = null)
+    public function __construct(public Courier $courier)
     {
-        $this->orderId = $orderId;
-        $this->lat = $lat;
-        $this->lon = $lon;
-        $this->heading = $heading;
-        $this->timestamp = now()->toIso8601String();
     }
 
     public function broadcastOn(): array
     {
-        return [
-            new Channel('tracking.'.$this->orderId),
-        ];
+        $channels = [];
+        $activeOrders = Order::where('courier_id', $this->courier->id)
+            ->whereIn('status', [Order::STATUS_READY_FOR_PICKUP, Order::STATUS_DELIVERING])
+            ->get();
+
+        foreach ($activeOrders as $order) {
+            $channels[] = new PrivateChannel('order.' . $order->id);
+        }
+
+        return $channels;
     }
 
     public function broadcastWith(): array
     {
         return [
-            'order_id' => $this->orderId,
-            'lat' => $this->lat,
-            'lon' => $this->lon,
-            'heading' => $this->heading,
-            'timestamp' => $this->timestamp,
+            'courier_id' => $this->courier->id,
+            'lat' => $this->courier->current_lat,
+            'lon' => $this->courier->current_lon,
         ];
-    }
-
-    public function broadcastAs(): string
-    {
-        return 'courier.location.updated';
     }
 }

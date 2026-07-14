@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Domains\Logistics\Models\Courier;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
@@ -56,6 +57,11 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         return $this->role === UserRole::CLIENT;
     }
 
+    public function isCourier(): bool
+    {
+        return $this->role === UserRole::COURIER;
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'admin') {
@@ -95,6 +101,11 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     public function restaurant(): HasOne
     {
         return $this->hasOne(Restaurant::class, 'vendor_id');
+    }
+
+    public function courierProfile(): HasOne
+    {
+        return $this->hasOne(Courier::class);
     }
 
     public function addresses(): HasMany
