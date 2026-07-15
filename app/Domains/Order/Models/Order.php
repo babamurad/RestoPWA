@@ -99,6 +99,8 @@ class Order extends Model
         'items',
         'total',
         'delivery_fee',
+        'commission_amount',
+        'vendor_settlement_id',
         'delivery_time',
         'payment_method',
         'comment',
@@ -115,7 +117,8 @@ class Order extends Model
             'address' => 'array',
             'items' => 'array',
             'total' => MoneyCast::class,
-            'delivery_fee' => 'float',
+            'delivery_fee' => MoneyCast::class,
+            'commission_amount' => MoneyCast::class,
             'is_offline' => 'boolean',
             'metadata' => 'array',
         ];
@@ -124,6 +127,11 @@ class Order extends Model
     public function restaurant(): BelongsTo
     {
         return $this->belongsTo(Restaurant::class, 'vendor_id', 'id');
+    }
+
+    public function settlement(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\VendorSettlement::class, 'vendor_settlement_id');
     }
 
     public function user(): BelongsTo

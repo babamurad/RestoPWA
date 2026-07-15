@@ -93,15 +93,16 @@ class Restaurant extends Model
         'review_count',
         'delivery_time',
         'delivery_fee',
-        'min_order',
         'settings',
         'delivery_zones',
         'is_active',
         'is_paused',
         'pause_reason',
-        'timezone',
+        'min_order',
+        'commission_percent',
         'courier_fixed_fee',
         'courier_percent_fee',
+        'timezone',
     ];
 
     /**
@@ -112,12 +113,13 @@ class Restaurant extends Model
         return [
             'rating' => 'float',
             'review_count' => 'integer',
-            'delivery_fee' => 'float',
-            'min_order' => 'integer',
+            'delivery_fee' => MoneyCast::class,
+            'min_order' => MoneyCast::class,
+            'commission_percent' => 'decimal:2',
+            'courier_fixed_fee' => 'decimal:2',
             'settings' => 'array',
             'is_active' => 'boolean',
             'is_paused' => 'boolean',
-            'courier_fixed_fee' => 'float',
             'courier_percent_fee' => 'float',
         ];
     }

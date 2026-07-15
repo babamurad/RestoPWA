@@ -22,8 +22,26 @@ class OrderObserver
             $this->sendPushNotification($order, $newStatus);
         }
 
-        if ($newStatus === 'delivered' && $order->courier_id) {
-            $this->calculateCourierEarning($order);
+        if ($newStatus === 'delivered') {
+            if ($order->courier_id) {
+                $this->calculateCourierEarning($order);
+            }
+            $this->calculateMarketplaceCommission($order);
+        }
+    }
+
+    private function calculateMarketplaceCommission(Order $order): void
+    {
+        $restaurant = $order->vendor;
+        if (!$restaurant) return;
+
+        $percent = (float) $restaurant->commission_percent;
+        if ($percent > 0 && $order->total > 0) {
+            $commission = (int) round(($order->total * $percent) / 100);
+            $order->commission_amount = $commission;
+            // Need to save without triggering events to prevent infinite loops, 
+            // but since we're in observer and just updating a specific field, we can use saveQuietly
+            $order->saveQuietly();
         }
     }
 
