@@ -18,8 +18,36 @@ class OrderObserver
 
         $newStatus = $order->status;
 
-        if (in_array($newStatus, ['cooking', 'delivering'])) {
+        if (in_array($newStatus, ['cooking', 'delivering', 'delivered'])) {
             $this->sendPushNotification($order, $newStatus);
+        }
+
+        if ($newStatus === 'delivered' && $order->courier_id) {
+            $this->calculateCourierEarning($order);
+        }
+    }
+
+    private function calculateCourierEarning(Order $order): void
+    {
+        $restaurant = $order->vendor;
+        if (!$restaurant) return;
+        
+        $fixed = (float) $restaurant->courier_fixed_fee;
+        $percent = (float) $restaurant->courier_percent_fee;
+        
+        $amount = $fixed;
+        if ($percent > 0) {
+            $amount += ($order->total * $percent) / 100;
+        }
+
+        if ($amount > 0) {
+            \App\Domains\Logistics\Models\CourierEarning::firstOrCreate([
+                'order_id' => $order->id,
+                'courier_id' => $order->courier_id,
+            ], [
+                'amount' => $amount,
+                'status' => 'pending',
+            ]);
         }
     }
 
@@ -35,11 +63,13 @@ class OrderObserver
             $titles = [
                 'cooking' => 'Заказ начали готовить',
                 'delivering' => 'Заказ в пути',
+                'delivered' => 'Заказ доставлен',
             ];
 
             $bodies = [
                 'cooking' => 'Ресторан начал готовить ваш заказ',
                 'delivering' => 'Курьер уже в пути к вам',
+                'delivered' => 'Ваш заказ доставлен',
             ];
 
             $title = $titles[$status] ?? 'Статус заказа изменён';

@@ -40,4 +40,9 @@ class Courier extends Model
     {
         return $this->belongsTo(Restaurant::class, 'vendor_id');
     }
+
+    public function earnings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CourierEarning::class, 'courier_id');
+    }
 }

@@ -73,7 +73,7 @@ class RestaurantResource extends Resource
 
                 \Filament\Schemas\Components\Group::make()
                     ->schema([
-                        \Filament\Schemas\Components\Section::make('Условия доставки')
+                        \Filament\Schemas\Components\Section::make('Условия доставки и курьеры')
                             ->schema([
                                 Forms\Components\TextInput::make('delivery_time')
                                     ->label('Среднее время доставки (мин)')
@@ -86,6 +86,16 @@ class RestaurantResource extends Resource
                                     ->label('Минимальная сумма заказа')
                                     ->numeric()
                                     ->prefix('₽'),
+                                Forms\Components\TextInput::make('courier_fixed_fee')
+                                    ->label('Фикс. выплата курьеру (за заказ)')
+                                    ->numeric()
+                                    ->prefix('₽')
+                                    ->default(0),
+                                Forms\Components\TextInput::make('courier_percent_fee')
+                                    ->label('Процент курьеру (от суммы)')
+                                    ->numeric()
+                                    ->suffix('%')
+                                    ->default(0),
                             ])->columns(1),
                     ])->columnSpan(['lg' => 1]),
 

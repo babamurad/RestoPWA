@@ -101,6 +101,16 @@ class RestaurantResource extends Resource
                             ->label('Минимальный заказ')
                             ->numeric()
                             ->prefix('₽'),
+                        Forms\Components\TextInput::make('courier_fixed_fee')
+                            ->label('Фикс. выплата курьеру')
+                            ->numeric()
+                            ->prefix('₽')
+                            ->default(0),
+                        Forms\Components\TextInput::make('courier_percent_fee')
+                            ->label('Процент выплат курьеру')
+                            ->numeric()
+                            ->suffix('%')
+                            ->default(0),
                     ])->columns(2),
                 Section::make('Зона доставки')
                     ->description('Нарисуйте область доставки на карте. Координаты будут сохранены автоматически.')

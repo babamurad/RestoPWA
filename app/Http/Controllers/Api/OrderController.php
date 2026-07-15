@@ -100,4 +100,30 @@ class OrderController extends Controller
             }),
         ]);
     }
+
+    public function assignCourier(Request $request, string $id): JsonResponse
+    {
+        $request->validate([
+            'courier_id' => 'required|string|uuid',
+        ]);
+
+        $user = Auth::user();
+        if (!$user || !($user->isAdmin() || $user->isRestaurateur())) {
+            return $this->error('Forbidden', 403);
+        }
+
+        $order = Order::findOrFail($id);
+        
+        $courier = \App\Domains\Logistics\Models\Courier::find($request->input('courier_id'));
+        if (!$courier) {
+            return $this->error('Courier not found', 404);
+        }
+
+        $order->update([
+            'courier_id' => $courier->id,
+            'status' => Order::STATUS_DELIVERING,
+        ]);
+
+        return $this->success($order->fresh());
+    }
 }

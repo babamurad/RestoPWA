@@ -109,6 +109,13 @@ class CourierResource extends Resource
             ]);
     }
 
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\EarningsRelationManager::class,
+        ];
+    }
+
     public static function getPages(): array
     {
         return [

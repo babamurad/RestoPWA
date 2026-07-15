@@ -72,6 +72,10 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->gro
             Route::post('orders/{id}/accept', [\App\Domains\Logistics\Http\Controllers\Api\CourierOrderController::class, 'accept'])->name('api.courier.accept');
             Route::post('orders/{id}/status', [\App\Domains\Logistics\Http\Controllers\Api\CourierOrderController::class, 'updateStatus'])->name('api.courier.status');
             Route::post('location', [\App\Domains\Logistics\Http\Controllers\Api\CourierOrderController::class, 'updateLocation'])->name('api.courier.location');
+            Route::post('status', [\App\Domains\Logistics\Http\Controllers\Api\CourierOrderController::class, 'updateProfileStatus'])->name('api.courier.profile_status');
+            Route::get('earnings', [\App\Domains\Logistics\Http\Controllers\Api\CourierOrderController::class, 'earnings'])->name('api.courier.earnings');
         });
+
+        Route::post('orders/{id}/assign', [OrderController::class, 'assignCourier'])->name('api.v1.orders.assign');
     });
 });

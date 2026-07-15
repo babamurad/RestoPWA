@@ -149,4 +149,46 @@ class CourierOrderController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    /**
+     * Update courier availability status.
+     */
+    public function updateProfileStatus(Request $request): JsonResponse
+    {
+        $request->validate([
+            'status' => 'required|string|in:offline,available,busy',
+        ]);
+
+        $user = Auth::user();
+        if (!$user || !$user->isCourier()) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $courier = $user->courierProfile;
+        if ($courier) {
+            $courier->update(['status' => $request->input('status')]);
+        }
+
+        return response()->json(['success' => true, 'status' => $request->input('status')]);
+    }
+
+    /**
+     * Get courier earnings history.
+     */
+    public function earnings(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        if (!$user || !$user->isCourier()) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $courier = $user->courierProfile;
+        if (!$courier) {
+            return response()->json(['data' => []]);
+        }
+
+        $earnings = $courier->earnings()->with('order')->latest()->get();
+
+        return response()->json(['data' => $earnings]);
+    }
 }
