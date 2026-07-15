@@ -10,6 +10,9 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Illuminate\Support\Str;
+use App\Enums\OrderRejectReason;
+use App\Domains\Geo\Services\GeoService;
+use App\Domains\Geo\Services\DeliveryZoneCheckResult;
 
 class OrderApiTest extends TestCase
 {
@@ -49,10 +52,18 @@ class OrderApiTest extends TestCase
                     ],
                 ],
                 'total' => 100,
+                'payment_method' => 'card',
+                'customer_name' => 'John Doe',
+                'customer_phone' => '+99361234567',
+                'address' => [
+                    'address' => 'Main St 10',
+                    'lat' => 39.0886,
+                    'lon' => 63.5593,
+                ],
             ]);
 
         $response->assertStatus(401)
-            ->assertJson(['success' => false]);
+            ->assertJson(['success' => false, 'reason' => OrderRejectReason::UNAUTHORIZED->value]);
     }
 
     public function test_authenticated_user_can_create_order(): void
@@ -263,5 +274,111 @@ class OrderApiTest extends TestCase
             ->getJson('/api/v1/orders');
 
         $response->assertStatus(401);
+    }
+
+    public function test_order_fails_with_empty_cart(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
+            ->postJson('/api/v1/orders', [
+                'vendor_id' => $this->restaurant->id,
+                'items' => [],
+                'total' => 0,
+                'payment_method' => 'card',
+                'customer_name' => 'John Doe',
+                'customer_phone' => '+99361234567',
+                'address' => [
+                    'address' => 'Main St 10',
+                    'lat' => 39.0886,
+                    'lon' => 63.5593,
+                ],
+            ]);
+
+        $response->assertStatus(400)
+            ->assertJson([
+                'success' => false,
+                'reason' => OrderRejectReason::VALIDATION->value,
+            ]);
+    }
+
+    public function test_order_fails_with_invalid_phone(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
+            ->postJson('/api/v1/orders', [
+                'vendor_id' => $this->restaurant->id,
+                'items' => [
+                    [
+                        'product_id' => $this->product->id,
+                        'product_name' => $this->product->name,
+                        'quantity' => 1,
+                        'unit_price' => 10000,
+                        'total_price' => 10000,
+                    ],
+                ],
+                'total' => 10000,
+                'payment_method' => 'card',
+                'customer_name' => 'John Doe',
+                'customer_phone' => '123', // invalid phone length
+                'address' => [
+                    'address' => 'Main St 10',
+                    'lat' => 39.0886,
+                    'lon' => 63.5593,
+                ],
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'reason' => OrderRejectReason::INVALID_PHONE->value,
+            ]);
+    }
+
+    public function test_order_fails_when_outside_delivery_zone(): void
+    {
+        // Mock GeoService to force an out_of_zone result since SQLite doesn't check PostGIS polygons
+        $geoServiceMock = $this->mock(GeoService::class, function ($mock) {
+            // Needed because calculateDeliveryFee is also called in the controller
+            $mock->shouldReceive('calculateDeliveryFee')->andReturn(0);
+            
+            $mock->shouldReceive('checkDeliveryZone')->andReturn(
+                new DeliveryZoneCheckResult(
+                    status: 'out_of_zone',
+                    allowed: false,
+                    message: 'Адрес находится за пределами зоны доставки.',
+                    debugContext: []
+                )
+            );
+        });
+
+        $response = $this->actingAs($this->user)
+            ->withHeaders(['X-Vendor-ID' => $this->restaurant->id])
+            ->postJson('/api/v1/orders', [
+                'vendor_id' => $this->restaurant->id,
+                'items' => [
+                    [
+                        'product_id' => $this->product->id,
+                        'product_name' => $this->product->name,
+                        'quantity' => 1,
+                        'unit_price' => 10000,
+                        'total_price' => 10000,
+                    ],
+                ],
+                'total' => 10000,
+                'payment_method' => 'card',
+                'customer_name' => 'John Doe',
+                'customer_phone' => '+99361234567',
+                'address' => [
+                    'address' => 'Far Away',
+                    'lat' => 40.0, // Outside the 39.0-39.1 polygon
+                    'lon' => 64.0, // Outside
+                ],
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'reason' => OrderRejectReason::OUTSIDE_DELIVERY_ZONE->value,
+            ]);
     }
 }

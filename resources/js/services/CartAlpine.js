@@ -1,3 +1,5 @@
+import { getErrorMessage } from './OrderErrorCodes';
+
 document.addEventListener('alpine:init', () => {
     Alpine.data('cartManager', () => ({
         isInitialized: false,
@@ -367,6 +369,23 @@ document.addEventListener('alpine:init', () => {
                             icon: 'error',
                             confirmButtonText: 'Понятно',
                         });
+                        failed++;
+                    } else if (response.status === 400) {
+                        const result = await response.json();
+                        if (result.reject_reason) {
+                            console.warn('[CartAlpine] Order rejected by server', result.reject_reason, 'trace:', orderTraceId);
+                            await window.CartService.updatePendingOrderStatus(order.id, 'needs_user_action');
+                            needsUserAction++;
+                            
+                            window.Swal.fire({
+                                title: 'Ошибка оформления заказа',
+                                text: getErrorMessage(result.reject_reason),
+                                icon: 'warning',
+                                confirmButtonText: 'Понятно',
+                            });
+                        } else {
+                            await window.CartService.incrementRetry(order.id);
+                        }
                         failed++;
                     } else {
                         await window.CartService.incrementRetry(order.id);
