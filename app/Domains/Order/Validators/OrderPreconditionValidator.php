@@ -77,6 +77,10 @@ final readonly class OrderPreconditionValidator
             return OrderRejectReason::INVALID_VENDOR;
         }
 
+        if (! $restaurant->is_open_now) {
+            return OrderRejectReason::RESTAURANT_CLOSED;
+        }
+
         return null;
     }
 

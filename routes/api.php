@@ -23,11 +23,19 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->gro
     Route::get('menu/{vendor}', [MenuController::class, 'index'])->name('api.menu.index');
     Route::get('menu/product/{product}', [MenuController::class, 'show'])->name('api.menu.product.show');
 
-    Route::get('restaurants', fn () => Restaurant::active()
-        ->select('id', 'slug', 'name', 'image', 'cover_image', 'rating', 'review_count', 'delivery_time', 'delivery_fee', 'min_order', 'is_active', 'description')
-        ->get())->name('api.restaurants.index');
+    Route::get('restaurants', function () {
+        return Restaurant::active()
+            ->with('schedules')
+            ->select('id', 'slug', 'name', 'image', 'cover_image', 'rating', 'review_count', 'delivery_time', 'delivery_fee', 'min_order', 'is_active', 'description', 'is_paused', 'timezone')
+            ->get()
+            ->each(fn ($r) => $r->setAppends(['is_open_now'])->makeHidden(['schedules']));
+    })->name('api.restaurants.index');
 
-    Route::get('restaurants/{vendor}', fn (Restaurant $vendor) => response()->json($vendor))->name('api.restaurants.show');
+    Route::get('restaurants/{vendor}', function (Restaurant $vendor) {
+        $vendor->load('schedules');
+        $vendor->setAppends(['is_open_now']);
+        return response()->json($vendor);
+    })->name('api.restaurants.show');
 
     Route::get('categories', fn () => response()->json(['data' => Category::where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'sort_order', 'parent_id'])]))->name('api.categories.index');
 

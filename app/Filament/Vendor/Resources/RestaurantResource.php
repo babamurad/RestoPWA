@@ -55,6 +55,19 @@ class RestaurantResource extends Resource
                                     ->label('Заведение открыто')
                                     ->default(true)
                                     ->columnSpanFull(),
+                                Forms\Components\Toggle::make('is_paused')
+                                    ->label('Временно не принимает заказы')
+                                    ->default(false)
+                                    ->columnSpanFull(),
+                                Forms\Components\TextInput::make('pause_reason')
+                                    ->label('Причина паузы')
+                                    ->maxLength(255)
+                                    ->columnSpanFull(),
+                                Forms\Components\TextInput::make('timezone')
+                                    ->label('Часовой пояс')
+                                    ->default('Asia/Ashgabat')
+                                    ->required()
+                                    ->columnSpanFull(),
                             ])->columns(2),
                     ])->columnSpan(['lg' => 2]),
 
@@ -75,6 +88,49 @@ class RestaurantResource extends Resource
                                     ->prefix('₽'),
                             ])->columns(1),
                     ])->columnSpan(['lg' => 1]),
+
+                \Filament\Schemas\Components\Section::make('Расписание работы')
+                    ->schema([
+                        Forms\Components\Repeater::make('schedules')
+                            ->relationship()
+                            ->label('График по дням')
+                            ->schema([
+                                Forms\Components\Select::make('weekday')
+                                    ->label('День недели')
+                                    ->options([
+                                        0 => 'Понедельник',
+                                        1 => 'Вторник',
+                                        2 => 'Среда',
+                                        3 => 'Четверг',
+                                        4 => 'Пятница',
+                                        5 => 'Суббота',
+                                        6 => 'Воскресенье',
+                                    ])
+                                    ->required(),
+                                Forms\Components\TimePicker::make('opens_at')
+                                    ->label('Открытие')
+                                    ->seconds(false),
+                                Forms\Components\TimePicker::make('closes_at')
+                                    ->label('Закрытие')
+                                    ->seconds(false),
+                                Forms\Components\Toggle::make('is_closed')
+                                    ->label('Выходной')
+                                    ->default(false),
+                            ])
+                            ->columns(4)
+                            ->itemLabel(fn (array $state): ?string => match ((string)($state['weekday'] ?? '')) {
+                                '0' => 'Понедельник',
+                                '1' => 'Вторник',
+                                '2' => 'Среда',
+                                '3' => 'Четверг',
+                                '4' => 'Пятница',
+                                '5' => 'Суббота',
+                                '6' => 'Воскресенье',
+                                default => null,
+                            })
+                            ->defaultItems(0)
+                            ->collapsible()
+                    ])->columnSpanFull(),
 
                 \Filament\Schemas\Components\Section::make('Зона доставки')
                     ->description('Настройте полигон доставки в формате GeoJSON')

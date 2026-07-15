@@ -117,6 +117,20 @@ class OrderRejectReasonsTest extends TestCase
             ->assertJsonPath('reason', 'invalid_vendor');
     }
 
+    public function test_rejects_restaurant_closed_with_422(): void
+    {
+        $closedRestaurant = Restaurant::factory()->create(['is_active' => true, 'is_paused' => true]);
+        $closedRestaurant->update(['vendor_id' => $closedRestaurant->id]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson('/api/v1/orders', $this->validOrderPayload([
+                'vendor_id' => $closedRestaurant->id,
+            ]));
+
+        $response->assertStatus(422)
+            ->assertJsonPath('reason', 'restaurant_closed');
+    }
+
     public function test_rejects_invalid_price_with_422(): void
     {
         $response = $this->actingAs($this->user)

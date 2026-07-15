@@ -35,6 +35,11 @@ use App\Domains\Geo\Services\GeoJsonNormalizer;
  * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property bool $is_paused
+ * @property string|null $pause_reason
+ * @property string $timezone
+ * @property-read bool $is_open_now
+ * @property-read \Illuminate\Database\Eloquent\Collection|RestaurantSchedule[] $schedules
  */
 class Restaurant extends Model
 {
@@ -92,6 +97,11 @@ class Restaurant extends Model
         'settings',
         'delivery_zones',
         'is_active',
+        'is_paused',
+        'pause_reason',
+        'timezone',
+        'courier_fixed_fee',
+        'courier_percent_fee',
     ];
 
     /**
@@ -106,6 +116,9 @@ class Restaurant extends Model
             'min_order' => 'integer',
             'settings' => 'array',
             'is_active' => 'boolean',
+            'is_paused' => 'boolean',
+            'courier_fixed_fee' => 'float',
+            'courier_percent_fee' => 'float',
         ];
     }
 
@@ -276,5 +289,55 @@ class Restaurant extends Model
     public function owner(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(\App\Models\User::class, 'owner_id');
+    }
+
+    /**
+     * Get the schedules for the restaurant.
+     */
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(RestaurantSchedule::class, 'restaurant_id');
+    }
+
+    /**
+     * Determine if the restaurant is currently open.
+     */
+    public function getIsOpenNowAttribute(): bool
+    {
+        if ($this->is_paused) {
+            return false;
+        }
+
+        if (!$this->relationLoaded('schedules')) {
+            $this->load('schedules');
+        }
+
+        if ($this->schedules->isEmpty()) {
+            return true; // Open by default if no schedule defined
+        }
+
+        $now = \Carbon\Carbon::now($this->timezone ?: 'Asia/Ashgabat');
+        $weekday = $now->dayOfWeekIso - 1; // 0 = Monday, 6 = Sunday
+
+        $schedule = $this->schedules->firstWhere('weekday', $weekday);
+
+        if (!$schedule || $schedule->is_closed) {
+            return false;
+        }
+
+        if (!$schedule->opens_at || !$schedule->closes_at) {
+            return true;
+        }
+
+        $opensAt = \Carbon\Carbon::parse($schedule->opens_at, $this->timezone ?: 'Asia/Ashgabat');
+        $closesAt = \Carbon\Carbon::parse($schedule->closes_at, $this->timezone ?: 'Asia/Ashgabat');
+        $currentTime = \Carbon\Carbon::createFromFormat('H:i:s', $now->format('H:i:s'), $this->timezone ?: 'Asia/Ashgabat');
+
+        if ($closesAt->lt($opensAt)) {
+            // Overnight shift (e.g. 22:00 - 02:00)
+            return $currentTime->gte($opensAt) || $currentTime->lt($closesAt);
+        }
+
+        return $currentTime->between($opensAt, $closesAt);
     }
 }

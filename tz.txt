@@ -6,3 +6,6 @@ php artisan view:clear
 php artisan route:clear 
 php artisan optimize:clear
 chmod -R 755 storage bootstrap/cache
+
+составь подробное тз для реализации. 
+Чтобы после этого проект был полностью готов для передачи заказчику

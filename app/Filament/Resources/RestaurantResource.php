@@ -81,6 +81,16 @@ class RestaurantResource extends Resource
                         Forms\Components\Toggle::make('is_active')
                             ->label('Активен')
                             ->default(true),
+                        Forms\Components\Toggle::make('is_paused')
+                            ->label('Временно не принимает заказы')
+                            ->default(false),
+                        Forms\Components\TextInput::make('pause_reason')
+                            ->label('Причина паузы')
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('timezone')
+                            ->label('Часовой пояс')
+                            ->default('Asia/Ashgabat')
+                            ->required(),
                         Forms\Components\TextInput::make('delivery_time')
                             ->label('Время доставки'),
                         Forms\Components\TextInput::make('delivery_fee')
@@ -185,6 +195,48 @@ class RestaurantResource extends Resource
                                         })
                                 ])->columnSpanFull()
                             ]),
+                    ])->columnSpanFull(),
+                Section::make('Расписание работы')
+                    ->schema([
+                        Forms\Components\Repeater::make('schedules')
+                            ->relationship()
+                            ->label('График по дням')
+                            ->schema([
+                                Forms\Components\Select::make('weekday')
+                                    ->label('День недели')
+                                    ->options([
+                                        0 => 'Понедельник',
+                                        1 => 'Вторник',
+                                        2 => 'Среда',
+                                        3 => 'Четверг',
+                                        4 => 'Пятница',
+                                        5 => 'Суббота',
+                                        6 => 'Воскресенье',
+                                    ])
+                                    ->required(),
+                                Forms\Components\TimePicker::make('opens_at')
+                                    ->label('Открытие')
+                                    ->seconds(false),
+                                Forms\Components\TimePicker::make('closes_at')
+                                    ->label('Закрытие')
+                                    ->seconds(false),
+                                Forms\Components\Toggle::make('is_closed')
+                                    ->label('Выходной')
+                                    ->default(false),
+                            ])
+                            ->columns(4)
+                            ->itemLabel(fn (array $state): ?string => match ((string)($state['weekday'] ?? '')) {
+                                '0' => 'Понедельник',
+                                '1' => 'Вторник',
+                                '2' => 'Среда',
+                                '3' => 'Четверг',
+                                '4' => 'Пятница',
+                                '5' => 'Суббота',
+                                '6' => 'Воскресенье',
+                                default => null,
+                            })
+                            ->defaultItems(0)
+                            ->collapsible()
                     ])->columnSpanFull(),
             ]);
     }
