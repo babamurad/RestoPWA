@@ -1,0 +1,126 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\VendorSettlementResource\Pages;
+use App\Models\VendorSettlement;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+
+class VendorSettlementResource extends Resource
+{
+    protected static ?string $model = VendorSettlement::class;
+
+    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
+    protected static ?string $navigationGroup = 'Финансы';
+    protected static ?string $modelLabel = 'Выплата ресторану';
+    protected static ?string $pluralModelLabel = 'Выплаты ресторанам';
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Select::make('restaurant_id')
+                    ->relationship('restaurant', 'name')
+                    ->label('Ресторан')
+                    ->required()
+                    ->disabled(),
+                Forms\Components\DatePicker::make('period_from')
+                    ->label('Период С')
+                    ->disabled(),
+                Forms\Components\DatePicker::make('period_to')
+                    ->label('Период ПО')
+                    ->disabled(),
+                Forms\Components\TextInput::make('gross_amount')
+                    ->label('Сумма заказов')
+                    ->disabled()
+                    ->prefix('₽'),
+                Forms\Components\TextInput::make('commission_amount')
+                    ->label('Комиссия маркетплейса')
+                    ->disabled()
+                    ->prefix('₽'),
+                Forms\Components\TextInput::make('net_payable')
+                    ->label('К выплате')
+                    ->disabled()
+                    ->prefix('₽'),
+                Forms\Components\Select::make('status')
+                    ->label('Статус')
+                    ->options([
+                        'draft' => 'Черновик',
+                        'approved' => 'Одобрено',
+                        'paid' => 'Выплачено',
+                    ])
+                    ->required(),
+                Forms\Components\DateTimePicker::make('paid_at')
+                    ->label('Дата выплаты'),
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('restaurant.name')
+                    ->label('Ресторан')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('period_from')
+                    ->label('Период С')
+                    ->date('d.m.Y')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('period_to')
+                    ->label('Период ПО')
+                    ->date('d.m.Y')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('net_payable')
+                    ->label('К выплате')
+                    ->money('RUB')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Статус')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'draft' => 'gray',
+                        'approved' => 'primary',
+                        'paid' => 'success',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'draft' => 'Черновик',
+                        'approved' => 'Одобрено',
+                        'paid' => 'Выплачено',
+                        default => $state,
+                    }),
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('restaurant_id')
+                    ->relationship('restaurant', 'name')
+                    ->label('Ресторан'),
+                Tables\Filters\SelectFilter::make('status')
+                    ->options([
+                        'draft' => 'Черновик',
+                        'approved' => 'Одобрено',
+                        'paid' => 'Выплачено',
+                    ])
+                    ->label('Статус'),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ManageVendorSettlements::route('/'),
+        ];
+    }
+}

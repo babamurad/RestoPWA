@@ -111,6 +111,11 @@ class RestaurantResource extends Resource
                             ->numeric()
                             ->suffix('%')
                             ->default(0),
+                        Forms\Components\TextInput::make('commission_percent')
+                            ->label('Комиссия маркетплейса')
+                            ->numeric()
+                            ->suffix('%')
+                            ->default(0),
                     ])->columns(2),
                 Section::make('Зона доставки')
                     ->description('Нарисуйте область доставки на карте. Координаты будут сохранены автоматически.')
