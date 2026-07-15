@@ -84,8 +84,17 @@ class OrderObserver
                     'status' => $status,
                 ]
             );
+
+            // Send SMS
+            $user = \App\Models\User::find($order->user_id);
+            if ($user && $user->phone) {
+                // Only send SMS for important updates like delivering or delivered to save money
+                if (in_array($status, ['delivering', 'delivered'])) {
+                    \App\Jobs\SendSmsJob::dispatch($user->phone, "RestoPWA: $body");
+                }
+            }
         } catch (\Throwable $e) {
-            Log::warning('Push notification failed: '.$e->getMessage());
+            Log::warning('Notification failed: '.$e->getMessage());
         }
     }
 }

@@ -39,6 +39,8 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(TenantContext::class);
         $this->app->singleton(GeoService::class);
+        
+        $this->app->singleton(\App\Services\Sms\SmsProviderInterface::class, \App\Services\Sms\TmSmsService::class);
 
         $this->app->singleton(PushNotificationService::class, function ($app) {
             if (! class_exists(WebPush::class)) {
