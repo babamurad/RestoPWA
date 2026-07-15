@@ -1,9 +1,8 @@
 cd /var/www/restopwa.tmtourism.com
 git pull
-chmod -R 755 storage bootstrap/cache
 php artisan cache:clear 
 php artisan config:clear 
 php artisan view:clear 
 php artisan route:clear 
 php artisan optimize:clear
-
+chmod -R 755 storage bootstrap/cache
