@@ -62,7 +62,7 @@ class DeliveryZoneDiagnosticTest extends TestCase
                 'name' => 'User Name',
                 'phone' => '+99312345678',
             ],
-            'payment_method' => 'card',
+            'payment_method' => 'cash',
         ];
 
         $validator = app(\App\Domains\Order\Validators\OrderPreconditionValidator::class);

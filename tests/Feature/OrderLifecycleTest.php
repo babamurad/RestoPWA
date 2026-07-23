@@ -78,7 +78,7 @@ class OrderLifecycleTest extends TestCase
                     ],
                 ],
                 'total' => 20000,
-                'payment_method' => 'card',
+                'payment_method' => 'cash',
                 'address' => [
                     'address' => 'Test Street 10',
                     'lat' => 39.0886,

@@ -37,7 +37,7 @@ final readonly class OrderSubmitDTO
             address: (array) ($data['address'] ?? []),
             deliveryFee: (int) ($data['delivery_fee'] ?? 0),
             deliveryTime: isset($data['delivery_time']) ? (string) $data['delivery_time'] : null,
-            paymentMethod: (string) ($data['payment_method'] ?? 'card'),
+            paymentMethod: (string) ($data['payment_method'] ?? 'cash'),
             comment: isset($data['comment']) ? (string) $data['comment'] : null,
             idempotencyKey: isset($data['idempotency_key']) ? (string) $data['idempotency_key'] : null,
             isOffline: (bool) ($data['is_offline'] ?? false),

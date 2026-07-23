@@ -24,7 +24,7 @@ class MarketplaceCommissionTest extends TestCase
         $order = Order::factory()->create([
             'vendor_id' => $restaurant->id,
             'status' => Order::STATUS_DELIVERING,
-            'total' => 1000,
+            'total' => 100000,
         ]);
 
         $order->update(['status' => Order::STATUS_DELIVERED]);

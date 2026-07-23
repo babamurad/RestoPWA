@@ -3,6 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\VendorSettlementResource\Pages;
+use UnitEnum;
+use BackedEnum;
 use App\Models\VendorSettlement;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -14,8 +16,8 @@ class VendorSettlementResource extends Resource
 {
     protected static ?string $model = VendorSettlement::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
-    protected static ?string $navigationGroup = 'Финансы';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-currency-dollar';
+    protected static string|UnitEnum|null $navigationGroup = 'Финансы';
     protected static ?string $modelLabel = 'Выплата ресторану';
     protected static ?string $pluralModelLabel = 'Выплаты ресторанам';
 

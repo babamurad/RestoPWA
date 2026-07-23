@@ -372,7 +372,7 @@ class CheckoutWizard extends Component
 
     private function validatePayment(): bool
     {
-        if (! in_array($this->paymentMethod, ['card', 'cash', 'sbp'], true)) {
+        if (! in_array($this->paymentMethod, ['cash', 'terminal', 'online'], true)) {
             $this->error = 'Выберите способ оплаты';
             return false;
         }

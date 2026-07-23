@@ -22,7 +22,7 @@ class CartSyncTest extends TestCase
         parent::setUp();
 
         $this->restaurant = Restaurant::factory()->create([
-            'min_order' => 500,
+            'min_order' => 50000,
         ]);
         $this->restaurant->update(['vendor_id' => $this->restaurant->id]);
 

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Domains\Geo\Services\GeoService;
+use App\Domains\Geo\Services\DeliveryZoneCheckResult;
+use App\Domains\Menu\Models\Product;
 use App\Domains\Order\Models\Order;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Models\User;
@@ -16,13 +19,29 @@ class OrderIdempotencyTest extends TestCase
     use RefreshDatabase;
 
     protected Restaurant $restaurant;
+    protected Product $product;
 
     protected function setUp(): void
     {
         parent::setUp();
-        // Create a restaurant for the orders
-        $this->restaurant = Restaurant::factory()->create();
+
+        $this->restaurant = Restaurant::factory()->create([
+            'is_active' => true,
+            'delivery_fee' => 5.00,
+            'min_order' => 10.00,
+        ]);
         $this->restaurant->update(['vendor_id' => $this->restaurant->id]);
+
+        $this->product = Product::factory()->create([
+            'vendor_id' => $this->restaurant->id,
+            'price' => 1000,
+            'is_available' => true,
+        ]);
+
+        $this->instance(GeoService::class, \Mockery::mock(GeoService::class, function ($mock) {
+            $mock->shouldReceive('checkDeliveryZone')->andReturn(new DeliveryZoneCheckResult('inside', true, 'Allowed'));
+            $mock->shouldReceive('geocodeWithFallback')->andReturn(null);
+        }));
     }
 
     public function test_order_submission_is_idempotent(): void
@@ -34,15 +53,15 @@ class OrderIdempotencyTest extends TestCase
             'vendor_id' => $this->restaurant->id,
             'items' => [
                 [
-                    'product_id' => (string) Str::uuid(),
-                    'product_name' => 'Pizza',
+                    'product_id' => $this->product->id,
+                    'product_name' => $this->product->name,
                     'quantity' => 2,
                     'unit_price' => 1000,
                     'total_price' => 2000,
                 ]
             ],
             'total' => 2000,
-            'payment_method' => 'card',
+            'payment_method' => 'cash',
             'customer_name' => 'John Doe',
             'customer_phone' => '+99361234567',
             'address' => [
@@ -93,15 +112,15 @@ class OrderIdempotencyTest extends TestCase
             'vendor_id' => $this->restaurant->id,
             'items' => [
                 [
-                    'product_id' => (string) Str::uuid(),
-                    'product_name' => 'Pizza',
+                    'product_id' => $this->product->id,
+                    'product_name' => $this->product->name,
                     'quantity' => 1,
                     'unit_price' => 1000,
                     'total_price' => 1000,
                 ]
             ],
             'total' => 1000,
-            'payment_method' => 'card',
+            'payment_method' => 'cash',
             'customer_name' => 'John Doe',
             'customer_phone' => '+99361234567',
             'address' => [
@@ -137,15 +156,15 @@ class OrderIdempotencyTest extends TestCase
             'vendor_id' => $this->restaurant->id,
             'items' => [
                 [
-                    'product_id' => (string) Str::uuid(),
-                    'product_name' => 'Burger',
+                    'product_id' => $this->product->id,
+                    'product_name' => $this->product->name,
                     'quantity' => 1,
                     'unit_price' => 1000,
                     'total_price' => 1000,
                 ]
             ],
             'total' => 1000,
-            'payment_method' => 'card',
+            'payment_method' => 'cash',
             'customer_name' => 'John Doe',
             'customer_phone' => '+99361234567',
             'address' => [

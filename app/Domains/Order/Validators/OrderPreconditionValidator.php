@@ -214,9 +214,9 @@ final readonly class OrderPreconditionValidator
     private function validatePaymentMethod(array $data): ?OrderRejectReason
     {
         $method = $data['payment_method'] ?? null;
-        $allowed = ['card', 'cash', 'sbp'];
+        $allowed = ['cash', 'terminal', 'online'];
 
-        if (! in_array($method, $allowed, true)) {
+        if ($method !== null && ! in_array($method, $allowed, true)) {
             return OrderRejectReason::INVALID_PAYMENT_METHOD;
         }
 

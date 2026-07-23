@@ -32,12 +32,12 @@ class OrderObserver
 
     private function calculateMarketplaceCommission(Order $order): void
     {
-        $restaurant = $order->vendor;
+        $restaurant = $order->restaurant;
         if (!$restaurant) return;
 
         $percent = (float) $restaurant->commission_percent;
         if ($percent > 0 && $order->total > 0) {
-            $commission = (int) round(($order->total * $percent) / 100);
+            $commission = round(($order->total * $percent) / 100);
             $order->commission_amount = $commission;
             // Need to save without triggering events to prevent infinite loops, 
             // but since we're in observer and just updating a specific field, we can use saveQuietly
@@ -47,7 +47,7 @@ class OrderObserver
 
     private function calculateCourierEarning(Order $order): void
     {
-        $restaurant = $order->vendor;
+        $restaurant = $order->restaurant;
         if (!$restaurant) return;
         
         $fixed = (float) $restaurant->courier_fixed_fee;

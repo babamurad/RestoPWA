@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Vendor\Models;
 
+use App\Casts\MoneyCast;
 use App\Domains\Menu\Models\Category;
 use App\Domains\Menu\Models\Product;
 

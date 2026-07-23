@@ -65,7 +65,7 @@ class OrderSubmissionTest extends TestCase
                 'lon' => 1.0,
                 'address' => 'Test Street 1',
             ],
-            'payment_method' => 'card',
+            'payment_method' => 'cash',
         ], $overrides);
     }
 

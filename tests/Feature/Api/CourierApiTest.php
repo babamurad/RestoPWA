@@ -109,7 +109,7 @@ class CourierApiTest extends TestCase
             'vendor_id' => $restaurant->id,
             'courier_id' => $courier->id,
             'status' => Order::STATUS_DELIVERING,
-            'total' => 1000,
+            'total' => 100000,
         ]);
 
         $response = $this->actingAs($user)->postJson("/api/v1/courier/orders/{$order->id}/status", [
@@ -118,7 +118,7 @@ class CourierApiTest extends TestCase
 
         $response->assertStatus(200);
 
-        // Fixed = 10, Percent = 5% of 1000 = 50. Total = 60.
+        // Fixed = 10, Percent = 5% of 1000 (= 100000 cents via MoneyCast) = 50. Total = 60.
         $this->assertDatabaseHas('courier_earnings', [
             'order_id' => $order->id,
             'courier_id' => $courier->id,

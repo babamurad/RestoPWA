@@ -66,7 +66,7 @@ class OrderRejectReasonsTest extends TestCase
                 'lon' => 1.0,
                 'address' => 'Test Street 1',
             ],
-            'payment_method' => 'card',
+            'payment_method' => 'cash',
         ], $overrides);
     }
 
@@ -131,8 +131,9 @@ class OrderRejectReasonsTest extends TestCase
             ->assertJsonPath('reason', 'restaurant_closed');
     }
 
-    public function test_rejects_invalid_price_with_422(): void
+    public function test_forged_price_is_overwritten_by_server(): void
     {
+        // Client sends unit_price=0, total_price=0 — server recalculates from DB
         $response = $this->actingAs($this->user)
             ->postJson('/api/v1/orders', $this->validOrderPayload([
                 'items' => [
@@ -147,30 +148,31 @@ class OrderRejectReasonsTest extends TestCase
                 'total' => 500,
             ]));
 
-        $response->assertStatus(422)
-            ->assertJsonPath('reason', 'invalid_price');
+        // Server overwrites with DB price — order succeeds
+        $response->assertStatus(201)->assertJson(['success' => true]);
     }
 
-    public function test_rejects_invalid_total_mismatch_with_422(): void
+    public function test_forged_total_is_recalculated_by_server(): void
     {
         $response = $this->actingAs($this->user)
             ->postJson('/api/v1/orders', $this->validOrderPayload([
                 'total' => 99999,
             ]));
 
-        $response->assertStatus(422)
-            ->assertJsonPath('reason', 'invalid_total');
+        // Server recalculates total from items — order succeeds
+        $response->assertStatus(201)->assertJson(['success' => true]);
     }
 
-    public function test_rejects_missing_address_with_400_validation(): void
+    public function test_rejects_missing_address_with_422(): void
     {
         $response = $this->actingAs($this->user)
             ->postJson('/api/v1/orders', $this->validOrderPayload([
                 'address' => [],
             ]));
 
-        // Laravel validation catches required fields on address
-        $response->assertStatus(400);
+        // Preprocessing fills default lat/lon, but no text field → precondition catches it
+        $response->assertStatus(422)
+            ->assertJsonPath('reason', 'missing_address');
     }
 
     public function test_rejects_invalid_coordinates_with_400_validation(): void
@@ -230,6 +232,11 @@ class OrderRejectReasonsTest extends TestCase
 
     public function test_rejects_below_min_order_with_422(): void
     {
+        // Set min_order above what the server-recalculated total will be
+        // Product price = 10.00, quantity 1 → 1000 cents; delivery_fee = 500 cents; total = 1500 cents
+        // min_order = 20.00 = 2000 cents → 1500 < 2000 → rejected
+        $this->restaurant->update(['min_order' => 2000]);
+
         $response = $this->actingAs($this->user)
             ->postJson('/api/v1/orders', $this->validOrderPayload([
                 'items' => [

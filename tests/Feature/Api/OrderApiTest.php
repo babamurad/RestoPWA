@@ -52,7 +52,7 @@ class OrderApiTest extends TestCase
                     ],
                 ],
                 'total' => 100,
-                'payment_method' => 'card',
+                'payment_method' => 'cash',
                 'customer_name' => 'John Doe',
                 'customer_phone' => '+99361234567',
                 'address' => [
@@ -82,7 +82,7 @@ class OrderApiTest extends TestCase
                     ],
                 ],
                 'total' => 20000,
-                'payment_method' => 'card',
+                'payment_method' => 'cash',
                 'customer_name' => 'John Doe',
                 'customer_phone' => '+99361234567',
                 'address' => [
@@ -113,7 +113,7 @@ class OrderApiTest extends TestCase
                 ]
             ],
             'total' => 2000,
-            'payment_method' => 'card',
+            'payment_method' => 'cash',
             'customer_name' => 'John Doe',
             'customer_phone' => '+99361234567',
             'address' => [
@@ -164,7 +164,7 @@ class OrderApiTest extends TestCase
                 ]
             ],
             'total' => 1000,
-            'payment_method' => 'card',
+            'payment_method' => 'cash',
             'customer_name' => 'John Doe',
             'customer_phone' => '+99361234567',
             'address' => [
@@ -239,7 +239,7 @@ class OrderApiTest extends TestCase
                 ]
             ],
             'total' => 1000,
-            'payment_method' => 'card',
+            'payment_method' => 'cash',
             'customer_name' => 'John Doe',
             'customer_phone' => '+99361234567',
             'address' => [
@@ -284,7 +284,7 @@ class OrderApiTest extends TestCase
                 'vendor_id' => $this->restaurant->id,
                 'items' => [],
                 'total' => 0,
-                'payment_method' => 'card',
+                'payment_method' => 'cash',
                 'customer_name' => 'John Doe',
                 'customer_phone' => '+99361234567',
                 'address' => [
@@ -317,7 +317,7 @@ class OrderApiTest extends TestCase
                     ],
                 ],
                 'total' => 10000,
-                'payment_method' => 'card',
+                'payment_method' => 'cash',
                 'customer_name' => 'John Doe',
                 'customer_phone' => '123', // invalid phone length
                 'address' => [
@@ -365,7 +365,7 @@ class OrderApiTest extends TestCase
                     ],
                 ],
                 'total' => 10000,
-                'payment_method' => 'card',
+                'payment_method' => 'cash',
                 'customer_name' => 'John Doe',
                 'customer_phone' => '+99361234567',
                 'address' => [

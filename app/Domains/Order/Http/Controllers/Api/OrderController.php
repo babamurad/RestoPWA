@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Order\Http\Controllers\Api;
 
+use App\Domains\Menu\Models\Product;
 use App\Domains\Order\DTO\OrderSubmitDTO;
 use App\Domains\Order\Models\Order;
 use App\Domains\Order\Services\OrderService;
@@ -13,6 +14,7 @@ use App\Http\Traits\ApiResponses;
 use App\Support\PIIMasker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
@@ -82,56 +84,69 @@ class OrderController
             $request->merge(['address' => $addressInput]);
         }
 
-        // 3. Structure items
+        // 3. Structure items — always recalculate prices from DB, never trust client
         $itemsInput = $request->input('items');
         if (is_array($itemsInput)) {
             $updatedItems = [];
             foreach ($itemsInput as $item) {
                 if (is_array($item) && isset($item['product_id'])) {
                     $productId = $item['product_id'];
-                    $product = \App\Domains\Menu\Models\Product::find($productId);
-                    
+                    $product = Product::find($productId);
+
                     $productName = $item['product_name'] ?? $item['name'] ?? ($product ? $product->name : 'Блюдо');
-                    $unitPrice = $item['unit_price'] ?? $item['price'] ?? ($product ? (int)round($product->price * 100) : 0);
-                    $quantity = (int)($item['quantity'] ?? 1);
-                    $totalPrice = $item['total_price'] ?? ($unitPrice * $quantity);
-                    
+                    $quantity = (int) ($item['quantity'] ?? 1);
+                    $clientModifiers = $item['modifiers'] ?? [];
+
+                    // Server-side price: base product price from DB (MoneyCast → float currency units → cents)
+                    $basePriceCents = $product ? (int) round($product->price * 100) : 0;
+
+                    // Recalculate modifier surcharge from DB, ignoring client-sent prices
+                    $modifierPriceCents = 0;
+                    if (! empty($clientModifiers) && $product) {
+                        $modifierPriceCents = self::calculateModifierPriceFromDb($product, $clientModifiers);
+                    }
+
+                    $unitPrice = $basePriceCents + $modifierPriceCents;
+                    $totalPrice = $unitPrice * $quantity;
+
                     $item['product_name'] = $productName;
-                    $item['unit_price'] = (int)$unitPrice;
-                    $item['total_price'] = (int)$totalPrice;
-                    $item['modifiers'] = $item['modifiers'] ?? [];
-                    $item['image'] = $item['image'] ?? ($product ? $product->image : null);
+                    $item['unit_price'] = $unitPrice;
+                    $item['total_price'] = $totalPrice;
+                    $item['modifiers'] = $clientModifiers;
+                    $item['image'] = $item['image'] ?? ($product?->image);
                 }
                 $updatedItems[] = $item;
             }
             $request->merge(['items' => $updatedItems]);
         }
 
-        // 4. Calculate total & delivery_fee if missing or zero
-        if ((!$request->has('total') || (int)$request->input('total') === 0) && is_array($request->input('items'))) {
+        // 4. Calculate total & delivery_fee
+        if (is_array($request->input('items'))) {
             $itemsTotal = 0;
             foreach ($request->input('items') as $item) {
-                $itemsTotal += (int)($item['total_price'] ?? 0);
+                $itemsTotal += (int) ($item['total_price'] ?? 0);
             }
-            
-            $deliveryFee = 0;
-            $vendorId = $request->input('vendor_id');
-            if ($vendorId && is_array($request->input('address'))) {
-                try {
-                    $geoService = app(\App\Domains\Geo\Services\GeoService::class);
-                    $lat = (float)$request->input('address.lat');
-                    $lon = (float)$request->input('address.lon');
-                    $deliveryFee = (int)round($geoService->calculateDeliveryFee($lat, $lon, $vendorId) * 100);
-                } catch (\Throwable $e) {
-                    Log::warning('[API Order] Delivery fee calculation failed', [
-                        'exception' => $e->getMessage()
-                    ]);
+
+            $deliveryFee = (int) ($request->input('delivery_fee') ?? 0);
+            if ($deliveryFee === 0) {
+                $vendorId = $request->input('vendor_id');
+                if ($vendorId && is_array($request->input('address'))) {
+                    try {
+                        $geoService = app(\App\Domains\Geo\Services\GeoService::class);
+                        $lat = (float) $request->input('address.lat');
+                        $lon = (float) $request->input('address.lon');
+                        $deliveryFee = (int) round($geoService->calculateDeliveryFee($lat, $lon, $vendorId) * 100);
+                    } catch (\Throwable $e) {
+                        Log::warning('[API Order] Delivery fee calculation failed', [
+                            'exception' => $e->getMessage(),
+                        ]);
+                    }
                 }
             }
-            
+
             $request->merge([
                 'delivery_fee' => $deliveryFee,
-                'total' => $itemsTotal + $deliveryFee
+                'total' => $itemsTotal + $deliveryFee,
             ]);
         }
         // --- PREPROCESSING LAYER END ---
@@ -286,6 +301,52 @@ class OrderController
                 traceId: $traceId,
             );
         }
+    }
+
+    /**
+     * Calculate the modifier price surcharge in cents from the DB product modifiers,
+     * matching client-selected modifiers by id or name. Never trusts client-sent prices.
+     */
+    private static function calculateModifierPriceFromDb(Product $product, array $clientModifiers): int
+    {
+        $dbModifiers = $product->modifiers;
+        if (! $dbModifiers instanceof Collection || $dbModifiers->isEmpty() || empty($clientModifiers)) {
+            return 0;
+        }
+
+        // Flatten DB modifiers: groups with options → extract options; flat → keep as-is
+        $flatDb = collect();
+        foreach ($dbModifiers as $mod) {
+            if (isset($mod['options']) && is_array($mod['options'])) {
+                foreach ($mod['options'] as $option) {
+                    $flatDb->push($option);
+                }
+            } else {
+                $flatDb->push($mod);
+            }
+        }
+
+        $surchargeCents = 0;
+        foreach ($clientModifiers as $clientMod) {
+            $clientModId = is_array($clientMod) ? ($clientMod['id'] ?? null) : (is_string($clientMod) ? $clientMod : null);
+            $clientModName = is_array($clientMod) ? ($clientMod['name'] ?? null) : null;
+
+            $dbMatch = null;
+
+            if ($clientModId !== null) {
+                $dbMatch = $flatDb->firstWhere('id', $clientModId);
+            }
+            if ($dbMatch === null && $clientModName !== null) {
+                $dbMatch = $flatDb->firstWhere('name', $clientModName);
+            }
+
+            if ($dbMatch !== null) {
+                // Modifier prices in JSON are in currency units → convert to cents
+                $surchargeCents += (int) round(((float) ($dbMatch['price'] ?? 0)) * 100);
+            }
+        }
+
+        return $surchargeCents;
     }
 
     private function errorResponse(

@@ -21,7 +21,7 @@ class SmsIntegrationTest extends TestCase
         $user = User::factory()->create(['phone' => '+99312345678']);
         $order = Order::factory()->create([
             'user_id' => $user->id,
-            'status' => Order::STATUS_COOKING,
+            'status' => Order::STATUS_PREPARING,
         ]);
 
         $order->update(['status' => Order::STATUS_DELIVERING]);
