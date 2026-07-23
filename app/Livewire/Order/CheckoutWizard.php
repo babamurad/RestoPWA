@@ -67,7 +67,7 @@ class CheckoutWizard extends Component
 
     public bool $isAsap = true;
 
-    public string $paymentMethod = 'card';
+    public string $paymentMethod = 'cash';
 
     public ?string $comment = '';
 
@@ -372,7 +372,9 @@ class CheckoutWizard extends Component
 
     private function validatePayment(): bool
     {
-        if (! in_array($this->paymentMethod, ['cash', 'terminal', 'online'], true)) {
+        // Only cash is functionally supported until an online/terminal payment gateway is
+        // integrated — keep in sync with OrderPreconditionValidator::validatePaymentMethod().
+        if (! in_array($this->paymentMethod, ['cash'], true)) {
             $this->error = 'Выберите способ оплаты';
             return false;
         }

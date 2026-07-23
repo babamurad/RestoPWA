@@ -4,7 +4,7 @@ namespace App\Filament\Vendor\Resources;
 
 use App\Filament\Vendor\Resources\VendorSettlementResource\Pages;
 use App\Models\VendorSettlement;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -15,14 +15,14 @@ class VendorSettlementResource extends Resource
 {
     protected static ?string $model = VendorSettlement::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
-    protected static ?string $navigationGroup = 'Финансы';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-currency-dollar';
+    protected static string | \UnitEnum | null $navigationGroup = 'Финансы';
     protected static ?string $modelLabel = 'Выплата';
     protected static ?string $pluralModelLabel = 'История выплат';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([]);
+        return $schema->schema([]);
     }
 
     public static function table(Table $table): Table

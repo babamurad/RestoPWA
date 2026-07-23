@@ -77,20 +77,25 @@ class PaymentMethodValidationTest extends TestCase
         $response->assertStatus(201)->assertJson(['success' => true]);
     }
 
-    public function test_terminal_payment_accepted(): void
+    public function test_terminal_payment_rejected_pending_gateway_integration(): void
     {
+        // 'terminal' is a recognized value in the DTO/Order model for forward-compatibility,
+        // but no payment gateway is integrated yet, so orders can't be created with it
+        // (see docs/00_Active/TZ_ROADMAP_2026-07-18.md §4 — cash-only until a provider exists).
         $response = $this->actingAs($this->user)
             ->postJson('/api/v1/orders', $this->payloadWithPayment('terminal'));
 
-        $response->assertStatus(201)->assertJson(['success' => true]);
+        $response->assertStatus(422)
+            ->assertJsonPath('reason', 'invalid_payment_method');
     }
 
-    public function test_online_payment_accepted(): void
+    public function test_online_payment_rejected_pending_gateway_integration(): void
     {
         $response = $this->actingAs($this->user)
             ->postJson('/api/v1/orders', $this->payloadWithPayment('online'));
 
-        $response->assertStatus(201)->assertJson(['success' => true]);
+        $response->assertStatus(422)
+            ->assertJsonPath('reason', 'invalid_payment_method');
     }
 
     public function test_old_card_value_rejected(): void
@@ -120,15 +125,18 @@ class PaymentMethodValidationTest extends TestCase
             ->assertJsonPath('reason', 'invalid_payment_method');
     }
 
-    public function test_null_payment_method_defaults_to_cash(): void
+    public function test_missing_payment_method_rejected(): void
     {
+        // A missing payment_method must be explicitly rejected by the precondition
+        // validator, not silently pass through — OrderSubmitDTO's 'cash' fallback only
+        // applies after preconditions pass, so it must never mask an omitted field here.
         $payload = $this->payloadWithPayment('cash');
         unset($payload['payment_method']);
 
         $response = $this->actingAs($this->user)
             ->postJson('/api/v1/orders', $payload);
 
-        // Should pass validation since null triggers default 'cash'
-        $response->assertStatus(201)->assertJson(['success' => true]);
+        $response->assertStatus(422)
+            ->assertJsonPath('reason', 'invalid_payment_method');
     }
 }

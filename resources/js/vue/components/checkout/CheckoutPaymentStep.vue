@@ -4,7 +4,8 @@
 
     <div class="space-y-3">
       <!-- Cash Option -->
-      <label class="flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-all duration-200"
+      <label @click="selectMethod('cash')"
+             class="flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-all duration-200"
              :class="localData.payment_method === 'cash' ? 'bg-orange-500/10 border-orange-500 shadow-md shadow-orange-500/5' : 'dark:bg-slate-900 dark:border-slate-800 dark:hover:border-slate-700 bg-slate-50 border-slate-200 hover:border-slate-300'">
         <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors"
              :class="localData.payment_method === 'cash' ? 'border-orange-500' : 'dark:border-slate-600 border-slate-400'">
@@ -17,33 +18,27 @@
         <span class="text-xl">💵</span>
       </label>
 
-      <!-- Terminal Option -->
-      <label class="flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-all duration-200"
-             :class="localData.payment_method === 'terminal' ? 'bg-orange-500/10 border-orange-500 shadow-md shadow-orange-500/5' : 'dark:bg-slate-900 dark:border-slate-800 dark:hover:border-slate-700 bg-slate-50 border-slate-200 hover:border-slate-300'">
-        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors"
-             :class="localData.payment_method === 'terminal' ? 'border-orange-500' : 'dark:border-slate-600 border-slate-400'">
-          <div v-if="localData.payment_method === 'terminal'" class="w-2.5 h-2.5 rounded-full bg-orange-500"></div>
-        </div>
+      <!-- Terminal Option — not processed yet, disabled -->
+      <div class="flex items-center gap-4 p-4 rounded-2xl border cursor-not-allowed opacity-50 dark:bg-slate-900 dark:border-slate-800 bg-slate-50 border-slate-200">
+        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center dark:border-slate-600 border-slate-400"></div>
         <div class="flex-1">
           <div class="text-sm font-bold dark:text-slate-100 text-slate-900">Картой при получении</div>
           <div class="text-[10px] font-semibold dark:text-slate-500 mt-0.5 text-slate-500">Курьер приедет с терминалом</div>
         </div>
+        <span class="text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full bg-slate-400/20 text-slate-500">Скоро</span>
         <span class="text-xl">💳</span>
-      </label>
+      </div>
 
-      <!-- Online Option -->
-      <label class="flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-all duration-200"
-             :class="localData.payment_method === 'online' ? 'bg-orange-500/10 border-orange-500 shadow-md shadow-orange-500/5' : 'dark:bg-slate-900 dark:border-slate-800 dark:hover:border-slate-700 bg-slate-50 border-slate-200 hover:border-slate-300'">
-        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors"
-             :class="localData.payment_method === 'online' ? 'border-orange-500' : 'dark:border-slate-600 border-slate-400'">
-          <div v-if="localData.payment_method === 'online'" class="w-2.5 h-2.5 rounded-full bg-orange-500"></div>
-        </div>
+      <!-- Online Option — not processed yet, disabled -->
+      <div class="flex items-center gap-4 p-4 rounded-2xl border cursor-not-allowed opacity-50 dark:bg-slate-900 dark:border-slate-800 bg-slate-50 border-slate-200">
+        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center dark:border-slate-600 border-slate-400"></div>
         <div class="flex-1">
           <div class="text-sm font-bold dark:text-slate-100 text-slate-900">Онлайн оплата</div>
           <div class="text-[10px] font-semibold dark:text-slate-500 mt-0.5 text-slate-500">Перенаправление на шлюз оплаты</div>
         </div>
+        <span class="text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full bg-slate-400/20 text-slate-500">Скоро</span>
         <span class="text-xl">📱</span>
-      </label>
+      </div>
     </div>
 
     <!-- Optional Comment -->
@@ -79,11 +74,18 @@ const props = defineProps({
 
 const emit = defineEmits(['update-data', 'next-step']);
 
-const localData = ref({ ...props.orderData });
+const localData = ref({ ...props.orderData, payment_method: 'cash' });
 
 watch(localData, (newVal) => {
   emit('update-data', newVal);
 }, { deep: true });
+
+// Only 'cash' is functionally supported until an online/terminal payment gateway
+// is integrated (see docs/00_Active/TZ_ROADMAP_2026-07-18.md §4) — keep in sync with
+// OrderPreconditionValidator::validatePaymentMethod() on the backend.
+const selectMethod = (method) => {
+  localData.value.payment_method = method;
+};
 
 const handleNext = () => {
   emit('next-step');

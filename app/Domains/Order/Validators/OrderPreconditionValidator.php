@@ -214,9 +214,14 @@ final readonly class OrderPreconditionValidator
     private function validatePaymentMethod(array $data): ?OrderRejectReason
     {
         $method = $data['payment_method'] ?? null;
-        $allowed = ['cash', 'terminal', 'online'];
 
-        if ($method !== null && ! in_array($method, $allowed, true)) {
+        // Only cash is functionally supported until an online/terminal payment gateway is
+        // integrated (see docs/00_Active/TZ_ROADMAP_2026-07-18.md §4). "terminal"/"online" are
+        // recognized values in the DTO/Order model for forward-compatibility, but are rejected
+        // here so an order can't be created advertising a payment method nothing actually processes.
+        $allowed = ['cash'];
+
+        if (! in_array($method, $allowed, true)) {
             return OrderRejectReason::INVALID_PAYMENT_METHOD;
         }
 

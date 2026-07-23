@@ -341,4 +341,32 @@ class OrderModifierPriceValidationTest extends TestCase
         $this->assertEquals(10000, $items[0]['total_price']);
         $this->assertEquals(100.00, $order->total);
     }
+
+    public function test_forged_delivery_fee_is_recalculated_from_geo_service(): void
+    {
+        // Client tries to pay almost nothing for delivery by forging delivery_fee + a matching total.
+        // Server must ignore both and always (re)compute delivery_fee via GeoService, same policy
+        // as item/modifier prices above.
+        $this->mock(GeoService::class, function ($mock) {
+            $mock->shouldReceive('checkDeliveryZone')
+                ->andReturn(new DeliveryZoneCheckResult('inside', true, 'Allowed'));
+            $mock->shouldReceive('calculateDeliveryFee')->andReturn(25.00); // 25.00 currency units → 2500 cents
+        });
+
+        $response = $this->actingAs($this->user)
+            ->postJson('/api/v1/orders', $this->basePayload([
+                'delivery_fee' => 1,  // forged: near-zero delivery fee
+                'total' => 10001,     // forged to match the forged delivery_fee
+            ]));
+
+        $response->assertStatus(201);
+        $orderId = $response->json('data.order_id');
+
+        $order = Order::find($orderId);
+
+        // MoneyCast: 2500 recalculated cents → 25.00 currency units — not the client's forged value.
+        $this->assertEquals(25.00, $order->delivery_fee);
+        // MoneyCast: (10000 item cents + 2500 delivery cents) → 125.00 currency units
+        $this->assertEquals(125.00, $order->total);
+    }
 }

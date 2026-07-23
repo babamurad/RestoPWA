@@ -120,27 +120,26 @@ class OrderController
             $request->merge(['items' => $updatedItems]);
         }
 
-        // 4. Calculate total & delivery_fee
+        // 4. Calculate total & delivery_fee — delivery fee is always recalculated server-side
+        // via GeoService, the client-submitted value is never trusted (same policy as item prices above).
         if (is_array($request->input('items'))) {
             $itemsTotal = 0;
             foreach ($request->input('items') as $item) {
                 $itemsTotal += (int) ($item['total_price'] ?? 0);
             }
 
-            $deliveryFee = (int) ($request->input('delivery_fee') ?? 0);
-            if ($deliveryFee === 0) {
-                $vendorId = $request->input('vendor_id');
-                if ($vendorId && is_array($request->input('address'))) {
-                    try {
-                        $geoService = app(\App\Domains\Geo\Services\GeoService::class);
-                        $lat = (float) $request->input('address.lat');
-                        $lon = (float) $request->input('address.lon');
-                        $deliveryFee = (int) round($geoService->calculateDeliveryFee($lat, $lon, $vendorId) * 100);
-                    } catch (\Throwable $e) {
-                        Log::warning('[API Order] Delivery fee calculation failed', [
-                            'exception' => $e->getMessage(),
-                        ]);
-                    }
+            $deliveryFee = 0;
+            $vendorId = $request->input('vendor_id');
+            if ($vendorId && is_array($request->input('address'))) {
+                try {
+                    $geoService = app(\App\Domains\Geo\Services\GeoService::class);
+                    $lat = (float) $request->input('address.lat');
+                    $lon = (float) $request->input('address.lon');
+                    $deliveryFee = (int) round($geoService->calculateDeliveryFee($lat, $lon, $vendorId) * 100);
+                } catch (\Throwable $e) {
+                    Log::warning('[API Order] Delivery fee calculation failed', [
+                        'exception' => $e->getMessage(),
+                    ]);
                 }
             }
 
