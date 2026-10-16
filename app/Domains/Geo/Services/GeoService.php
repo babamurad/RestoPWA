@@ -8,6 +8,7 @@ use App\Domains\Geo\Models\GeocodingLog;
 use App\Domains\Geo\Models\LocalPlace;
 use App\Domains\Vendor\Models\Restaurant;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -161,6 +162,7 @@ class GeoService
         $localResults = $this->suggestAddressesViaLocal($query);
         if (count($localResults) >= 5) {
             $this->logGeocodingEvent('suggest_local', 'local', $query);
+
             return $localResults;
         }
 
@@ -249,6 +251,7 @@ class GeoService
             })->toArray();
         } catch (\Exception $e) {
             Log::warning('Local suggestions error: '.$e->getMessage());
+
             return [];
         }
     }
@@ -316,7 +319,7 @@ class GeoService
     {
         try {
             $place = LocalPlace::query()
-                ->selectRaw("*, (6371 * acos(cos(radians(?)) * cos(radians(lat)) * cos(radians(lon) - radians(?)) + sin(radians(?)) * sin(radians(lat)))) as distance", [$lat, $lon, $lat])
+                ->selectRaw('*, (6371 * acos(cos(radians(?)) * cos(radians(lat)) * cos(radians(lon) - radians(?)) + sin(radians(?)) * sin(radians(lat)))) as distance', [$lat, $lon, $lat])
                 ->having('distance', '<', 0.2)
                 ->orderBy('popularity', 'desc')
                 ->orderBy('distance')
@@ -508,7 +511,7 @@ class GeoService
         try {
             $response = Http::timeout(5)->get('https://geocode-maps.yandex.ru/1.x/', [
                 'apikey' => $this->yandexKey,
-                'geocode' => str_contains($query, 'Туркменабат') ? $query : 'Туркменабат, ' . $query,
+                'geocode' => str_contains($query, 'Туркменабат') ? $query : 'Туркменабат, '.$query,
                 'format' => 'json',
                 'lang' => 'ru_RU',
                 'll' => '63.5593,39.0886',
@@ -545,7 +548,7 @@ class GeoService
     private function geocodeViaNominatim(array $params): ?array
     {
         try {
-            $userAgent = 'RestoPWA/1.0 (' . config('app.url') . ')';
+            $userAgent = 'RestoPWA/1.0 ('.config('app.url').')';
             $response = Http::withHeaders(['User-Agent' => $userAgent])
                 ->timeout(5)
                 ->get('https://nominatim.openstreetmap.org/search', array_merge([
@@ -555,21 +558,21 @@ class GeoService
                     'accept-language' => 'ru',
                 ], $params));
 
-            if ($response->successful() && !empty($response->json())) {
+            if ($response->successful() && ! empty($response->json())) {
                 $result = $response->json()[0];
 
-                    return [
-                        'lat' => (float) $result['lat'],
-                        'lon' => (float) $result['lon'],
-                        'address' => (string) $result['display_name'],
-                        'source' => 'manual_geocoded',
-                        'provider' => 'nominatim',
-                    ];
-                }
+                return [
+                    'lat' => (float) $result['lat'],
+                    'lon' => (float) $result['lon'],
+                    'address' => (string) $result['display_name'],
+                    'source' => 'manual_geocoded',
+                    'provider' => 'nominatim',
+                ];
+            }
 
-            Log::warning('Nominatim Geocoding failed for: ' . json_encode($params));
+            Log::warning('Nominatim Geocoding failed for: '.json_encode($params));
         } catch (\Exception $e) {
-            Log::error('Nominatim Geocoding exception: ' . $e->getMessage());
+            Log::error('Nominatim Geocoding exception: '.$e->getMessage());
         }
 
         return null;
@@ -581,7 +584,7 @@ class GeoService
     private function reverseGeocodeViaNominatim(array $params): ?array
     {
         try {
-            $userAgent = 'RestoPWA/1.0 (' . config('app.url') . ')';
+            $userAgent = 'RestoPWA/1.0 ('.config('app.url').')';
             $response = Http::withHeaders(['User-Agent' => $userAgent])
                 ->timeout(5)
                 ->get('https://nominatim.openstreetmap.org/reverse', array_merge([
@@ -593,18 +596,18 @@ class GeoService
             if ($response->successful() && $response->json('display_name')) {
                 $result = $response->json();
 
-                    return [
-                        'lat' => (float) $result['lat'],
-                        'lon' => (float) $result['lon'],
-                        'address' => (string) $result['display_name'],
-                        'source' => 'map_pin',
-                        'provider' => 'nominatim',
-                    ];
-                }
+                return [
+                    'lat' => (float) $result['lat'],
+                    'lon' => (float) $result['lon'],
+                    'address' => (string) $result['display_name'],
+                    'source' => 'map_pin',
+                    'provider' => 'nominatim',
+                ];
+            }
 
-            Log::warning('Nominatim Reverse Geocoding failed for: ' . json_encode($params));
+            Log::warning('Nominatim Reverse Geocoding failed for: '.json_encode($params));
         } catch (\Exception $e) {
-            Log::error('Nominatim Reverse Geocoding exception: ' . $e->getMessage());
+            Log::error('Nominatim Reverse Geocoding exception: '.$e->getMessage());
         }
 
         return null;
@@ -616,7 +619,7 @@ class GeoService
     private function suggestAddressesViaNominatim(string $query): array
     {
         try {
-            $userAgent = 'RestoPWA/1.0 (' . config('app.url') . ')';
+            $userAgent = 'RestoPWA/1.0 ('.config('app.url').')';
             $response = Http::withHeaders(['User-Agent' => $userAgent])
                 ->timeout(5)
                 ->get('https://nominatim.openstreetmap.org/search', [
@@ -641,7 +644,7 @@ class GeoService
                 }, $results);
             }
         } catch (\Exception $e) {
-            Log::error('Nominatim Address suggestion exception: ' . $e->getMessage());
+            Log::error('Nominatim Address suggestion exception: '.$e->getMessage());
         }
 
         return [];
@@ -654,6 +657,7 @@ class GeoService
     {
         try {
             $result = DB::select("SELECT proname FROM pg_proc WHERE proname = 'addgeometrycolumn' LIMIT 1");
+
             return ! empty($result);
         } catch (\Throwable $e) {
             return false;
@@ -667,15 +671,15 @@ class GeoService
     {
         $driver = DB::getDriverName();
         $hasPostGis = $this->checkPostGis();
-        
+
         if ($driver === 'sqlite') {
             $row = DB::selectOne('
                 SELECT id, (delivery_zones IS NULL OR delivery_zones = "") as is_zones_empty
                 FROM restaurants
                 WHERE id = ?
             ', [$vendorId]);
-            
-            if (!$row) {
+
+            if (! $row) {
                 $result = new DeliveryZoneCheckResult(
                     status: 'zone_missing',
                     allowed: false,
@@ -683,9 +687,10 @@ class GeoService
                     debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
                 );
                 $this->logGeocodingEvent('zone_missing', 'postgis', null, $lat, $lon, 'NO_RESTAURANT', 'Ресторан не найден', $vendorId);
+
                 return $result;
             }
-            
+
             if ($row->is_zones_empty) {
                 $result = new DeliveryZoneCheckResult(
                     status: 'zone_missing',
@@ -694,9 +699,10 @@ class GeoService
                     debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
                 );
                 $this->logGeocodingEvent('zone_missing', 'postgis', null, $lat, $lon, 'ZONE_UNCONFIGURED', 'Зона доставки не настроена', $vendorId);
+
                 return $result;
             }
-            
+
             $result = new DeliveryZoneCheckResult(
                 status: 'inside',
                 allowed: true,
@@ -704,17 +710,18 @@ class GeoService
                 debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
             );
             $this->logGeocodingEvent('inside', 'postgis', null, $lat, $lon, null, null, $vendorId);
+
             return $result;
         }
-        
-        if (!$hasPostGis) {
+
+        if (! $hasPostGis) {
             $row = DB::selectOne('
                 SELECT id, (delivery_zones IS NULL) as is_zones_empty
                 FROM restaurants
                 WHERE id = ?
             ', [$vendorId]);
-            
-            if (!$row) {
+
+            if (! $row) {
                 $result = new DeliveryZoneCheckResult(
                     status: 'zone_missing',
                     allowed: false,
@@ -722,9 +729,10 @@ class GeoService
                     debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
                 );
                 $this->logGeocodingEvent('zone_missing', 'postgis', null, $lat, $lon, 'NO_RESTAURANT', 'Ресторан не найден', $vendorId);
+
                 return $result;
             }
-            
+
             if ($row->is_zones_empty) {
                 $result = new DeliveryZoneCheckResult(
                     status: 'zone_missing',
@@ -733,22 +741,24 @@ class GeoService
                     debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
                 );
                 $this->logGeocodingEvent('zone_missing', 'postgis', null, $lat, $lon, 'ZONE_UNCONFIGURED', 'Зона доставки не настроена', $vendorId);
+
                 return $result;
             }
-            
+
             $allowed = (bool) config('services.geo_postgis_error_allowed', true);
             $result = new DeliveryZoneCheckResult(
                 status: 'postgis_error',
                 allowed: $allowed,
-                message: $allowed 
-                    ? 'Доставка разрешена (PostGIS недоступен).' 
+                message: $allowed
+                    ? 'Доставка разрешена (PostGIS недоступен).'
                     : 'Доставка временно недоступна из-за технических проблем на сервере.',
                 debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
             );
             $this->logGeocodingEvent('postgis_error', 'postgis', null, $lat, $lon, 'POSTGIS_UNAVAILABLE', 'PostGIS недоступен', $vendorId);
+
             return $result;
         }
-        
+
         try {
             $result = DB::selectOne('
                 SELECT 
@@ -768,6 +778,7 @@ class GeoService
                     debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
                 );
                 $this->logGeocodingEvent('zone_missing', 'postgis', null, $lat, $lon, 'NO_RESTAURANT', 'Ресторан не найден при проверке геометрии', $vendorId);
+
                 return $res;
             }
 
@@ -779,10 +790,11 @@ class GeoService
                     debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
                 );
                 $this->logGeocodingEvent('zone_missing', 'postgis', null, $lat, $lon, 'ZONE_UNCONFIGURED', 'Зона доставки не настроена', $vendorId);
+
                 return $res;
             }
 
-            if (!$result->is_valid) {
+            if (! $result->is_valid) {
                 $res = new DeliveryZoneCheckResult(
                     status: 'invalid_geometry',
                     allowed: false,
@@ -790,12 +802,13 @@ class GeoService
                     debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon, 'is_valid' => false]
                 );
                 $this->logGeocodingEvent('invalid_geometry', 'postgis', null, $lat, $lon, 'INVALID_GEOMETRY', 'Некорректная геометрия зоны доставки', $vendorId);
+
                 return $res;
             }
 
             $isInside = (bool) $result->is_inside;
 
-            Log::info("[GeoService] Diagnostic delivery zone check", [
+            Log::info('[GeoService] Diagnostic delivery zone check', [
                 'vendor_id' => $vendorId,
                 'lat' => $lat,
                 'lon' => $lon,
@@ -826,22 +839,22 @@ class GeoService
                 debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon]
             );
 
-        } catch (\Illuminate\Database\QueryException $e) {
-            Log::error("[GeoService] Delivery zone check failed: " . $e->getMessage());
+        } catch (QueryException $e) {
+            Log::error('[GeoService] Delivery zone check failed: '.$e->getMessage());
 
             $allowed = (bool) config('services.geo_postgis_error_allowed', true);
-            
+
             $res = new DeliveryZoneCheckResult(
                 status: 'postgis_error',
                 allowed: $allowed,
-                message: $allowed 
-                    ? 'Доставка разрешена (ошибка PostGIS функций).' 
+                message: $allowed
+                    ? 'Доставка разрешена (ошибка PostGIS функций).'
                     : 'Произошла ошибка при проверке адреса на сервере.',
                 debugContext: ['vendor_id' => $vendorId, 'lat' => $lat, 'lon' => $lon, 'error' => $e->getMessage()]
             );
-            
+
             $this->logGeocodingEvent('postgis_error', 'postgis', null, $lat, $lon, 'QUERY_EXCEPTION', $e->getMessage(), $vendorId);
-            
+
             return $res;
         }
     }
@@ -875,9 +888,10 @@ class GeoService
                 ->where('is_active', true)
                 ->orderBy('distance')
                 ->get();
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             if (str_contains(strtolower($e->getMessage()), 'st_makepoint')) {
                 Log::warning('PostGIS is not enabled. Returning all active restaurants.');
+
                 return $query->where('is_active', true)->get();
             }
             throw $e;
