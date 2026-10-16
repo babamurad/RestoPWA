@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Domains\Logistics\Models\Courier;
 use App\Domains\Order\Models\Order;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ApiResponses;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 class OrderController extends Controller
 {
     use ApiResponses;
+
     public function index(Request $request): JsonResponse
     {
         $user = Auth::user();
@@ -108,15 +110,25 @@ class OrderController extends Controller
         ]);
 
         $user = Auth::user();
-        if (!$user || !($user->isAdmin() || $user->isRestaurateur())) {
+        if (! $user || ! ($user->isAdmin() || $user->isRestaurateur())) {
             return $this->error('Forbidden', 403);
         }
 
-        $order = Order::findOrFail($id);
-        
-        $courier = \App\Domains\Logistics\Models\Courier::find($request->input('courier_id'));
-        if (!$courier) {
+        $order = Order::with('restaurant')->findOrFail($id);
+
+        // Restaurateur may only manage orders of their own restaurant.
+        if (! $user->isAdmin() && (! $order->restaurant || ! $user->canAccessTenant($order->restaurant))) {
+            return $this->error('Forbidden', 403);
+        }
+
+        $courier = Courier::find($request->input('courier_id'));
+        if (! $courier) {
             return $this->error('Courier not found', 404);
+        }
+
+        // A courier bound to a restaurant may only deliver that restaurant's orders.
+        if ($courier->vendor_id && $courier->vendor_id !== $order->vendor_id) {
+            return $this->error('Courier belongs to another restaurant', 422);
         }
 
         $order->update([

@@ -28,3 +28,6 @@ Thumbs.db
 /storage/framework/views
 /bootstrap/cache/*.php
 !/bootstrap/cache/.gitignore
+
+# Local tooling
+/composer.phar

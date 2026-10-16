@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class CourierOrderController extends Controller
 {
@@ -18,12 +19,12 @@ class CourierOrderController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = Auth::user();
-        if (!$user || !$user->isCourier()) {
+        if (! $user || ! $user->isCourier()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
         $courierId = $user->courierProfile->id ?? null;
-        if (!$courierId) {
+        if (! $courierId) {
             return response()->json(['message' => 'Courier profile not found'], 404);
         }
 
@@ -31,7 +32,7 @@ class CourierOrderController extends Controller
 
         $availableQuery = Order::where('status', Order::STATUS_READY_FOR_PICKUP)
             ->whereNull('courier_id');
-        
+
         if ($vendorId) {
             $availableQuery->where('vendor_id', $vendorId);
         }
@@ -56,38 +57,43 @@ class CourierOrderController extends Controller
     public function accept(Request $request, string $id): JsonResponse
     {
         $user = Auth::user();
-        if (!$user || !$user->isCourier()) {
+        if (! $user || ! $user->isCourier()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
         $courier = $user->courierProfile;
-        if (!$courier) {
+        if (! $courier) {
             return response()->json(['message' => 'Courier profile not found'], 404);
         }
 
-        $order = Order::findOrFail($id);
+        // Lock the order row so two couriers accepting at the same time
+        // cannot both pass the checks below: the second one waits for the
+        // first transaction to commit and then sees courier_id already set.
+        return DB::transaction(function () use ($id, $courier): JsonResponse {
+            $order = Order::whereKey($id)->lockForUpdate()->firstOrFail();
 
-        if ($order->courier_id !== null && $order->courier_id !== $courier->id) {
-            return response()->json(['message' => 'Order already assigned to another courier'], 409);
-        }
+            if ($order->courier_id !== null && $order->courier_id !== $courier->id) {
+                return response()->json(['message' => 'Order already assigned to another courier'], 409);
+            }
 
-        if ($order->status !== Order::STATUS_READY_FOR_PICKUP) {
-            return response()->json(['message' => 'Order is not ready for pickup'], 400);
-        }
+            if ($order->status !== Order::STATUS_READY_FOR_PICKUP) {
+                return response()->json(['message' => 'Order is not ready for pickup'], 400);
+            }
 
-        if ($courier->vendor_id && $order->vendor_id !== $courier->vendor_id) {
-            return response()->json(['message' => 'Forbidden vendor'], 403);
-        }
+            if ($courier->vendor_id && $order->vendor_id !== $courier->vendor_id) {
+                return response()->json(['message' => 'Forbidden vendor'], 403);
+            }
 
-        $order->update([
-            'courier_id' => $courier->id,
-            'status' => Order::STATUS_DELIVERING,
-        ]);
+            $order->update([
+                'courier_id' => $courier->id,
+                'status' => Order::STATUS_DELIVERING,
+            ]);
 
-        return response()->json([
-            'message' => 'Order accepted',
-            'data' => $order->fresh(),
-        ]);
+            return response()->json([
+                'message' => 'Order accepted',
+                'data' => $order->fresh(),
+            ]);
+        });
     }
 
     /**
@@ -96,11 +102,11 @@ class CourierOrderController extends Controller
     public function updateStatus(Request $request, string $id): JsonResponse
     {
         $request->validate([
-            'status' => 'required|string|in:' . implode(',', array_keys(Order::STATUSES)),
+            'status' => 'required|string|in:'.implode(',', array_keys(Order::STATUSES)),
         ]);
 
         $user = Auth::user();
-        if (!$user || !$user->isCourier()) {
+        if (! $user || ! $user->isCourier()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -112,7 +118,7 @@ class CourierOrderController extends Controller
 
         $newStatus = $request->input('status');
 
-        if (!in_array($newStatus, $order->getNextStatuses(), true)) {
+        if (! in_array($newStatus, $order->getNextStatuses(), true)) {
             return response()->json(['message' => 'Invalid status transition'], 400);
         }
 
@@ -135,7 +141,7 @@ class CourierOrderController extends Controller
         ]);
 
         $user = Auth::user();
-        if (!$user || !$user->isCourier()) {
+        if (! $user || ! $user->isCourier()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -160,7 +166,7 @@ class CourierOrderController extends Controller
         ]);
 
         $user = Auth::user();
-        if (!$user || !$user->isCourier()) {
+        if (! $user || ! $user->isCourier()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -178,12 +184,12 @@ class CourierOrderController extends Controller
     public function earnings(Request $request): JsonResponse
     {
         $user = Auth::user();
-        if (!$user || !$user->isCourier()) {
+        if (! $user || ! $user->isCourier()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
         $courier = $user->courierProfile;
-        if (!$courier) {
+        if (! $courier) {
             return response()->json(['data' => []]);
         }
 
