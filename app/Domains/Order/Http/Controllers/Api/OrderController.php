@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Order\Http\Controllers\Api;
 
+use App\Domains\Geo\Services\GeoService;
 use App\Domains\Menu\Models\Product;
 use App\Domains\Order\DTO\OrderSubmitDTO;
 use App\Domains\Order\Models\Order;
@@ -15,8 +16,9 @@ use App\Support\PIIMasker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class OrderController
 {
@@ -25,8 +27,7 @@ class OrderController
     public function __construct(
         private readonly OrderService $orderService,
         private readonly OrderPreconditionValidator $preconditionValidator,
-    ) {
-    }
+    ) {}
 
     public function store(Request $request): JsonResponse
     {
@@ -60,23 +61,23 @@ class OrderController
             if (empty($addressInput['lat']) || empty($addressInput['lon'])) {
                 $lat = 39.0886; // Default latitude for Turkmenabat
                 $lon = 63.5593; // Default longitude for Turkmenabat
-                
+
                 $addressString = $addressInput['address'] ?? $addressInput['manual_address'] ?? '';
-                if (!empty($addressString)) {
+                if (! empty($addressString)) {
                     try {
-                        $geoService = app(\App\Domains\Geo\Services\GeoService::class);
+                        $geoService = app(GeoService::class);
                         $geoResult = $geoService->geocodeWithFallback($addressString);
-                        if ($geoResult && !empty($geoResult['lat']) && !empty($geoResult['lon'])) {
+                        if ($geoResult && ! empty($geoResult['lat']) && ! empty($geoResult['lon'])) {
                             $lat = $geoResult['lat'];
                             $lon = $geoResult['lon'];
                         }
                     } catch (\Throwable $e) {
                         Log::warning('[API Order] Geocoding fallback failed', [
-                            'exception' => $e->getMessage()
+                            'exception' => $e->getMessage(),
                         ]);
                     }
                 }
-                
+
                 $addressInput['lat'] = $lat;
                 $addressInput['lon'] = $lon;
             }
@@ -130,9 +131,12 @@ class OrderController
 
             $deliveryFee = 0;
             $vendorId = $request->input('vendor_id');
+            // delivery_type is not persisted on the order yet, so a client-sent
+            // "pickup" must not waive the fee: the order would still be dispatched
+            // to the given address as a regular delivery.
             if ($vendorId && is_array($request->input('address'))) {
                 try {
-                    $geoService = app(\App\Domains\Geo\Services\GeoService::class);
+                    $geoService = app(GeoService::class);
                     $lat = (float) $request->input('address.lat');
                     $lon = (float) $request->input('address.lon');
                     $deliveryFee = (int) round($geoService->calculateDeliveryFee($lat, $lon, $vendorId) * 100);
@@ -184,7 +188,7 @@ class OrderController
                 'comment' => 'nullable|string',
                 'is_offline' => 'nullable|boolean',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             Log::warning('[API Order] Validation failed', [
                 'trace_id' => $traceId,
                 'reason' => OrderRejectReason::VALIDATION->value,
@@ -201,7 +205,7 @@ class OrderController
         $user = $request->user();
 
         if (! $user) {
-            \Illuminate\Support\Facades\Log::error('Order Auth Failed', [
+            Log::error('Order Auth Failed', [
                 'has_session' => $request->hasSession(),
                 'session_id' => $request->hasSession() ? $request->session()->getId() : 'none',
                 'cookies' => $request->cookies->all(),
