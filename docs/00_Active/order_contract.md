@@ -22,7 +22,8 @@
     }
   ],
   "total": "integer, required (в центах)",
-  "delivery_fee": "integer, required (в центах)",
+  "delivery_fee": "integer, required (в центах; сервер всегда пересчитывает)",
+  "delivery_type": "string, optional (delivery | pickup; по умолчанию delivery)",
   "address": {
     "lat": "numeric, required",
     "lon": "numeric, required",
@@ -51,6 +52,7 @@
 
 ### Правила маппинга
 - **Цены**: Поля `unit_price`, `total_price` (на уровне товара), `delivery_fee` и `total` передаются в **целочисленном формате (в центах / минимальных единицах)**.
+- **Доставка**: `delivery_fee` и `total` от клиента сервер не принимает на веру и пересчитывает: `delivery_fee` = `Restaurant.delivery_fee` (тот же тариф, что возвращает `POST /api/v1/cart/sync`), для `delivery_type = pickup` — 0; `total` = сумма `total_price` + `delivery_fee`.
 - **Trace ID**: Генерируется на Frontend в момент начала оформления заказа и передается в `trace_id` body и заголовке `X-Trace-Id` во всех API-запросах для сквозного логирования.
 - **Idempotency Key**: Уникальный ключ транзакции. Передается в `idempotency_key` body и заголовке `X-Idempotency-Key`. Если Frontend отправляет запрос с существующим ключом, Backend возвращает успешный ответ (если заказ уже был создан) без дублирования.
 

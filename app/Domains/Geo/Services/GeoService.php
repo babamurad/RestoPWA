@@ -885,20 +885,25 @@ class GeoService
     }
 
     /**
-     * Calculate delivery fee for a specific vendor at a given point.
+     * Calculate delivery fee (in currency units) for a specific vendor at a given point.
+     *
+     * Uses Restaurant::delivery_fee — the same value the restaurateur edits in
+     * Filament and the cart shows via POST /api/v1/cart/sync.
      */
     public function calculateDeliveryFee(float $lat, float $lon, string $vendorId): float
     {
         $restaurant = Restaurant::find($vendorId);
 
         if (! $restaurant) {
-            return (float) env('DELIVERY_FEE_DEFAULT', 5.0);
+            return 0.0;
         }
+
+        $fee = (float) $restaurant->delivery_fee;
 
         if (! $this->isPointInDeliveryZone($lat, $lon, $vendorId)) {
-            return (float) ($restaurant->settings['delivery_fee_outside'] ?? env('DELIVERY_FEE_DEFAULT', 5.0));
+            return (float) ($restaurant->settings['delivery_fee_outside'] ?? $fee);
         }
 
-        return (float) ($restaurant->settings['delivery_fee'] ?? env('DELIVERY_FEE_DEFAULT', 5.0));
+        return $fee;
     }
 }

@@ -130,7 +130,8 @@ class OrderController
 
             $deliveryFee = 0;
             $vendorId = $request->input('vendor_id');
-            if ($vendorId && is_array($request->input('address'))) {
+            $isPickup = $request->input('delivery_type') === 'pickup';
+            if ($vendorId && ! $isPickup && is_array($request->input('address'))) {
                 try {
                     $geoService = app(\App\Domains\Geo\Services\GeoService::class);
                     $lat = (float) $request->input('address.lat');
