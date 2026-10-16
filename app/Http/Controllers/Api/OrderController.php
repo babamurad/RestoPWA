@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Domains\Logistics\Models\Courier;
 use App\Domains\Order\Models\Order;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ApiResponses;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 class OrderController extends Controller
 {
     use ApiResponses;
+
     public function index(Request $request): JsonResponse
     {
         $user = Auth::user();
@@ -108,7 +110,7 @@ class OrderController extends Controller
         ]);
 
         $user = Auth::user();
-        if (!$user || !($user->isAdmin() || $user->isRestaurateur())) {
+        if (! $user || ! ($user->isAdmin() || $user->isRestaurateur())) {
             return $this->error('Forbidden', 403);
         }
 
@@ -119,8 +121,8 @@ class OrderController extends Controller
             return $this->error('Forbidden', 403);
         }
 
-        $courier = \App\Domains\Logistics\Models\Courier::find($request->input('courier_id'));
-        if (!$courier) {
+        $courier = Courier::find($request->input('courier_id'));
+        if (! $courier) {
             return $this->error('Courier not found', 404);
         }
 

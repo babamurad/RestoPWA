@@ -19,12 +19,12 @@ class CourierOrderController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = Auth::user();
-        if (!$user || !$user->isCourier()) {
+        if (! $user || ! $user->isCourier()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
         $courierId = $user->courierProfile->id ?? null;
-        if (!$courierId) {
+        if (! $courierId) {
             return response()->json(['message' => 'Courier profile not found'], 404);
         }
 
@@ -32,7 +32,7 @@ class CourierOrderController extends Controller
 
         $availableQuery = Order::where('status', Order::STATUS_READY_FOR_PICKUP)
             ->whereNull('courier_id');
-        
+
         if ($vendorId) {
             $availableQuery->where('vendor_id', $vendorId);
         }
@@ -57,12 +57,12 @@ class CourierOrderController extends Controller
     public function accept(Request $request, string $id): JsonResponse
     {
         $user = Auth::user();
-        if (!$user || !$user->isCourier()) {
+        if (! $user || ! $user->isCourier()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
         $courier = $user->courierProfile;
-        if (!$courier) {
+        if (! $courier) {
             return response()->json(['message' => 'Courier profile not found'], 404);
         }
 
@@ -102,11 +102,11 @@ class CourierOrderController extends Controller
     public function updateStatus(Request $request, string $id): JsonResponse
     {
         $request->validate([
-            'status' => 'required|string|in:' . implode(',', array_keys(Order::STATUSES)),
+            'status' => 'required|string|in:'.implode(',', array_keys(Order::STATUSES)),
         ]);
 
         $user = Auth::user();
-        if (!$user || !$user->isCourier()) {
+        if (! $user || ! $user->isCourier()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -118,7 +118,7 @@ class CourierOrderController extends Controller
 
         $newStatus = $request->input('status');
 
-        if (!in_array($newStatus, $order->getNextStatuses(), true)) {
+        if (! in_array($newStatus, $order->getNextStatuses(), true)) {
             return response()->json(['message' => 'Invalid status transition'], 400);
         }
 
@@ -141,7 +141,7 @@ class CourierOrderController extends Controller
         ]);
 
         $user = Auth::user();
-        if (!$user || !$user->isCourier()) {
+        if (! $user || ! $user->isCourier()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -166,7 +166,7 @@ class CourierOrderController extends Controller
         ]);
 
         $user = Auth::user();
-        if (!$user || !$user->isCourier()) {
+        if (! $user || ! $user->isCourier()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -184,12 +184,12 @@ class CourierOrderController extends Controller
     public function earnings(Request $request): JsonResponse
     {
         $user = Auth::user();
-        if (!$user || !$user->isCourier()) {
+        if (! $user || ! $user->isCourier()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
         $courier = $user->courierProfile;
-        if (!$courier) {
+        if (! $courier) {
             return response()->json(['data' => []]);
         }
 
