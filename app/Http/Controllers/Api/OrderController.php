@@ -112,11 +112,21 @@ class OrderController extends Controller
             return $this->error('Forbidden', 403);
         }
 
-        $order = Order::findOrFail($id);
-        
+        $order = Order::with('restaurant')->findOrFail($id);
+
+        // Restaurateur may only manage orders of their own restaurant.
+        if (! $user->isAdmin() && (! $order->restaurant || ! $user->canAccessTenant($order->restaurant))) {
+            return $this->error('Forbidden', 403);
+        }
+
         $courier = \App\Domains\Logistics\Models\Courier::find($request->input('courier_id'));
         if (!$courier) {
             return $this->error('Courier not found', 404);
+        }
+
+        // A courier bound to a restaurant may only deliver that restaurant's orders.
+        if ($courier->vendor_id && $courier->vendor_id !== $order->vendor_id) {
+            return $this->error('Courier belongs to another restaurant', 422);
         }
 
         $order->update([

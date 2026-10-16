@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class CourierOrderController extends Controller
 {
@@ -65,29 +66,34 @@ class CourierOrderController extends Controller
             return response()->json(['message' => 'Courier profile not found'], 404);
         }
 
-        $order = Order::findOrFail($id);
+        // Lock the order row so two couriers accepting at the same time
+        // cannot both pass the checks below: the second one waits for the
+        // first transaction to commit and then sees courier_id already set.
+        return DB::transaction(function () use ($id, $courier): JsonResponse {
+            $order = Order::whereKey($id)->lockForUpdate()->firstOrFail();
 
-        if ($order->courier_id !== null && $order->courier_id !== $courier->id) {
-            return response()->json(['message' => 'Order already assigned to another courier'], 409);
-        }
+            if ($order->courier_id !== null && $order->courier_id !== $courier->id) {
+                return response()->json(['message' => 'Order already assigned to another courier'], 409);
+            }
 
-        if ($order->status !== Order::STATUS_READY_FOR_PICKUP) {
-            return response()->json(['message' => 'Order is not ready for pickup'], 400);
-        }
+            if ($order->status !== Order::STATUS_READY_FOR_PICKUP) {
+                return response()->json(['message' => 'Order is not ready for pickup'], 400);
+            }
 
-        if ($courier->vendor_id && $order->vendor_id !== $courier->vendor_id) {
-            return response()->json(['message' => 'Forbidden vendor'], 403);
-        }
+            if ($courier->vendor_id && $order->vendor_id !== $courier->vendor_id) {
+                return response()->json(['message' => 'Forbidden vendor'], 403);
+            }
 
-        $order->update([
-            'courier_id' => $courier->id,
-            'status' => Order::STATUS_DELIVERING,
-        ]);
+            $order->update([
+                'courier_id' => $courier->id,
+                'status' => Order::STATUS_DELIVERING,
+            ]);
 
-        return response()->json([
-            'message' => 'Order accepted',
-            'data' => $order->fresh(),
-        ]);
+            return response()->json([
+                'message' => 'Order accepted',
+                'data' => $order->fresh(),
+            ]);
+        });
     }
 
     /**
