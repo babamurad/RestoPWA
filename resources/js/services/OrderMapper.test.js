@@ -104,7 +104,9 @@ describe('OrderMapper', () => {
 
             expect(payload).toMatchObject({
                 vendor_id: 'v1',
-                total: 250500,
+                // items (2 × 100000) + delivery_fee (500), same formula as
+                // OrderPreconditionValidator::validateTotal on the backend
+                total: 200500,
                 delivery_fee: 500,
                 delivery_time: 'asap',
                 payment_method: 'card',
