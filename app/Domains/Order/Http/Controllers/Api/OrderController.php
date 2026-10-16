@@ -131,8 +131,10 @@ class OrderController
 
             $deliveryFee = 0;
             $vendorId = $request->input('vendor_id');
-            $isPickup = $request->input('delivery_type') === 'pickup';
-            if ($vendorId && ! $isPickup && is_array($request->input('address'))) {
+            // delivery_type is not persisted on the order yet, so a client-sent
+            // "pickup" must not waive the fee: the order would still be dispatched
+            // to the given address as a regular delivery.
+            if ($vendorId && is_array($request->input('address'))) {
                 try {
                     $geoService = app(GeoService::class);
                     $lat = (float) $request->input('address.lat');

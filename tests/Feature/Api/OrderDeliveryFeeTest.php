@@ -17,7 +17,7 @@ use Tests\TestCase;
 /**
  * The delivery fee charged on an order must be the one the customer saw in the
  * cart: Restaurant::delivery_fee (set by the restaurateur in Filament and
- * returned by POST /api/v1/cart/sync), and zero for pickup.
+ * returned by POST /api/v1/cart/sync).
  */
 class OrderDeliveryFeeTest extends TestCase
 {
@@ -109,8 +109,10 @@ class OrderDeliveryFeeTest extends TestCase
         $this->assertEquals(100.00, $order->total);
     }
 
-    public function test_pickup_order_has_no_delivery_fee(): void
+    public function test_client_sent_pickup_type_does_not_waive_delivery_fee(): void
     {
+        // delivery_type is not persisted on the order, so the order is still
+        // dispatched to the address as a delivery and must pay for it.
         $response = $this->actingAs($this->user)->postJson('/api/v1/orders', $this->payload([
             'delivery_type' => 'pickup',
             'total' => 10000,
@@ -119,7 +121,7 @@ class OrderDeliveryFeeTest extends TestCase
 
         $response->assertStatus(201);
         $order = Order::find($response->json('data.order_id'));
-        $this->assertEquals(0.00, $order->delivery_fee);
-        $this->assertEquals(100.00, $order->total);
+        $this->assertEquals(12.00, $order->delivery_fee);
+        $this->assertEquals(112.00, $order->total);
     }
 }
