@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
@@ -50,12 +51,12 @@ class AuthController extends Controller
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Неверный email или пароль',
+                'message' => __('api.invalid_credentials'),
             ], 401);
         }
 
         return back()->withErrors([
-            'email' => 'Неверный email или пароль',
+            'email' => __('api.invalid_credentials'),
         ])->onlyInput('email');
     }
 
@@ -74,8 +75,9 @@ class AuthController extends Controller
             'password' => ['required', 'confirmed', Password::min(8)],
             'phone' => ['nullable', 'regex:/^\+993\d{8}$/', 'unique:users,phone'],
             'terms_accepted' => 'accepted',
+            'locale' => ['nullable', Rule::in(config('app.supported_locales'))],
         ], [
-            'terms_accepted.accepted' => 'Необходимо принять пользовательское соглашение и политику конфиденциальности.',
+            'terms_accepted.accepted' => __('api.terms_required'),
         ]);
 
         $user = User::create([
@@ -83,6 +85,7 @@ class AuthController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'phone' => $validated['phone'] ?? null,
+            'locale' => $validated['locale'] ?? app()->getLocale(),
             'terms_accepted_at' => now(),
             'terms_version' => config('legal.version'),
         ]);
@@ -137,7 +140,23 @@ class AuthController extends Controller
                 'phone' => $user->phone,
                 'role' => $user->role?->value ?? $user->role,
                 'avatar' => $user->avatar,
+                'locale' => $user->locale,
             ],
+        ]);
+    }
+
+    /** Language of the customer app, push notifications and SMS. */
+    public function updateLocale(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'locale' => ['required', Rule::in(config('app.supported_locales'))],
+        ]);
+
+        $request->user()->update(['locale' => $validated['locale']]);
+
+        return response()->json([
+            'success' => true,
+            'locale' => $validated['locale'],
         ]);
     }
 }

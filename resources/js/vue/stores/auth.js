@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import apiClient from '../api/client';
+import { currentLocale, setLocale, t } from '../i18n';
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
@@ -16,6 +17,7 @@ export const useAuthStore = defineStore('auth', {
                 if (response.data.success && response.data.user) {
                     this.user = response.data.user;
                     this.isAuthenticated = true;
+                    this.syncLocaleFromUser();
                 } else {
                     this.user = null;
                     this.isAuthenticated = false;
@@ -36,11 +38,27 @@ export const useAuthStore = defineStore('auth', {
                     this.user = response.data.user;
                     this.isAuthenticated = true;
                     this.hasChecked = true;
+                    this.syncLocaleFromUser();
                 } else {
-                    throw new Error(response.data?.message || 'Неверные учетные данные');
+                    throw new Error(response.data?.message || t('auth.invalid_credentials'));
                 }
             } finally {
                 this.isLoading = false;
+            }
+        },
+        // A signed-in user's saved language wins over this device's choice
+        syncLocaleFromUser() {
+            if (this.user?.locale && this.user.locale !== currentLocale()) {
+                setLocale(this.user.locale);
+            }
+        },
+        async changeLocale(locale) {
+            const next = setLocale(locale);
+            if (this.isAuthenticated) {
+                await apiClient.put('/profile/locale', { locale: next });
+                if (this.user) {
+                    this.user.locale = next;
+                }
             }
         },
         async logout() {

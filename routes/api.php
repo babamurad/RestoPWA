@@ -71,6 +71,7 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->gro
 
         // Profile features
         Route::prefix('profile')->group(function () {
+            Route::put('locale', [AuthController::class, 'updateLocale'])->name('api.profile.locale');
             Route::apiResource('addresses', AddressController::class)->except(['show']);
             Route::apiResource('payments', PaymentMethodController::class)->only(['index', 'store', 'destroy']);
             Route::apiResource('support', SupportController::class)->only(['index', 'store']);

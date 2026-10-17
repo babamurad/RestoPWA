@@ -147,20 +147,13 @@ class OrderObserver
         try {
             $pushService = app(PushNotificationService::class);
 
-            $titles = [
-                'cooking' => 'Заказ начали готовить',
-                'delivering' => 'Заказ в пути',
-                'delivered' => 'Заказ доставлен',
-            ];
+            // Push and SMS go out in the customer's language
+            $user = User::find($order->user_id);
+            $locale = $user?->locale ?? config('app.locale');
+            $key = in_array($status, ['cooking', 'delivering', 'delivered'], true) ? $status : 'default';
 
-            $bodies = [
-                'cooking' => 'Ресторан начал готовить ваш заказ',
-                'delivering' => 'Курьер уже в пути к вам',
-                'delivered' => 'Ваш заказ доставлен',
-            ];
-
-            $title = $titles[$status] ?? 'Статус заказа изменён';
-            $body = $bodies[$status] ?? '';
+            $title = __("notifications.order.{$key}.title", [], $locale);
+            $body = __("notifications.order.{$key}.body", [], $locale);
 
             $pushService->sendToUser(
                 $order->user_id,
@@ -172,13 +165,9 @@ class OrderObserver
                 ]
             );
 
-            // Send SMS
-            $user = User::find($order->user_id);
-            if ($user && $user->phone) {
-                // Only send SMS for important updates like delivering or delivered to save money
-                if (in_array($status, ['delivering', 'delivered'])) {
-                    SendSmsJob::dispatch($user->phone, "RestoPWA: $body");
-                }
+            // Only send SMS for important updates like delivering or delivered to save money
+            if ($user && $user->phone && in_array($status, ['delivering', 'delivered'])) {
+                SendSmsJob::dispatch($user->phone, 'RestoPWA: '.$body);
             }
         } catch (\Throwable $e) {
             Log::warning('Notification failed: '.$e->getMessage());

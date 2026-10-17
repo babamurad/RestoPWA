@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureTenant;
+use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SetTenantContext;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,7 +21,17 @@ return Application::configure(basePath: dirname(__DIR__))
         
         $middleware->appendToGroup('web', [
             SetTenantContext::class,
+            SetLocale::class,
         ]);
+
+        // Before auth, so "unauthenticated" errors are already translated
+        $middleware->prependToPriorityList(
+            before: \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+            prepend: SetLocale::class,
+        );
+
+        // Written by the PWA in plain text so guests get pages in their language
+        $middleware->encryptCookies(except: [SetLocale::COOKIE]);
 
         $middleware->prependToGroup('api', [
             \Illuminate\Cookie\Middleware\EncryptCookies::class,
@@ -29,6 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->appendToGroup('api', [
             SetTenantContext::class,
+            SetLocale::class,
         ]);
 
         $middleware->alias([
@@ -45,15 +57,15 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 if ($e instanceof \Illuminate\Validation\ValidationException) {
                     $code = 422;
-                    $message = 'Ошибка валидации данных';
+                    $message = __('api.validation_failed');
                     $errors = $e->errors();
                 } elseif ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException || 
                           $e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
                     $code = 404;
-                    $message = 'Ресурс не найден';
+                    $message = __('api.not_found');
                 } elseif ($e instanceof \Illuminate\Auth\AuthenticationException) {
                     $code = 401;
-                    $message = 'Не авторизован';
+                    $message = __('api.unauthenticated');
                 } elseif ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
                     $code = $e->getStatusCode();
                 }
