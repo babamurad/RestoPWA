@@ -21,6 +21,16 @@ class OrderObserver
         $this->broadcastStatus($order);
     }
 
+    /**
+     * The DB cascade on reviews.order_id would drop the review silently and
+     * leave the restaurant rating stale; delete it through the model instead
+     * so ReviewObserver recalculates.
+     */
+    public function deleting(Order $order): void
+    {
+        $order->review?->delete();
+    }
+
     public function updated(Order $order): void
     {
         if (! $order->wasChanged('status')) {
