@@ -1,12 +1,17 @@
 <template>
   <div class="px-4 py-12 max-w-md mx-auto min-h-[80vh] flex flex-col justify-center font-inter">
+    <!-- Language choice for guests -->
+    <div class="flex justify-end mb-4">
+      <LanguageSwitcher />
+    </div>
+
     <div class="bg-gradient-to-tr from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700/40 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
       <!-- Decorative radial gradient background glow -->
       <div class="absolute -right-24 -top-24 w-64 h-64 rounded-full bg-orange-500/10 blur-3xl group-hover:bg-orange-500/15 transition-colors duration-500"></div>
       
       <div class="text-center mb-8 relative z-10">
-        <h2 class="text-2xl font-black dark:text-slate-100 font-outfit tracking-wide mb-2 text-slate-900">Создать аккаунт</h2>
-        <p class="text-xs dark:text-slate-400 font-medium text-slate-600">Зарегистрируйтесь, чтобы сохранять адреса и накапливать скидки</p>
+        <h2 class="text-2xl font-black dark:text-slate-100 font-outfit tracking-wide mb-2 text-slate-900">{{ t('auth.register.title') }}</h2>
+        <p class="text-xs dark:text-slate-400 font-medium text-slate-600">{{ t('auth.register.subtitle') }}</p>
       </div>
 
       <form @submit.prevent="handleRegister" class="space-y-4 relative z-10">
@@ -18,19 +23,19 @@
 
         <!-- Name Field -->
         <div class="space-y-1">
-          <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">Ваше имя</label>
+          <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">{{ t('auth.register.name') }}</label>
           <input 
             v-model="form.name" 
             type="text" 
             required
-            placeholder="Иван Иванов"
+            :placeholder="t('auth.register.name_placeholder')"
             class="w-full dark:bg-slate-950/50 border dark:border-slate-700/50 rounded-xl px-4 py-3 text-sm dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold bg-slate-50 border-slate-300 text-slate-900"
           />
         </div>
 
         <!-- Email Field -->
         <div class="space-y-1">
-          <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">Email</label>
+          <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">{{ t('auth.email') }}</label>
           <input 
             v-model="form.email" 
             type="email" 
@@ -42,7 +47,7 @@
 
         <!-- Phone Field -->
         <div class="space-y-1">
-          <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">Номер телефона (8 цифр)</label>
+          <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">{{ t('auth.register.phone') }}</label>
           <div class="relative flex items-center">
             <span class="absolute left-4 dark:text-slate-400 font-bold text-sm text-slate-600">+993</span>
             <input 
@@ -54,29 +59,29 @@
               class="w-full dark:bg-slate-950/50 border dark:border-slate-700/50 rounded-xl pl-[60px] pr-4 py-3 text-sm dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold bg-slate-50 border-slate-300 text-slate-900"
             />
           </div>
-          <p class="text-[10px] dark:text-slate-500 font-semibold pl-1 text-slate-500">Код оператора и номер, например: 65123456</p>
+          <p class="text-[10px] dark:text-slate-500 font-semibold pl-1 text-slate-500">{{ t('auth.register.phone_hint') }}</p>
         </div>
 
         <!-- Password Field -->
         <div class="space-y-1">
-          <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">Пароль</label>
+          <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">{{ t('auth.password') }}</label>
           <input 
             v-model="form.password" 
             type="password" 
             required
-            placeholder="Минимум 8 символов"
+            :placeholder="t('auth.register.password_placeholder')"
             class="w-full dark:bg-slate-950/50 border dark:border-slate-700/50 rounded-xl px-4 py-3 text-sm dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold bg-slate-50 border-slate-300 text-slate-900"
           />
         </div>
 
         <!-- Password Confirmation Field -->
         <div class="space-y-1">
-          <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">Подтверждение пароля</label>
+          <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">{{ t('auth.register.password_confirmation') }}</label>
           <input 
             v-model="form.password_confirmation" 
             type="password" 
             required
-            placeholder="Повторите пароль"
+            :placeholder="t('auth.register.password_confirmation_placeholder')"
             class="w-full dark:bg-slate-950/50 border dark:border-slate-700/50 rounded-xl px-4 py-3 text-sm dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold bg-slate-50 border-slate-300 text-slate-900"
           />
         </div>
@@ -89,13 +94,11 @@
             required
             class="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-orange-500 focus:ring-orange-500/50"
           />
-          <span>
-            Я принимаю
-            <a href="/legal/terms" target="_blank" rel="noopener" class="text-orange-400 hover:underline">пользовательское соглашение</a>,
-            <a href="/legal/offer" target="_blank" rel="noopener" class="text-orange-400 hover:underline">публичную оферту</a>
-            и
-            <a href="/legal/privacy" target="_blank" rel="noopener" class="text-orange-400 hover:underline">политику конфиденциальности</a>
-          </span>
+          <i18n-t keypath="auth.register.consent" tag="span" scope="global">
+            <template #terms><a href="/legal/terms" target="_blank" rel="noopener" class="text-orange-400 hover:underline">{{ t('auth.links.terms') }}</a></template>
+            <template #offer><a href="/legal/offer" target="_blank" rel="noopener" class="text-orange-400 hover:underline">{{ t('auth.links.offer') }}</a></template>
+            <template #privacy><a href="/legal/privacy" target="_blank" rel="noopener" class="text-orange-400 hover:underline">{{ t('auth.links.privacy') }}</a></template>
+          </i18n-t>
         </label>
 
         <!-- Submit Button -->
@@ -105,7 +108,7 @@
           class="w-full py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm rounded-xl shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 mt-4"
         >
           <span v-if="isLoading" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-          <span>{{ isLoading ? 'Регистрация...' : 'Зарегистрироваться' }}</span>
+          <span>{{ isLoading ? t('auth.register.submitting') : t('auth.register.submit') }}</span>
         </button>
       </form>
 
@@ -113,7 +116,7 @@
       <div class="mt-6 relative z-10">
         <div class="relative flex items-center mb-4">
           <div class="flex-grow border-t dark:border-slate-700 border-slate-300"></div>
-          <span class="flex-shrink mx-3 text-[10px] dark:text-slate-500 font-semibold uppercase text-slate-400">или</span>
+          <span class="flex-shrink mx-3 text-[10px] dark:text-slate-500 font-semibold uppercase text-slate-400">{{ t('auth.or') }}</span>
           <div class="flex-grow border-t dark:border-slate-700 border-slate-300"></div>
         </div>
         <a
@@ -126,23 +129,21 @@
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
-          Зарегистрироваться через Google
+          {{ t('auth.register.google') }}
         </a>
-        <p class="mt-2 text-[11px] text-center dark:text-slate-500 text-slate-500 font-medium">
-          Продолжая через Google, вы принимаете
-          <a href="/legal/terms" target="_blank" rel="noopener" class="text-orange-400 hover:underline">соглашение</a>,
-          <a href="/legal/offer" target="_blank" rel="noopener" class="text-orange-400 hover:underline">оферту</a>
-          и
-          <a href="/legal/privacy" target="_blank" rel="noopener" class="text-orange-400 hover:underline">политику конфиденциальности</a>.
-        </p>
+        <i18n-t keypath="auth.google_consent" tag="p" scope="global" class="mt-2 text-[11px] text-center dark:text-slate-500 text-slate-500 font-medium">
+          <template #terms><a href="/legal/terms" target="_blank" rel="noopener" class="text-orange-400 hover:underline">{{ t('auth.links.terms_short') }}</a></template>
+          <template #offer><a href="/legal/offer" target="_blank" rel="noopener" class="text-orange-400 hover:underline">{{ t('auth.links.offer_short') }}</a></template>
+          <template #privacy><a href="/legal/privacy" target="_blank" rel="noopener" class="text-orange-400 hover:underline">{{ t('auth.links.privacy') }}</a></template>
+        </i18n-t>
       </div>
 
       <!-- Footer navigation -->
       <div class="mt-6 text-center relative z-10 border-t dark:border-slate-800 pt-6 border-slate-200">
         <p class="text-xs dark:text-slate-400 font-semibold text-slate-600">
-          Уже зарегистрированы? 
+          {{ t('auth.register.has_account') }}
           <router-link :to="{ name: 'login', query: { redirect: $route.query.redirect } }" class="text-orange-400 hover:text-orange-350 transition-colors ml-1 font-bold">
-            Войти в аккаунт
+            {{ t('auth.register.login_link') }}
           </router-link>
         </p>
       </div>
@@ -153,12 +154,16 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
 import apiClient from '../api/client';
+import { currentLocale } from '../i18n';
+import LanguageSwitcher from '../components/LanguageSwitcher.vue';
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+const { t } = useI18n();
 
 const phoneInput = ref('');
 const isLoading = ref(false);
@@ -177,17 +182,17 @@ const handleRegister = async () => {
   errorMsg.value = '';
   
   if (phoneInput.value.length !== 8 || isNaN(phoneInput.value)) {
-    errorMsg.value = 'Номер телефона должен состоять ровно из 8 цифр.';
+    errorMsg.value = t('auth.register.errors.phone_digits');
     return;
   }
 
   if (form.password !== form.password_confirmation) {
-    errorMsg.value = 'Пароли не совпадают.';
+    errorMsg.value = t('auth.register.errors.password_mismatch');
     return;
   }
 
   if (!form.terms_accepted) {
-    errorMsg.value = 'Необходимо принять пользовательское соглашение и политику конфиденциальности.';
+    errorMsg.value = t('auth.register.errors.terms_required');
     return;
   }
 
@@ -195,21 +200,21 @@ const handleRegister = async () => {
   form.phone = phoneInput.value; // backend AuthController will prepend '+993'
 
   try {
-    const response = await apiClient.post('/register', form);
+    const response = await apiClient.post('/register', { ...form, locale: currentLocale() });
     if (response.data && response.data.success) {
       // Re-fetch user in store
       await authStore.fetchUser();
       const redirectPath = route.query.redirect || '/profile';
       router.push(redirectPath);
     } else {
-      errorMsg.value = response.data.message || 'Ошибка регистрации.';
+      errorMsg.value = response.data.message || t('auth.register.errors.failed');
     }
   } catch (err) {
     const errors = err.response?.data?.errors;
     if (errors) {
       errorMsg.value = Object.values(errors).flat().join(' ');
     } else {
-      errorMsg.value = err.response?.data?.message || 'Произошла ошибка при регистрации. Пожалуйста, попробуйте снова.';
+      errorMsg.value = err.response?.data?.message || t('auth.register.errors.generic');
     }
   } finally {
     isLoading.value = false;

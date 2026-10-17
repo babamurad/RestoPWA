@@ -10,7 +10,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
         </svg>
       </router-link>
-      <span class="text-xs dark:text-slate-400 font-bold uppercase tracking-wider text-slate-600">Назад к списку</span>
+      <span class="text-xs dark:text-slate-400 font-bold uppercase tracking-wider text-slate-600">{{ t('menu.back_to_list') }}</span>
     </div>
 
     <!-- Loading Skeleton for Header -->
@@ -45,23 +45,23 @@
             <h2 class="text-xl md:text-2xl font-black dark:text-slate-100 font-outfit tracking-wide leading-tight text-slate-900">{{ store.currentRestaurant.name }}</h2>
             <div class="px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-black flex items-center gap-1">
               <template v-if="store.currentRestaurant.review_count > 0">★ {{ Number(store.currentRestaurant.rating).toFixed(1) }}</template>
-              <template v-else>Новый</template>
+              <template v-else>{{ t('menu.new_badge') }}</template>
             </div>
           </div>
-          <p class="text-xs dark:text-slate-400 mt-2 font-medium leading-relaxed max-w-xl text-slate-600">{{ store.currentRestaurant.description || 'Изысканные фирменные блюда из свежих ингредиентов с быстрой доставкой.' }}</p>
+          <p class="text-xs dark:text-slate-400 mt-2 font-medium leading-relaxed max-w-xl text-slate-600">{{ store.currentRestaurant.description || t('menu.default_description') }}</p>
           
           <!-- Key Delivery params -->
           <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 pt-4 border-t dark:border-slate-700/20 text-xs dark:text-slate-400 font-semibold border-slate-300 text-slate-600">
             <span class="flex items-center gap-1.5">
-              ⏱ Время: <strong class="dark:text-slate-200 text-slate-800">{{ store.currentRestaurant.delivery_time || '20-30' }} мин</strong>
+              ⏱ {{ t('menu.time_label') }} <strong class="dark:text-slate-200 text-slate-800">{{ t('menu.minutes', { time: store.currentRestaurant.delivery_time || '20-30' }) }}</strong>
             </span>
             <span class="w-1.5 h-1.5 rounded-full dark:bg-slate-700 hidden sm:inline bg-slate-100"></span>
             <span class="flex items-center gap-1.5">
-              🚲 Доставка: <strong class="dark:text-slate-200 text-slate-800">{{ store.currentRestaurant.delivery_fee_from != null ? 'от ' + store.currentRestaurant.delivery_fee_from + ' TMT' : (parseFloat(store.currentRestaurant.delivery_fee) === 0 ? 'Бесплатно' : store.currentRestaurant.delivery_fee + ' TMT') }}</strong>
+              🚲 {{ t('menu.delivery_label') }} <strong class="dark:text-slate-200 text-slate-800">{{ store.currentRestaurant.delivery_fee_from != null ? t('common.from_price', { amount: store.currentRestaurant.delivery_fee_from }) : (parseFloat(store.currentRestaurant.delivery_fee) === 0 ? t('common.free') : t('common.price', { amount: store.currentRestaurant.delivery_fee })) }}</strong>
             </span>
             <span class="w-1.5 h-1.5 rounded-full dark:bg-slate-700 hidden sm:inline bg-slate-100"></span>
             <span class="flex items-center gap-1.5">
-              💰 Мин. заказ: <strong class="dark:text-slate-200 text-slate-800">{{ store.currentRestaurant.min_order || '15' }} TMT</strong>
+              💰 {{ t('menu.min_order_label') }} <strong class="dark:text-slate-200 text-slate-800">{{ t('common.price', { amount: store.currentRestaurant.min_order || '15' }) }}</strong>
             </span>
           </div>
         </div>
@@ -74,12 +74,12 @@
       <div class="lg:col-span-1 space-y-6">
         <!-- Search bar -->
         <div class="dark:bg-slate-800/40 border dark:border-slate-800/80 p-4 rounded-2xl shadow-md space-y-3 bg-white border-slate-200">
-          <h4 class="text-xs font-black uppercase tracking-wider dark:text-slate-400 font-outfit text-slate-600">Поиск блюд</h4>
+          <h4 class="text-xs font-black uppercase tracking-wider dark:text-slate-400 font-outfit text-slate-600">{{ t('menu.search_title') }}</h4>
           <div class="relative">
             <input 
               v-model="searchQuery" 
               type="text" 
-              placeholder="Поиск по меню..." 
+              :placeholder="t('menu.search_placeholder')" 
               class="w-full dark:bg-slate-900 border dark:border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs dark:text-slate-200 font-bold focus:outline-none focus:border-orange-500/50 transition-colors placeholder:text-slate-650 dark:text-slate-600 bg-slate-50 border-slate-200 text-slate-800 text-slate-400"
             />
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 dark:text-slate-500 absolute left-3 top-3 text-slate-500">
@@ -91,8 +91,8 @@
         <!-- Price Range local filter -->
         <div class="dark:bg-slate-800/40 border dark:border-slate-800/80 p-4 rounded-2xl shadow-md space-y-3.5 select-none bg-white border-slate-200">
           <div class="flex justify-between items-baseline">
-            <h4 class="text-xs font-black uppercase tracking-wider dark:text-slate-400 font-outfit text-slate-600">Диапазон цены</h4>
-            <span class="text-[10px] text-orange-400 font-black">{{ maxPriceLimit }} TMT</span>
+            <h4 class="text-xs font-black uppercase tracking-wider dark:text-slate-400 font-outfit text-slate-600">{{ t('menu.price_range') }}</h4>
+            <span class="text-[10px] text-orange-400 font-black">{{ t('common.price', { amount: maxPriceLimit }) }}</span>
           </div>
           <input 
             v-model="maxPriceLimit" 
@@ -102,8 +102,8 @@
             class="w-full h-1 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500 bg-slate-100"
           />
           <div class="flex justify-between text-[10px] dark:text-slate-500 font-bold text-slate-500">
-            <span>Мин: {{ store.priceFilters.min }} TMT</span>
-            <span>Макс: {{ store.priceFilters.max }} TMT</span>
+            <span>{{ t('menu.price_min', { amount: store.priceFilters.min }) }}</span>
+            <span>{{ t('menu.price_max', { amount: store.priceFilters.max }) }}</span>
           </div>
         </div>
       </div>
@@ -121,7 +121,7 @@
                 : 'dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/40 text-slate-600 hover:text-slate-800 hover:bg-white'
             ]"
           >
-            🍽️ Все меню
+            🍽️ {{ t('menu.all_menu') }}
           </button>
           
           <button 
@@ -154,8 +154,8 @@
         <!-- Empty Menu State -->
         <div v-else-if="filteredProducts.length === 0" class="text-center py-16 dark:bg-slate-800/10 border dark:border-slate-800/60 rounded-3xl select-none bg-white border-slate-200">
           <span class="text-4xl mb-3 block">🍽️</span>
-          <h4 class="text-sm font-extrabold dark:text-slate-300 mb-1 font-outfit text-slate-700">В этой категории пока пусто</h4>
-          <p class="text-xs dark:text-slate-500 text-slate-500">Попробуйте заглянуть в другие вкладки или изменить фильтры.</p>
+          <h4 class="text-sm font-extrabold dark:text-slate-300 mb-1 font-outfit text-slate-700">{{ t('menu.empty_title') }}</h4>
+          <p class="text-xs dark:text-slate-500 text-slate-500">{{ t('menu.empty_text') }}</p>
         </div>
 
         <!-- Products List -->
@@ -175,7 +175,7 @@
                 @error="handleImageError"
               />
               <div v-if="!product.is_available" class="absolute inset-0 dark:bg-slate-950/70 flex items-center justify-center text-[8px] font-black text-rose-400 uppercase tracking-widest text-center px-1 bg-slate-50">
-                Нет в наличии
+                {{ t('menu.out_of_stock') }}
               </div>
             </div>
 
@@ -185,7 +185,7 @@
                 <h5 class="text-sm font-bold dark:text-slate-100 group-hover:text-orange-400 transition-colors truncate text-slate-900">
                   {{ product.name }}
                 </h5>
-                <p v-if="product.weight_g" class="text-[10px] dark:text-slate-400 mt-0.5 font-bold text-slate-600">Вес: {{ product.weight_g }} г</p>
+                <p v-if="product.weight_g" class="text-[10px] dark:text-slate-400 mt-0.5 font-bold text-slate-600">{{ t('menu.weight', { weight: product.weight_g }) }}</p>
                 <p v-if="product.description" class="text-xs dark:text-slate-400 mt-1.5 line-clamp-2 leading-relaxed font-medium text-slate-600">
                   {{ product.description }}
                 </p>
@@ -193,12 +193,12 @@
 
               <!-- Price & CTA bar -->
               <div class="flex justify-between items-center mt-2.5">
-                <span class="text-sm font-black text-orange-400 font-outfit">{{ product.price }} TMT</span>
+                <span class="text-sm font-black text-orange-400 font-outfit">{{ t('common.price', { amount: product.price }) }}</span>
                 <button 
                   :disabled="!product.is_available"
                   class="px-3.5 py-1.5 dark:bg-slate-900 border dark:border-slate-800/80 hover:bg-orange-500 disabled:hover:bg-white dark:hover:bg-slate-900 disabled:hover:text-slate-500 dark:hover:text-slate-500 disabled:opacity-40 hover:border-transparent text-[11px] font-extrabold rounded-xl transition-all active:scale-90 bg-slate-50 border-slate-200 hover:bg-slate-50 hover:text-slate-500"
                 >
-                  Выбрать
+                  {{ t('menu.choose') }}
                 </button>
               </div>
             </div>
@@ -230,9 +230,9 @@
             <span class="text-lg">🛒</span>
           </div>
           <div>
-            <span class="text-[10px] dark:text-slate-400 block font-black uppercase tracking-wider text-slate-600">Корзина</span>
+            <span class="text-[10px] dark:text-slate-400 block font-black uppercase tracking-wider text-slate-600">{{ t('menu.cart_bar_title') }}</span>
             <span class="text-xs dark:text-slate-200 font-extrabold text-slate-800">
-              {{ cartStore.totalItemsCount }} блюда на сумму <strong class="text-orange-400 ml-0.5 font-black">{{ cartStore.subtotal }} TMT</strong>
+              {{ t('menu.cart_bar_summary', { dishes: t('common.dishes', cartStore.totalItemsCount) }) }} <strong class="text-orange-400 ml-0.5 font-black">{{ t('common.price', { amount: cartStore.subtotal }) }}</strong>
             </span>
           </div>
         </div>
@@ -241,7 +241,7 @@
           to="/cart" 
           class="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-extrabold text-xs rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1"
         >
-          Оформить заказ
+          {{ t('menu.checkout') }}
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-3.5 h-3.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
           </svg>
@@ -264,11 +264,13 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useRestaurantsStore } from '../stores/restaurants';
 import { useCartStore } from '../stores/cart';
 import ProductModal from '../components/ProductModal.vue';
 import RestaurantReviews from '../components/RestaurantReviews.vue';
 
+const { t } = useI18n();
 const route = useRoute();
 const store = useRestaurantsStore();
 const cartStore = useCartStore();
@@ -345,12 +347,12 @@ const handleAddToCart = (data) => {
   if (result.status === 'mismatch') {
     if (window.Swal) {
       window.Swal.fire({
-        title: 'Сменить ресторан?',
-        text: `В вашей корзине уже находятся блюда из заведения "${result.currentVendorName}". Хотите очистить корзину и начать новый заказ в "${store.currentRestaurant.name}"?`,
+        title: t('menu.switch_vendor.title'),
+        text: t('menu.switch_vendor.text', { current: result.currentVendorName, next: store.currentRestaurant.name }),
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Очистить и добавить',
-        cancelButtonText: 'Отмена',
+        confirmButtonText: t('menu.switch_vendor.confirm'),
+        cancelButtonText: t('common.cancel'),
         confirmButtonColor: '#f97316',
         cancelButtonColor: '#334155',
         background: '#0f172a',
@@ -361,21 +363,21 @@ const handleAddToCart = (data) => {
         if (swalResult.isConfirmed) {
           cartStore.clearCart();
           cartStore.addItem(data.product, data.quantity, store.currentRestaurant);
-          triggerToast(`${data.product.name} добавлено в корзину (${data.quantity} шт)!`);
+          triggerToast(t('menu.added_toast', { name: data.product.name, qty: data.quantity }));
         }
       });
     } else {
       const confirmClear = window.confirm(
-        `В вашей корзине уже находятся блюда из ресторана "${result.currentVendorName}". Желаете очистить корзину и начать новый заказ в "${store.currentRestaurant.name}"?`
+        t('menu.switch_vendor.text', { current: result.currentVendorName, next: store.currentRestaurant.name })
       );
       if (confirmClear) {
         cartStore.clearCart();
         cartStore.addItem(data.product, data.quantity, store.currentRestaurant);
-        triggerToast(`${data.product.name} добавлено в корзину (${data.quantity} шт)!`);
+        triggerToast(t('menu.added_toast', { name: data.product.name, qty: data.quantity }));
       }
     }
   } else if (result.status === 'success') {
-    triggerToast(`${data.product.name} добавлено в корзину (${data.quantity} шт)!`);
+    triggerToast(t('menu.added_toast', { name: data.product.name, qty: data.quantity }));
   }
 };
 

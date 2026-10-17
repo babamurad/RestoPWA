@@ -20,7 +20,7 @@
             active-class="dark:bg-slate-800/50 text-orange-400 dark:border-slate-700/40 bg-white border-slate-300"
             class="px-4 py-2.5 rounded-xl border border-transparent dark:hover:bg-slate-800/40 dark:hover:text-slate-100 transition-all flex items-center gap-2 hover:bg-white hover:text-slate-900"
           >
-            <span>🍔</span> Каталог
+            <span>🍔</span> {{ t('common.nav.catalog') }}
           </router-link>
           
           <router-link 
@@ -28,7 +28,7 @@
             active-class="dark:bg-slate-800/50 text-orange-400 dark:border-slate-700/40 bg-white border-slate-300"
             class="px-4 py-2.5 rounded-xl border border-transparent dark:hover:bg-slate-800/40 dark:hover:text-slate-100 transition-all flex items-center gap-2 relative hover:bg-white hover:text-slate-900"
           >
-            <span>🛒</span> Корзина
+            <span>🛒</span> {{ t('common.nav.cart') }}
             <span v-if="cartStore.totalItemsCount > 0" class="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] font-black flex items-center justify-center border dark:border-slate-950 shadow-md border-slate-200">
               {{ cartStore.totalItemsCount }}
             </span>
@@ -39,7 +39,7 @@
             active-class="dark:bg-slate-800/50 text-orange-400 dark:border-slate-700/40 bg-white border-slate-300"
             class="px-4 py-2.5 rounded-xl border border-transparent dark:hover:bg-slate-800/40 dark:hover:text-slate-100 transition-all flex items-center gap-2 hover:bg-white hover:text-slate-900"
           >
-            <span>📋</span> Заказы
+            <span>📋</span> {{ t('common.nav.orders') }}
           </router-link>
 
           <router-link 
@@ -47,8 +47,10 @@
             active-class="dark:bg-slate-800/50 text-orange-400 dark:border-slate-700/40 bg-white border-slate-300"
             class="px-4 py-2.5 rounded-xl border border-transparent dark:hover:bg-slate-800/40 dark:hover:text-slate-100 transition-all flex items-center gap-2 hover:bg-white hover:text-slate-900"
           >
-            <span>👤</span> Профиль
+            <span>👤</span> {{ t('common.nav.profile') }}
           </router-link>
+
+          <LanguageSwitcher class="ml-2" />
         </nav>
       </div>
     </header>
@@ -71,7 +73,7 @@
         class="flex flex-col items-center gap-1 dark:text-slate-400 transition-all duration-200 text-slate-600"
       >
         <span class="text-xl">🍔</span>
-        <span class="text-[9px] font-black uppercase tracking-wider">Каталог</span>
+        <span class="text-[9px] font-black uppercase tracking-wider">{{ t('common.nav.catalog') }}</span>
       </router-link>
 
       <!-- Cart tab with items count badge -->
@@ -81,7 +83,7 @@
         class="flex flex-col items-center gap-1 dark:text-slate-400 transition-all duration-200 relative text-slate-600"
       >
         <span class="text-xl">🛒</span>
-        <span class="text-[9px] font-black uppercase tracking-wider">Корзина</span>
+        <span class="text-[9px] font-black uppercase tracking-wider">{{ t('common.nav.cart') }}</span>
         <span v-if="cartStore.totalItemsCount > 0" class="absolute -top-1.5 -right-2.5 w-4 h-4 rounded-full bg-orange-500 text-white text-[9px] font-black flex items-center justify-center border dark:border-slate-950 shadow-md border-slate-200">
           {{ cartStore.totalItemsCount }}
         </span>
@@ -94,7 +96,7 @@
         class="flex flex-col items-center gap-1 dark:text-slate-400 transition-all duration-200 text-slate-600"
       >
         <span class="text-xl">📋</span>
-        <span class="text-[9px] font-black uppercase tracking-wider">Заказы</span>
+        <span class="text-[9px] font-black uppercase tracking-wider">{{ t('common.nav.orders') }}</span>
       </router-link>
 
       <!-- Profile tab -->
@@ -104,7 +106,7 @@
         class="flex flex-col items-center gap-1 dark:text-slate-400 transition-all duration-200 text-slate-600"
       >
         <span class="text-xl">👤</span>
-        <span class="text-[9px] font-black uppercase tracking-wider">Профиль</span>
+        <span class="text-[9px] font-black uppercase tracking-wider">{{ t('common.nav.profile') }}</span>
       </router-link>
     </nav>
 
@@ -120,8 +122,8 @@
           </svg>
         </div>
         <div>
-          <h4 class="text-xs font-black uppercase tracking-wide">Режим оффлайн</h4>
-          <p class="text-[11px] text-rose-100 mt-0.5 leading-relaxed font-medium">Отсутствует интернет-подключение. Вы можете продолжать просмотр, заказы будут синхронизированы при появлении сети.</p>
+          <h4 class="text-xs font-black uppercase tracking-wide">{{ t('app.offline.title') }}</h4>
+          <p class="text-[11px] text-rose-100 mt-0.5 leading-relaxed font-medium">{{ t('app.offline.text') }}</p>
         </div>
       </div>
     </transition>
@@ -130,9 +132,12 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useCartStore } from './stores/cart';
+import LanguageSwitcher from './components/LanguageSwitcher.vue';
 
 const cartStore = useCartStore();
+const { t } = useI18n();
 
 const isOffline = ref(!navigator.onLine);
 

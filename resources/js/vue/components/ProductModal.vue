@@ -32,7 +32,7 @@
             v-if="!product.is_available"
             class="absolute top-4 left-4 px-3 py-1 rounded-lg bg-rose-500 text-white text-[10px] font-black uppercase tracking-wider shadow-md"
           >
-            Нет в наличии
+            {{ t('menu.out_of_stock') }}
           </div>
         </div>
 
@@ -45,19 +45,19 @@
               </h3>
               <!-- Weight detail -->
               <span v-if="product.weight_g" class="text-xs dark:text-slate-400 font-bold whitespace-nowrap dark:bg-slate-800/60 border dark:border-slate-800 px-2.5 py-1 rounded-xl text-slate-600 bg-white border-slate-200">
-                {{ product.weight_g }} г
+                {{ t('menu.weight_short', { weight: product.weight_g }) }}
               </span>
             </div>
             
             <p v-if="product.description" class="text-xs dark:text-slate-400 mt-3 leading-relaxed font-semibold text-slate-600">
               {{ product.description }}
             </p>
-            <p v-else class="text-xs dark:text-slate-500 italic mt-3 text-slate-500">Описание отсутствует.</p>
+            <p v-else class="text-xs dark:text-slate-500 italic mt-3 text-slate-500">{{ t('menu.modal.no_description') }}</p>
           </div>
 
           <!-- Modifiers Placeholder if exists in JSON -->
           <div v-if="product.modifiers && product.modifiers.length > 0" class="space-y-3 pt-3 border-t dark:border-slate-800/40 border-slate-200">
-            <h4 class="text-xs font-black uppercase tracking-wider dark:text-slate-400 font-outfit text-slate-600">Добавки</h4>
+            <h4 class="text-xs font-black uppercase tracking-wider dark:text-slate-400 font-outfit text-slate-600">{{ t('menu.modal.modifiers') }}</h4>
             <div class="space-y-2">
               <div v-for="mod in product.modifiers" :key="mod.id" class="flex justify-between items-center text-xs">
                 <span class="dark:text-slate-300 font-bold text-slate-700">{{ mod.name }}</span>
@@ -92,8 +92,8 @@
             :disabled="!product.is_available"
             class="flex-1 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:disabled:from-slate-800 dark:disabled:to-slate-800 dark:disabled:text-slate-500 disabled:cursor-not-allowed text-white font-extrabold text-xs rounded-2xl shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20 active:scale-[0.97] transition-all flex items-center justify-center gap-1.5 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-500"
           >
-            <span>В корзину за</span>
-            <span class="font-black underline decoration-2 decoration-orange-300">{{ totalPrice }} TMT</span>
+            <span>{{ t('menu.modal.add_to_cart_for') }}</span>
+            <span class="font-black underline decoration-2 decoration-orange-300">{{ t('common.price', { amount: totalPrice }) }}</span>
           </button>
         </div>
       </div>
@@ -103,6 +103,9 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   product: {

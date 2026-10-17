@@ -7,26 +7,26 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
         </svg>
       </button>
-      <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100 font-outfit">Служба поддержки</h1>
+      <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100 font-outfit">{{ t('profile.support.title') }}</h1>
     </div>
 
     <!-- Contact Form -->
     <div v-if="!success" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-5 shadow-lg">
-      <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">Опишите вашу проблему, и наши специалисты свяжутся с вами в ближайшее время (пока в виде обратной связи).</p>
+      <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">{{ t('profile.support.intro') }}</p>
       
       <form @submit.prevent="submitSupport" class="space-y-4">
         <div>
-          <label class="block text-xs font-bold text-slate-500 mb-1">Тема обращения (необязательно)</label>
+          <label class="block text-xs font-bold text-slate-500 mb-1">{{ t('profile.support.subject_label') }}</label>
           <input v-model="form.subject" type="text" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-orange-500 transition-colors text-slate-800 dark:text-slate-100">
         </div>
         
         <div>
-          <label class="block text-xs font-bold text-slate-500 mb-1">Ваше сообщение *</label>
+          <label class="block text-xs font-bold text-slate-500 mb-1">{{ t('profile.support.message_label') }}</label>
           <textarea v-model="form.message" required rows="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-orange-500 transition-colors text-slate-800 dark:text-slate-100"></textarea>
         </div>
 
         <button type="submit" :disabled="saving" class="w-full py-4 rounded-xl font-bold text-white bg-orange-500 hover:bg-orange-600 transition-colors disabled:opacity-70 flex justify-center mt-4">
-          {{ saving ? 'Отправка...' : 'Отправить сообщение' }}
+          {{ saving ? t('profile.support.sending') : t('profile.support.send') }}
         </button>
       </form>
     </div>
@@ -38,11 +38,11 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
         </svg>
       </div>
-      <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 font-outfit mb-2">Сообщение отправлено!</h2>
-      <p class="text-slate-600 dark:text-slate-400 mb-8">Мы получили ваше обращение и скоро свяжемся с вами.</p>
+      <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 font-outfit mb-2">{{ t('profile.support.sent_title') }}</h2>
+      <p class="text-slate-600 dark:text-slate-400 mb-8">{{ t('profile.support.sent_text') }}</p>
       
       <button @click="$router.push('/profile')" class="px-8 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl font-bold text-slate-700 dark:text-slate-200 transition-colors">
-        Вернуться в профиль
+        {{ t('profile.support.back_to_profile') }}
       </button>
     </div>
   </div>
@@ -50,7 +50,10 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import apiClient from '../../api/client';
+
+const { t } = useI18n();
 
 const saving = ref(false);
 const success = ref(false);
@@ -66,7 +69,7 @@ const submitSupport = async () => {
     success.value = true;
   } catch (error) {
     console.error(error);
-    alert('Произошла ошибка при отправке сообщения.');
+    alert(t('profile.support.send_error'));
   } finally {
     saving.value = false;
   }

@@ -1,0 +1,41 @@
+// Home page (restaurant catalog)
+export default {
+    delivery_to: 'Eltip bermek salgysy',
+    demo_address: 'Türkmenbaşy köçesi, 45-nji jaý',
+    promo: {
+        badge: '20% arzanladyş',
+        title: 'Ilkinji sargyt has tagamly!',
+        text: 'Halaýan restoranlaryňyzdan şu wagt eltip bermek arzanladyşy bilen sargyt ediň.',
+        cta: 'Restoran saýla',
+    },
+    popular_categories: 'Meşhur kategoriýalar',
+    all: 'Ählisi',
+    categories: {
+        all: 'Ählisi',
+        burgers: 'Burgerler',
+        pizza: 'Pissa',
+        sushi: 'Suşi',
+        desserts: 'Süýjüler',
+        drinks: 'Içgiler',
+    },
+    best_places: 'Iň gowy ýerlerden saýlaň',
+    sort_rating: 'Reýting boýunça',
+    sort_delivery: 'Çalt eltip bermek',
+    empty_title: 'Hiç zat tapylmady',
+    empty_text: 'Süzgüç sazlamalaryny üýtgedip görüň.',
+    new_badge: 'Täze',
+    minutes: '{time} min',
+    default_description: 'Aşpezden ajaýyp naharlar, öýüňize eltip bermek bilen',
+    delivery_label: 'Eltip bermek:',
+    min_order_label: 'Iň az sargyt:',
+    legal: {
+        aria: 'Resminamalar',
+        terms: 'Ulanyjy ylalaşygy',
+        offer: 'Köpçülikleýin teklip',
+        privacy: 'Gizlinlik syýasaty',
+    },
+    errors: {
+        load_restaurants: 'Restoranlaryň sanawyny ýükläp bolmady',
+        load_data: 'Maglumatlary ýüklemekde ýalňyşlyk',
+    },
+};

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#FF6B35">
-    <title>Офлайн - RestoPWA</title>
+    <title>{{ __('pages.offline.title') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,25 +40,25 @@
             </div>
         </div>
 
-        <h1 class="text-2xl font-extrabold text-gray-900 mb-3 tracking-tight">Нет сети</h1>
+        <h1 class="text-2xl font-extrabold text-gray-900 mb-3 tracking-tight">{{ __('pages.offline.heading') }}</h1>
         <p class="text-gray-500 text-sm mb-10 leading-relaxed">
-            Похоже, соединение с интернетом потеряно. <br>
-            Эта страница еще не была сохранена для работы без сети.
+            {{ __('pages.offline.lost_connection') }} <br>
+            {{ __('pages.offline.not_cached') }}
         </p>
 
         <div class="space-y-3">
             <button onclick="window.location.reload()" class="w-full py-4 bg-orange-500 text-white font-bold rounded-2xl shadow-xl shadow-orange-500/30 hover:bg-orange-600 transition-all touch-feedback active:scale-95">
-                Попробовать снова
+                {{ __('pages.offline.retry') }}
             </button>
             <a href="/" class="block w-full py-4 bg-white text-gray-700 font-bold rounded-2xl border border-gray-200 hover:bg-gray-50 transition-all touch-feedback active:scale-95">
-                На главную
+                {{ __('pages.offline.home') }}
             </a>
         </div>
 
         <!-- Connection Badge -->
         <div class="mt-12 flex items-center justify-center gap-2">
             <div class="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse"></div>
-            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Офлайн режим</span>
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">{{ __('pages.offline.badge') }}</span>
         </div>
     </div>
 

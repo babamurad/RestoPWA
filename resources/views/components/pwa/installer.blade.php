@@ -9,12 +9,12 @@
                 <img src="/icons/icon-192x192.svg" alt="App Icon" class="w-12 h-12 rounded-xl">
                 <div>
                     <p class="text-sm font-bold text-gray-900 dark:text-white">{{ config('app.name', 'RestoPWA') }}</p>
-                    <p class="text-xs text-gray-500 dark:text-slate-400">Установить на домашний экран</p>
+                    <p class="text-xs text-gray-500 dark:text-slate-400">{{ __('pages.installer.subtitle') }}</p>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
                 <button @click="installPwa()" class="px-4 py-2 text-sm font-semibold text-white bg-orange-500 rounded-xl shadow-md hover:bg-orange-600 active:scale-95 transition-all">
-                    Установить
+                    {{ __('pages.installer.install') }}
                 </button>
                 <button @click="dismissBanner()" class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>

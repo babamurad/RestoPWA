@@ -2,10 +2,21 @@
 
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureTenant;
+use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SetTenantContext;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,18 +28,29 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
-        
+
         $middleware->appendToGroup('web', [
             SetTenantContext::class,
+            SetLocale::class,
         ]);
 
+        // Before auth, so "unauthenticated" errors are already translated
+        $middleware->prependToPriorityList(
+            before: AuthenticatesRequests::class,
+            prepend: SetLocale::class,
+        );
+
+        // Written by the PWA in plain text so guests get pages in their language
+        $middleware->encryptCookies(except: [SetLocale::COOKIE]);
+
         $middleware->prependToGroup('api', [
-            \Illuminate\Cookie\Middleware\EncryptCookies::class,
-            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-            \Illuminate\Session\Middleware\StartSession::class,
+            EncryptCookies::class,
+            AddQueuedCookiesToResponse::class,
+            StartSession::class,
         ]);
         $middleware->appendToGroup('api', [
             SetTenantContext::class,
+            SetLocale::class,
         ]);
 
         $middleware->alias([
@@ -37,24 +59,24 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+        $exceptions->render(function (Throwable $e, Request $request) {
             if ($request->is('api/*')) {
                 $code = 500;
                 $message = $e->getMessage();
                 $errors = [];
 
-                if ($e instanceof \Illuminate\Validation\ValidationException) {
+                if ($e instanceof ValidationException) {
                     $code = 422;
-                    $message = 'Ошибка валидации данных';
+                    $message = __('api.validation_failed');
                     $errors = $e->errors();
-                } elseif ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException || 
-                          $e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
+                } elseif ($e instanceof ModelNotFoundException ||
+                          $e instanceof NotFoundHttpException) {
                     $code = 404;
-                    $message = 'Ресурс не найден';
-                } elseif ($e instanceof \Illuminate\Auth\AuthenticationException) {
+                    $message = __('api.not_found');
+                } elseif ($e instanceof AuthenticationException) {
                     $code = 401;
-                    $message = 'Не авторизован';
-                } elseif ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                    $message = __('api.unauthenticated');
+                } elseif ($e instanceof HttpExceptionInterface) {
                     $code = $e->getStatusCode();
                 }
 
@@ -73,7 +95,7 @@ return Application::configure(basePath: dirname(__DIR__))
                         'exception' => get_class($e),
                         'file' => $e->getFile(),
                         'line' => $e->getLine(),
-                        'trace' => array_slice($e->getTrace(), 0, 10)
+                        'trace' => array_slice($e->getTrace(), 0, 10),
                     ];
                 }
 

@@ -1,5 +1,6 @@
 import { ref, readonly } from 'vue'
 import apiClient from '../api/client'
+import { t } from '../i18n'
 
 /**
  * Composable for delivery zone check and reverse geocoding.
@@ -44,7 +45,7 @@ export function useZoneCheck() {
         district.value    = payload.district ?? null
       } catch {
         zoneStatus.value  = 'error'
-        zoneMessage.value = 'Не удалось проверить зону доставки.'
+        zoneMessage.value = t('checkout.zone_check_failed')
       }
     }, debounceMs)
   }

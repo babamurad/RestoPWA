@@ -23,7 +23,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 
-#[Fillable(['name', 'email', 'password', 'phone', 'role', 'google_id', 'avatar', 'terms_accepted_at', 'terms_version'])]
+#[Fillable(['name', 'email', 'password', 'phone', 'locale', 'role', 'google_id', 'avatar', 'terms_accepted_at', 'terms_version'])]
 #[Hidden(['password', 'remember_token', 'google_id'])]
 class User extends Authenticatable implements FilamentUser, HasTenants
 {

@@ -17,14 +17,14 @@
             </svg>
           </div>
         </div>
-        <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border border-white dark:border-slate-900 flex items-center justify-center text-white text-[10px] font-black shadow-md transition-colors duration-300" title="Активный аккаунт">
+        <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border border-white dark:border-slate-900 flex items-center justify-center text-white text-[10px] font-black shadow-md transition-colors duration-300" :title="t('profile.active_account')">
           ✓
         </div>
       </div>
 
       <!-- Name & Contact details -->
       <div class="text-center sm:text-left flex-1">
-        <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 font-outfit transition-colors duration-300">{{ authStore.user?.name || 'Пользователь' }}</h3>
+        <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 font-outfit transition-colors duration-300">{{ authStore.user?.name || t('profile.default_user_name') }}</h3>
         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-semibold flex flex-wrap justify-center sm:justify-start gap-3 transition-colors duration-300">
           <span v-if="authStore.user?.phone">{{ formatPhone(authStore.user.phone) }}</span>
           <span v-if="authStore.user?.phone && authStore.user?.email" class="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 self-center hidden sm:inline transition-colors duration-300"></span>
@@ -35,14 +35,14 @@
 
     <!-- Quick Settings Links list -->
     <div>
-      <h4 class="text-base font-bold text-slate-800 dark:text-slate-100 mb-4 font-outfit tracking-wide transition-colors duration-300">Параметры и настройки</h4>
+      <h4 class="text-base font-bold text-slate-800 dark:text-slate-100 mb-4 font-outfit tracking-wide transition-colors duration-300">{{ t('profile.settings_title') }}</h4>
       <div class="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/50 shadow-md transition-colors duration-300">
         
         <!-- Vendor Panel link -->
         <a v-if="authStore.user?.role === 'restaurateur' || authStore.user?.role === 'admin'" href="/vendor" class="p-4 bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors cursor-pointer flex items-center justify-between block border-l-4 border-l-orange-500">
           <div class="flex items-center gap-3">
             <span class="text-lg">🏪</span>
-            <span class="text-xs font-bold text-orange-700 dark:text-orange-400 transition-colors duration-300">Панель управления рестораном</span>
+            <span class="text-xs font-bold text-orange-700 dark:text-orange-400 transition-colors duration-300">{{ t('profile.vendor_panel') }}</span>
           </div>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-orange-400 dark:text-orange-500 transition-colors duration-300">
             <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -53,7 +53,7 @@
         <a v-if="authStore.user?.role === 'admin'" href="/admin" class="p-4 bg-sky-50 dark:bg-sky-900/20 hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors cursor-pointer flex items-center justify-between block border-l-4 border-l-sky-500">
           <div class="flex items-center gap-3">
             <span class="text-lg">⚙️</span>
-            <span class="text-xs font-bold text-sky-700 dark:text-sky-400 transition-colors duration-300">Панель администратора</span>
+            <span class="text-xs font-bold text-sky-700 dark:text-sky-400 transition-colors duration-300">{{ t('profile.admin_panel') }}</span>
           </div>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-sky-400 dark:text-sky-500 transition-colors duration-300">
             <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -64,7 +64,7 @@
         <div class="p-4 flex items-center justify-between">
           <div class="flex items-center gap-3">
             <span class="text-lg">{{ isDark ? '🌙' : '☀️' }}</span>
-            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors duration-300">Тёмная тема</span>
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors duration-300">{{ t('profile.dark_theme') }}</span>
           </div>
           <!-- Interactive Switch -->
           <button 
@@ -75,11 +75,20 @@
           </button>
         </div>
 
+        <!-- Language selector -->
+        <div class="p-4 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <span class="text-lg">🌐</span>
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors duration-300">{{ t('profile.language_row') }}</span>
+          </div>
+          <LanguageSwitcher full />
+        </div>
+
         <!-- Addresses link -->
         <router-link to="/profile/addresses" class="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between block">
           <div class="flex items-center gap-3">
             <span class="text-lg">📍</span>
-            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors duration-300">Адреса доставки</span>
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors duration-300">{{ t('profile.addresses_link') }}</span>
           </div>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 transition-colors duration-300">
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -90,7 +99,7 @@
         <router-link to="/profile/payments" class="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between block">
           <div class="flex items-center gap-3">
             <span class="text-lg">💳</span>
-            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors duration-300">Способы оплаты</span>
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors duration-300">{{ t('profile.payments_link') }}</span>
           </div>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 transition-colors duration-300">
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -101,7 +110,7 @@
         <div class="p-4 flex items-center justify-between">
           <div class="flex items-center gap-3">
             <span class="text-lg">🔔</span>
-            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors duration-300">Push-уведомления</span>
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors duration-300">{{ t('profile.push_notifications') }}</span>
           </div>
           <!-- Interactive Switch -->
           <button 
@@ -116,7 +125,7 @@
         <router-link to="/profile/support" class="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center justify-between block">
           <div class="flex items-center gap-3">
             <span class="text-lg">💬</span>
-            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors duration-300">Служба поддержки</span>
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors duration-300">{{ t('profile.support_link') }}</span>
           </div>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 transition-colors duration-300">
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -127,7 +136,7 @@
         <div @click="handleLogout" class="p-4 hover:bg-rose-50 dark:hover:bg-rose-500/5 transition-colors cursor-pointer flex items-center justify-between text-rose-500 dark:text-rose-400 group">
           <div class="flex items-center gap-3">
             <span class="text-lg">🚪</span>
-            <span class="text-xs font-black text-rose-500 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">Выйти из профиля</span>
+            <span class="text-xs font-black text-rose-500 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">{{ t('profile.logout') }}</span>
           </div>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-rose-400 dark:text-rose-500/70 group-hover:text-rose-500 dark:group-hover:text-rose-400 transition-colors">
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -136,10 +145,10 @@
       </div>
 
       <!-- Legal documents -->
-      <nav class="mt-6 flex flex-wrap justify-center gap-x-4 gap-y-2 text-[11px] font-semibold text-slate-500 dark:text-slate-500" aria-label="Документы">
-        <a href="/legal/terms" target="_blank" rel="noopener" class="hover:text-orange-500">Пользовательское соглашение</a>
-        <a href="/legal/offer" target="_blank" rel="noopener" class="hover:text-orange-500">Публичная оферта</a>
-        <a href="/legal/privacy" target="_blank" rel="noopener" class="hover:text-orange-500">Политика конфиденциальности</a>
+      <nav class="mt-6 flex flex-wrap justify-center gap-x-4 gap-y-2 text-[11px] font-semibold text-slate-500 dark:text-slate-500" :aria-label="t('profile.documents')">
+        <a href="/legal/terms" target="_blank" rel="noopener" class="hover:text-orange-500">{{ t('profile.legal.terms') }}</a>
+        <a href="/legal/offer" target="_blank" rel="noopener" class="hover:text-orange-500">{{ t('profile.legal.offer') }}</a>
+        <a href="/legal/privacy" target="_blank" rel="noopener" class="hover:text-orange-500">{{ t('profile.legal.privacy') }}</a>
       </nav>
     </div>
   </div>
@@ -148,10 +157,13 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
+import LanguageSwitcher from '../components/LanguageSwitcher.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const { t } = useI18n();
 
 const pushEnabled = ref(true);
 const isDark = ref(false);
@@ -207,12 +219,12 @@ const handleLogout = async () => {
   const isDarkMode = document.documentElement.classList.contains('dark');
   if (window.Swal) {
     window.Swal.fire({
-      title: 'Выйти из профиля?',
-      text: 'Вам потребуется повторный вход для оформления заказов.',
+      title: t('profile.logout_dialog.title'),
+      text: t('profile.logout_dialog.text'),
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Выйти',
-      cancelButtonText: 'Отмена',
+      confirmButtonText: t('profile.logout_dialog.confirm'),
+      cancelButtonText: t('common.cancel'),
       confirmButtonColor: '#ef4444',
       cancelButtonColor: isDarkMode ? '#334155' : '#e2e8f0',
       background: isDarkMode ? '#0f172a' : '#ffffff',
@@ -226,7 +238,7 @@ const handleLogout = async () => {
       }
     });
   } else {
-    if (confirm('Вы уверены, что хотите выйти из профиля?')) {
+    if (confirm(t('profile.logout_dialog.fallback_confirm'))) {
       await authStore.logout();
       router.push('/login');
     }
@@ -238,17 +250,17 @@ const showDevelopmentNotification = () => {
   const isDarkMode = document.documentElement.classList.contains('dark');
   if (window.Swal) {
     window.Swal.fire({
-      title: 'В разработке',
-      text: 'Эта функция появится в ближайших обновлениях!',
+      title: t('profile.in_development.title'),
+      text: t('profile.in_development.text'),
       icon: 'info',
-      confirmButtonText: 'Понятно',
+      confirmButtonText: t('common.ok'),
       confirmButtonColor: '#f97316',
       background: isDarkMode ? '#0f172a' : '#ffffff',
       color: isDarkMode ? '#f8fafc' : '#0f172a',
       customClass: { popup: isDarkMode ? 'rounded-3xl border border-slate-800 shadow-2xl' : 'rounded-3xl border border-slate-200 shadow-xl' }
     });
   } else {
-    alert('Эта функция появится в ближайших обновлениях!');
+    alert(t('profile.in_development.text'));
   }
 };
 </script>

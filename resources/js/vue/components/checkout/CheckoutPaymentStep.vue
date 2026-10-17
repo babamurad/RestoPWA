@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6 select-none">
-    <h3 class="text-lg font-bold dark:text-slate-100 font-outfit text-slate-900">Способ оплаты</h3>
+    <h3 class="text-lg font-bold dark:text-slate-100 font-outfit text-slate-900">{{ t('checkout.payment.title') }}</h3>
 
     <div class="space-y-3">
       <!-- Cash Option -->
@@ -12,8 +12,8 @@
           <div v-if="localData.payment_method === 'cash'" class="w-2.5 h-2.5 rounded-full bg-orange-500"></div>
         </div>
         <div class="flex-1">
-          <div class="text-sm font-bold dark:text-slate-100 text-slate-900">Наличными</div>
-          <div class="text-[10px] font-semibold dark:text-slate-500 mt-0.5 text-slate-500">Оплата курьеру при получении</div>
+          <div class="text-sm font-bold dark:text-slate-100 text-slate-900">{{ t('checkout.payment.cash') }}</div>
+          <div class="text-[10px] font-semibold dark:text-slate-500 mt-0.5 text-slate-500">{{ t('checkout.payment.cash_hint') }}</div>
         </div>
         <span class="text-xl">💵</span>
       </label>
@@ -22,10 +22,10 @@
       <div class="flex items-center gap-4 p-4 rounded-2xl border cursor-not-allowed opacity-50 dark:bg-slate-900 dark:border-slate-800 bg-slate-50 border-slate-200">
         <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center dark:border-slate-600 border-slate-400"></div>
         <div class="flex-1">
-          <div class="text-sm font-bold dark:text-slate-100 text-slate-900">Картой при получении</div>
-          <div class="text-[10px] font-semibold dark:text-slate-500 mt-0.5 text-slate-500">Курьер приедет с терминалом</div>
+          <div class="text-sm font-bold dark:text-slate-100 text-slate-900">{{ t('checkout.payment.terminal') }}</div>
+          <div class="text-[10px] font-semibold dark:text-slate-500 mt-0.5 text-slate-500">{{ t('checkout.payment.terminal_hint') }}</div>
         </div>
-        <span class="text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full bg-slate-400/20 text-slate-500">Скоро</span>
+        <span class="text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full bg-slate-400/20 text-slate-500">{{ t('checkout.payment.soon') }}</span>
         <span class="text-xl">💳</span>
       </div>
 
@@ -33,21 +33,21 @@
       <div class="flex items-center gap-4 p-4 rounded-2xl border cursor-not-allowed opacity-50 dark:bg-slate-900 dark:border-slate-800 bg-slate-50 border-slate-200">
         <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center dark:border-slate-600 border-slate-400"></div>
         <div class="flex-1">
-          <div class="text-sm font-bold dark:text-slate-100 text-slate-900">Онлайн оплата</div>
-          <div class="text-[10px] font-semibold dark:text-slate-500 mt-0.5 text-slate-500">Перенаправление на шлюз оплаты</div>
+          <div class="text-sm font-bold dark:text-slate-100 text-slate-900">{{ t('checkout.payment.online') }}</div>
+          <div class="text-[10px] font-semibold dark:text-slate-500 mt-0.5 text-slate-500">{{ t('checkout.payment.online_hint') }}</div>
         </div>
-        <span class="text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full bg-slate-400/20 text-slate-500">Скоро</span>
+        <span class="text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full bg-slate-400/20 text-slate-500">{{ t('checkout.payment.soon') }}</span>
         <span class="text-xl">📱</span>
       </div>
     </div>
 
     <!-- Optional Comment -->
     <div class="pt-2">
-      <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">Комментарий к заказу (необязательно)</label>
+      <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">{{ t('checkout.payment.comment_label') }}</label>
       <textarea 
         v-model="localData.comment" 
         rows="2"
-        placeholder="Сдача с 1000, не звонить в дверь..."
+        :placeholder="t('checkout.payment.comment_placeholder')"
         class="w-full dark:bg-slate-900 border dark:border-slate-800 focus:border-orange-500/50 rounded-xl px-4 py-3 text-sm dark:text-slate-200 outline-none transition-all placeholder:text-slate-400 dark:text-slate-600 resize-none bg-slate-50 border-slate-200 text-slate-800 text-slate-400"
       ></textarea>
     </div>
@@ -57,13 +57,16 @@
       @click="handleNext"
       class="w-full mt-4 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-extrabold text-sm rounded-xl shadow-lg transition-all active:scale-[0.98]"
     >
-      Перейти к подтверждению
+      {{ t('checkout.payment.next') }}
     </button>
   </div>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   orderData: {

@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6 select-none">
-    <h3 class="text-lg font-bold dark:text-slate-100 font-outfit text-slate-900">Куда доставить?</h3>
+    <h3 class="text-lg font-bold dark:text-slate-100 font-outfit text-slate-900">{{ t('checkout.address.title') }}</h3>
     
     <!-- Delivery Type Toggle -->
     <div class="flex p-1 dark:bg-slate-900 border dark:border-slate-800 rounded-xl bg-slate-50 border-slate-200">
@@ -9,14 +9,14 @@
         class="flex-1 py-2 text-xs font-bold rounded-lg transition-all"
         :class="localData.delivery_type === 'delivery' ? 'dark:bg-slate-800 text-orange-400 shadow-sm bg-white' : 'dark:text-slate-500 dark:hover:text-slate-300 text-slate-500 hover:text-slate-700'"
       >
-        Доставка
+        {{ t('checkout.address.delivery') }}
       </button>
       <button 
         @click="updateType('pickup')"
         class="flex-1 py-2 text-xs font-bold rounded-lg transition-all"
         :class="localData.delivery_type === 'pickup' ? 'dark:bg-slate-800 text-orange-400 shadow-sm bg-white' : 'dark:text-slate-500 dark:hover:text-slate-300 text-slate-500 hover:text-slate-700'"
       >
-        Самовывоз
+        {{ t('checkout.address.pickup') }}
       </button>
     </div>
 
@@ -48,7 +48,7 @@
           class="absolute inset-0 flex flex-col items-center justify-center dark:bg-slate-900/80 backdrop-blur-sm z-20 rounded-2xl bg-slate-50"
         >
           <div class="w-8 h-8 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mb-3"></div>
-          <p class="text-xs dark:text-slate-400 font-medium tracking-wide text-slate-600">Загрузка карты...</p>
+          <p class="text-xs dark:text-slate-400 font-medium tracking-wide text-slate-600">{{ t('checkout.address.map_loading') }}</p>
         </div>
 
         <!-- Geolocation loading overlay -->
@@ -57,7 +57,7 @@
           class="absolute inset-0 flex flex-col items-center justify-center dark:bg-slate-900/80 backdrop-blur-sm z-20 rounded-2xl bg-slate-50"
         >
           <div class="w-6 h-6 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mb-2"></div>
-          <span class="text-xs dark:text-slate-300 font-semibold text-slate-700">Определяем ваше местоположение…</span>
+          <span class="text-xs dark:text-slate-300 font-semibold text-slate-700">{{ t('checkout.address.locating') }}</span>
         </div>
 
         <!-- Zone check badge (top-left) -->
@@ -71,10 +71,10 @@
             'dark:bg-slate-700/80 border dark:border-slate-600/50 dark:text-slate-300 bg-slate-100 border-slate-400 text-slate-700': zoneStatus === 'zone_missing' || zoneStatus === 'error',
           }"
         >
-          <span v-if="zoneStatus === 'inside' && zoneDistrict">✓ {{ zoneDistrict }} — доставка {{ zoneFee }} TMT</span>
-          <span v-else-if="zoneStatus === 'inside'">✓ Доставляем</span>
-          <span v-else-if="zoneStatus === 'outside'">✗ Вне зоны</span>
-          <span v-else>Зона не задана</span>
+          <span v-if="zoneStatus === 'inside' && zoneDistrict">{{ t('checkout.address.zone_inside_district', { district: zoneDistrict, fee: zoneFee }) }}</span>
+          <span v-else-if="zoneStatus === 'inside'">{{ t('checkout.address.zone_inside') }}</span>
+          <span v-else-if="zoneStatus === 'outside'">{{ t('checkout.address.zone_outside') }}</span>
+          <span v-else>{{ t('checkout.address.zone_missing') }}</span>
         </div>
 
         <!-- Zone check loading spinner (top-left) -->
@@ -90,7 +90,7 @@
         <button
           v-if="mapLoaded"
           @click="enterFullscreen"
-          title="Открыть карту на весь экран"
+          :title="t('checkout.address.open_fullscreen')"
           class="absolute top-2 right-2 z-20 w-8 h-8 rounded-lg dark:bg-slate-900/90 border dark:border-slate-700 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg bg-slate-50 border-slate-300"
           style="transform: translateZ(100px);"
         >
@@ -106,7 +106,7 @@
         <button
           v-if="mapLoaded && GEO_ENABLED && geo.status.value !== 'loading'"
           @click="handleRetryGeo"
-          title="Определить моё местоположение"
+          :title="t('checkout.address.locate_me')"
           class="absolute bottom-2 right-2 z-20 w-8 h-8 rounded-lg dark:bg-slate-900/90 border dark:border-slate-700 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg bg-slate-50 border-slate-300"
           style="transform: translateZ(100px);"
         >
@@ -127,8 +127,8 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
         </svg>
         <div>
-          <p class="font-bold mb-0.5">Адрес вне зоны доставки</p>
-          <p class="text-red-400/80">Переместите точку на карте или выберите <button @click="updateType('pickup')" class="underline font-bold">самовывоз</button>.</p>
+          <p class="font-bold mb-0.5">{{ t('checkout.address.outside_title') }}</p>
+          <p class="text-red-400/80">{{ t('checkout.address.outside_hint_before') }} <button @click="updateType('pickup')" class="underline font-bold">{{ t('checkout.address.outside_hint_pickup') }}</button>{{ t('checkout.address.outside_hint_after') }}</p>
         </div>
       </div>
 
@@ -146,7 +146,7 @@
           @click="handleRetryGeo"
           class="ml-auto shrink-0 text-orange-400 font-bold hover:text-orange-300 transition-colors"
         >
-          Повторить
+          {{ t('checkout.address.retry') }}
         </button>
       </div>
 
@@ -158,7 +158,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
         </svg>
-        <span>Низкая точность геолокации. Рекомендуется уточнить адрес на карте вручную.</span>
+        <span>{{ t('checkout.address.low_accuracy') }}</span>
       </div>
 
       <!-- Reverse-geocoded address hint -->
@@ -176,23 +176,23 @@
         </svg>
         <div class="min-w-0">
           <span class="break-words">{{ reverseAddr }}</span>
-          <span v-if="confidence === 'low'" class="block mt-0.5 text-amber-400/70">Низкая точность — уточните адрес вручную</span>
+          <span v-if="confidence === 'low'" class="block mt-0.5 text-amber-400/70">{{ t('checkout.address.low_confidence') }}</span>
         </div>
       </div>
 
       <div>
-        <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">Улица, дом (необязательно)</label>
+        <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">{{ t('checkout.address.street_label') }}</label>
         <input 
           v-model="localData.address" 
           type="text" 
-          placeholder="ул. Азади, д. 45"
+          :placeholder="t('checkout.address.street_placeholder')"
           class="w-full dark:bg-slate-900 border dark:border-slate-800 focus:border-orange-500/50 rounded-xl px-4 py-3 text-sm dark:text-slate-200 outline-none transition-all placeholder:text-slate-400 dark:text-slate-600 bg-slate-50 border-slate-200 text-slate-800 text-slate-400"
         />
       </div>
 
       <div class="grid grid-cols-3 gap-3">
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">Подъезд</label>
+          <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">{{ t('checkout.address.entrance') }}</label>
           <input 
             v-model="localData.entrance" 
             type="text" 
@@ -201,7 +201,7 @@
           />
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">Этаж</label>
+          <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">{{ t('checkout.address.floor') }}</label>
           <input 
             v-model="localData.floor" 
             type="text" 
@@ -210,7 +210,7 @@
           />
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">Квартира</label>
+          <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">{{ t('checkout.address.apartment') }}</label>
           <input 
             v-model="localData.apartment" 
             type="text" 
@@ -223,12 +223,12 @@
 
     <!-- Pickup text -->
     <div v-else class="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-semibold leading-relaxed animate-fade-in">
-      Вы сможете забрать заказ в выбранном ресторане. Мы пришлем уведомление, когда блюда будут готовы.
+      {{ t('checkout.address.pickup_info') }}
     </div>
 
     <!-- Phone Number (Required) -->
     <div>
-      <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">Контактный телефон</label>
+      <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">{{ t('checkout.address.phone_label') }}</label>
       <input 
         v-model="localData.phone" 
         type="tel" 
@@ -237,7 +237,7 @@
         :class="localData.phone && localData.phone.length > 5 && !isValidPhone ? 'border-red-500/50 focus:border-red-500' : 'dark:border-slate-800 border-slate-200'"
       />
       <div v-if="localData.phone && localData.phone.length > 5 && !isValidPhone" class="text-[10px] text-red-400 mt-1.5 ml-1 font-medium animate-fade-in">
-        Укажите корректный номер телефона (например, +993 65 123456)
+        {{ t('checkout.address.phone_invalid') }}
       </div>
     </div>
 
@@ -246,7 +246,7 @@
       :disabled="!isValid"
       class="w-full mt-6 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:disabled:from-slate-800 dark:disabled:to-slate-800 dark:disabled:text-slate-500 disabled:cursor-not-allowed text-white font-extrabold text-sm rounded-xl shadow-lg transition-all active:scale-[0.98] disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-500"
     >
-      Продолжить
+      {{ t('checkout.address.continue') }}
     </button>
 
     <!-- Fullscreen Map Overlay -->
@@ -263,7 +263,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
-          <h2 class="text-sm font-bold dark:text-slate-100 font-outfit tracking-wide text-slate-900">Укажите точку на карте</h2>
+          <h2 class="text-sm font-bold dark:text-slate-100 font-outfit tracking-wide text-slate-900">{{ t('checkout.address.pick_point_title') }}</h2>
         </div>
         <button @click="exitFullscreen" class="p-2 dark:hover:bg-slate-800 rounded-full transition-colors dark:text-slate-400 dark:hover:text-slate-200 active:scale-95 hover:bg-white text-slate-600 hover:text-slate-800">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -290,11 +290,11 @@
 
         <div v-show="!fullscreenMapLoaded" class="absolute inset-0 dark:bg-slate-900 flex flex-col items-center justify-center gap-3 z-[2000] bg-slate-50">
           <div class="w-8 h-8 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
-          <p class="text-xs dark:text-slate-400 font-medium text-slate-600">Загрузка...</p>
+          <p class="text-xs dark:text-slate-400 font-medium text-slate-600">{{ t('checkout.address.loading') }}</p>
         </div>
         
         <div v-show="fullscreenMapLoaded" class="absolute bottom-4 left-1/2 -translate-x-1/2 dark:bg-slate-900/90 border dark:border-slate-800 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-[10px] uppercase font-black tracking-wider dark:text-slate-300 whitespace-nowrap pointer-events-none z-[2000] bg-slate-50 border-slate-200 text-slate-700">
-          Перетащите карту под маркер
+          {{ t('checkout.address.drag_hint') }}
         </div>
       </div>
 
@@ -305,13 +305,13 @@
             @click="exitFullscreen"
             class="flex-1 py-3.5 dark:bg-slate-800 dark:hover:bg-slate-700 dark:active:bg-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all active:scale-[0.98] text-sm font-inter bg-white hover:bg-slate-100 active:bg-slate-100 text-slate-700"
           >
-            Отмена
+            {{ t('checkout.address.cancel') }}
           </button>
           <button 
             @click="confirmFullscreenSelection"
             class="flex-1 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-xl shadow-lg shadow-orange-500/20 transition-all active:scale-[0.98] text-sm font-inter"
           >
-            Подтвердить
+            {{ t('checkout.address.confirm') }}
           </button>
         </div>
       </div>
@@ -324,7 +324,7 @@
           <button
             @click="zoomInFullscreen"
             type="button"
-            title="Приблизить"
+            :title="t('checkout.address.zoom_in')"
             class="w-10 h-10 rounded-xl dark:bg-slate-900/95 border dark:border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg bg-slate-50 border-slate-200"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -336,7 +336,7 @@
           <button
             @click="zoomOutFullscreen"
             type="button"
-            title="Отдалить"
+            :title="t('checkout.address.zoom_out')"
             class="w-10 h-10 rounded-xl dark:bg-slate-900/95 border dark:border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg bg-slate-50 border-slate-200"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -350,7 +350,7 @@
             @click="handleRetryGeo"
             type="button"
             :disabled="geo.status.value === 'loading'"
-            title="Определить моё местоположение"
+            :title="t('checkout.address.locate_me')"
             class="w-10 h-10 rounded-xl dark:bg-slate-900/95 border dark:border-slate-800 flex items-center justify-center text-orange-400 hover:text-orange-300 hover:border-orange-500/40 transition-all active:scale-95 shadow-lg mt-2 disabled:opacity-50 bg-slate-50 border-slate-200"
           >
             <div v-if="geo.status.value === 'loading'" class="w-4 h-4 border border-orange-400/30 border-t-orange-400 rounded-full animate-spin"></div>
@@ -367,6 +367,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useCartStore } from '../../stores/cart';
 import { useGeolocate } from '../../composables/useGeolocate';
 import { useZoneCheck } from '../../composables/useZoneCheck';
@@ -384,6 +385,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update-data', 'next-step']);
 
+const { t } = useI18n();
 const cartStore = useCartStore();
 
 const localData = ref({
@@ -444,10 +446,10 @@ let pinMoveCount = 0;
 // Geo error messages
 const geoError = computed(() => {
   switch (geo.status.value) {
-    case 'denied':      return 'Доступ к геолокации запрещён. Выберите точку на карте вручную.';
-    case 'timeout':     return 'Не удалось получить геопозицию (таймаут). Попробуйте снова или выберите точку вручную.';
-    case 'unavailable': return 'Геолокация недоступна на этом устройстве. Выберите точку на карте вручную.';
-    case 'error':       return 'Не удалось получить геопозицию. Выберите точку на карте вручную.';
+    case 'denied':      return t('checkout.address.geo_error.denied');
+    case 'timeout':     return t('checkout.address.geo_error.timeout');
+    case 'unavailable': return t('checkout.address.geo_error.unavailable');
+    case 'error':       return t('checkout.address.geo_error.error');
     default:            return null;
   }
 });

@@ -2,6 +2,7 @@ import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import router from './vue/router';
 import App from './vue/App.vue';
+import { i18n, t } from './vue/i18n';
 import './bootstrap';
 import './services/CartService';
 import './services/CartAlpine';
@@ -44,12 +45,12 @@ function setupOrderSubmission(registration) {
                     detail: event.data,
                 }));
                 window.Swal.fire({
-                    title: 'Требуется авторизация',
-                    text: 'У вас есть сохраненный заказ, но время сессии истекло. Войдите, чтобы отправить его.',
+                    title: t('app.auth_required.title'),
+                    text: t('app.auth_required.text'),
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonText: 'Войти',
-                    cancelButtonText: 'Позже',
+                    confirmButtonText: t('common.login'),
+                    cancelButtonText: t('common.later'),
                     confirmButtonColor: '#f97316',
                     reverseButtons: true,
                     customClass: { popup: 'rounded-2xl' },
@@ -210,5 +211,6 @@ if (appElement) {
     const pinia = createPinia();
     app.use(pinia);
     app.use(router);
+    app.use(i18n);
     app.mount('#app');
 }

@@ -7,17 +7,17 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
         </svg>
       </button>
-      <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100 font-outfit">Способы оплаты</h1>
+      <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100 font-outfit">{{ t('profile.payments.title') }}</h1>
     </div>
 
-    <div v-if="loading" class="text-center py-10 text-slate-500">Загрузка...</div>
+    <div v-if="loading" class="text-center py-10 text-slate-500">{{ t('common.loading') }}</div>
 
     <div v-else class="space-y-4">
       <div v-if="methods.length === 0" class="text-center py-10">
         <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
           <span class="text-2xl">💳</span>
         </div>
-        <p class="text-slate-500 dark:text-slate-400 font-medium">У вас пока нет привязанных карт</p>
+        <p class="text-slate-500 dark:text-slate-400 font-medium">{{ t('profile.payments.empty') }}</p>
       </div>
 
       <div v-else class="space-y-3">
@@ -44,32 +44,32 @@
           </div>
           <div class="text-lg tracking-widest font-mono">{{ method.card_mask }}</div>
           <div class="mt-2 text-xs text-slate-400 uppercase tracking-wider flex items-center justify-between">
-            <span>{{ method.card_type || 'Банковская карта' }}</span>
-            <span v-if="method.is_default" class="bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full font-bold">Основная</span>
+            <span>{{ method.card_type || t('profile.payments.bank_card') }}</span>
+            <span v-if="method.is_default" class="bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full font-bold">{{ t('profile.payments.default_badge') }}</span>
           </div>
         </div>
       </div>
 
       <!-- Simple mock form for adding a card -->
       <div v-if="showForm" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-5 shadow-lg mt-6">
-        <h3 class="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">Привязать карту</h3>
+        <h3 class="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">{{ t('profile.payments.link_title') }}</h3>
         <form @submit.prevent="saveMethod" class="space-y-4">
           <div>
-            <label class="block text-xs font-bold text-slate-500 mb-1">Номер карты (симуляция)</label>
+            <label class="block text-xs font-bold text-slate-500 mb-1">{{ t('profile.payments.card_number_label') }}</label>
             <input v-model="form.cardNumber" type="text" placeholder="0000 0000 0000 0000" maxlength="19" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-orange-500 transition-colors text-slate-800 dark:text-slate-100 font-mono">
           </div>
           
           <label class="flex items-center gap-3 py-2 cursor-pointer">
             <input v-model="form.is_default" type="checkbox" class="w-5 h-5 rounded border-slate-300 text-orange-500 focus:ring-orange-500">
-            <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Сделать основной</span>
+            <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ t('profile.payments.make_default') }}</span>
           </label>
 
           <div class="flex gap-3 pt-2">
             <button type="button" @click="showForm = false" class="flex-1 py-3.5 rounded-xl font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
-              Отмена
+              {{ t('common.cancel') }}
             </button>
             <button type="submit" :disabled="saving" class="flex-1 py-3.5 rounded-xl font-bold text-white bg-orange-500 hover:bg-orange-600 transition-colors disabled:opacity-70">
-              {{ saving ? 'Сохранение...' : 'Привязать' }}
+              {{ saving ? t('profile.saving') : t('profile.payments.link') }}
             </button>
           </div>
         </form>
@@ -77,7 +77,7 @@
 
       <button v-else @click="showForm = true; form = {cardNumber: '', is_default: true}" class="w-full mt-6 bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-500/20 font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 hover:bg-orange-100 transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-        Добавить карту
+        {{ t('profile.payments.add') }}
       </button>
     </div>
   </div>
@@ -85,7 +85,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import apiClient from '../../api/client';
+
+const { t } = useI18n();
 
 const methods = ref([]);
 const loading = ref(true);
@@ -126,14 +129,14 @@ const saveMethod = async () => {
     showForm.value = false;
   } catch (error) {
     console.error(error);
-    alert('Произошла ошибка при добавлении карты');
+    alert(t('profile.payments.save_error'));
   } finally {
     saving.value = false;
   }
 };
 
 const deleteMethod = async (id) => {
-  if (!confirm('Удалить эту карту?')) return;
+  if (!confirm(t('profile.payments.delete_confirm'))) return;
   try {
     await apiClient.delete(`/profile/payments/${id}`);
     await fetchMethods();

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import apiClient from '../api/client';
+import { t } from '../i18n';
 
 export const useCartStore = defineStore('cart', {
   state: () => ({
@@ -204,7 +205,7 @@ export const useCartStore = defineStore('cart', {
         }
       } catch (err) {
         console.error('Error syncing cart:', err);
-        this.syncError = err.message || 'Ошибка синхронизации';
+        this.syncError = err.message || t('cart.sync_error');
         
         // Fallback local calculations in case server sync is offline
         const localSubtotal = this.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
