@@ -32,12 +32,12 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->gro
             ->with('schedules')
             ->select('id', 'slug', 'name', 'image', 'cover_image', 'rating', 'review_count', 'delivery_time', 'delivery_fee', 'min_order', 'is_active', 'description', 'is_paused', 'timezone')
             ->get()
-            ->each(fn ($r) => $r->setAppends(['is_open_now'])->makeHidden(['schedules']));
+            ->each(fn ($r) => $r->setAppends(['is_open_now', 'delivery_fee_from'])->makeHidden(['schedules']));
     })->name('api.restaurants.index');
 
     Route::get('restaurants/{vendor}', function (Restaurant $vendor) {
         $vendor->load('schedules');
-        $vendor->setAppends(['is_open_now']);
+        $vendor->setAppends(['is_open_now', 'delivery_fee_from']);
 
         return response()->json($vendor);
     })->name('api.restaurants.show');

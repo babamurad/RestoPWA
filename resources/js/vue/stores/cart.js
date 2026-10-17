@@ -11,6 +11,10 @@ export const useCartStore = defineStore('cart', {
     // Server synchronized values
     subtotal: 0,
     deliveryFee: 0,
+    // District pricing: cart shows the cheapest district ("от") until checkout
+    // knows the address; then districtFee holds the exact price for it.
+    deliveryFeeIsEstimate: false,
+    districtFee: null,
     total: 0,
     minOrder: 0,
     isMinOrderMet: true,
@@ -104,6 +108,8 @@ export const useCartStore = defineStore('cart', {
         this.vendorName = null;
         this.subtotal = 0;
         this.deliveryFee = 0;
+        this.deliveryFeeIsEstimate = false;
+        this.districtFee = null;
         this.total = 0;
         this.minOrder = 0;
         this.isMinOrderMet = true;
@@ -121,6 +127,8 @@ export const useCartStore = defineStore('cart', {
       this.vendorName = null;
       this.subtotal = 0;
       this.deliveryFee = 0;
+      this.deliveryFeeIsEstimate = false;
+      this.districtFee = null;
       this.total = 0;
       this.minOrder = 0;
       this.isMinOrderMet = true;
@@ -181,8 +189,16 @@ export const useCartStore = defineStore('cart', {
 
           // Map summary metrics from backend
           this.subtotal = syncData.subtotal || 0;
-          this.deliveryFee = syncData.delivery_fee || 0;
-          this.total = syncData.total || 0;
+          if (this.districtFee !== null) {
+            // Address already chosen in checkout: keep the exact district price
+            this.deliveryFee = this.districtFee;
+            this.deliveryFeeIsEstimate = false;
+            this.total = (syncData.subtotal || 0) + this.districtFee;
+          } else {
+            this.deliveryFee = syncData.delivery_fee || 0;
+            this.deliveryFeeIsEstimate = !!syncData.delivery_fee_is_estimate;
+            this.total = syncData.total || 0;
+          }
           this.minOrder = syncData.min_order || 0;
           this.isMinOrderMet = syncData.is_min_order_met !== undefined ? syncData.is_min_order_met : true;
         }
@@ -196,6 +212,16 @@ export const useCartStore = defineStore('cart', {
         this.total = localSubtotal + this.deliveryFee;
       } finally {
         this.syncLoading = false;
+      }
+    },
+
+    // Exact delivery price for the chosen address (district pricing)
+    setDistrictFee(fee) {
+      this.districtFee = fee;
+      if (fee !== null) {
+        this.deliveryFee = fee;
+        this.deliveryFeeIsEstimate = false;
+        this.total = (this.subtotal || 0) + fee;
       }
     },
 

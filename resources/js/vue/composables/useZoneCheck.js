@@ -10,6 +10,8 @@ export function useZoneCheck() {
   const zoneMessage  = ref(null)
   const reverseAddr  = ref(null)     // human-readable address from reverse geocode
   const confidence   = ref(null)     // high | medium | low | null
+  const deliveryFee  = ref(null)     // district pricing: price for this address (TMT), else null
+  const district     = ref(null)     // district pricing: district name
 
   let zoneTimer   = null
   let reverseTimer = null
@@ -29,6 +31,8 @@ export function useZoneCheck() {
     zoneTimer = setTimeout(async () => {
       zoneStatus.value  = 'loading'
       zoneMessage.value = null
+      deliveryFee.value = null
+      district.value    = null
 
       try {
         const { data } = await apiClient.post('/geo/zone-check', { vendor_id: vendorId, lat, lon })
@@ -36,6 +40,8 @@ export function useZoneCheck() {
 
         zoneStatus.value  = payload.status  ?? (payload.in_zone ? 'inside' : 'outside')
         zoneMessage.value = payload.message ?? null
+        deliveryFee.value = payload.delivery_fee ?? null
+        district.value    = payload.district ?? null
       } catch {
         zoneStatus.value  = 'error'
         zoneMessage.value = 'Не удалось проверить зону доставки.'
@@ -73,6 +79,8 @@ export function useZoneCheck() {
     clearTimeout(reverseTimer)
     zoneStatus.value  = 'idle'
     zoneMessage.value = null
+    deliveryFee.value = null
+    district.value    = null
     reverseAddr.value = null
     confidence.value  = null
   }
@@ -80,6 +88,8 @@ export function useZoneCheck() {
   return {
     zoneStatus:  readonly(zoneStatus),
     zoneMessage: readonly(zoneMessage),
+    deliveryFee: readonly(deliveryFee),
+    district:    readonly(district),
     reverseAddr: readonly(reverseAddr),
     confidence:  readonly(confidence),
     checkZone,

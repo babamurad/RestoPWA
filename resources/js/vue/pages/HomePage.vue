@@ -162,7 +162,7 @@
             
             <div class="flex items-center gap-4 mt-3 pt-3 border-t dark:border-slate-700/30 text-xs dark:text-slate-400 font-semibold border-slate-300 text-slate-600">
               <span class="flex items-center gap-1">
-                Доставка: <strong class="dark:text-slate-200 text-slate-800">{{ parseFloat(restaurant.delivery_fee) === 0 ? 'Бесплатно' : restaurant.delivery_fee + ' TMT' }}</strong>
+                Доставка: <strong class="dark:text-slate-200 text-slate-800">{{ restaurant.delivery_fee_from != null ? 'от ' + restaurant.delivery_fee_from + ' TMT' : (parseFloat(restaurant.delivery_fee) === 0 ? 'Бесплатно' : restaurant.delivery_fee + ' TMT') }}</strong>
               </span>
               <span class="w-1.5 h-1.5 rounded-full dark:bg-slate-700 bg-slate-100"></span>
               <span class="flex items-center gap-1">

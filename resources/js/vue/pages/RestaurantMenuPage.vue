@@ -57,7 +57,7 @@
             </span>
             <span class="w-1.5 h-1.5 rounded-full dark:bg-slate-700 hidden sm:inline bg-slate-100"></span>
             <span class="flex items-center gap-1.5">
-              🚲 Доставка: <strong class="dark:text-slate-200 text-slate-800">{{ parseFloat(store.currentRestaurant.delivery_fee) === 0 ? 'Бесплатно' : store.currentRestaurant.delivery_fee + ' TMT' }}</strong>
+              🚲 Доставка: <strong class="dark:text-slate-200 text-slate-800">{{ store.currentRestaurant.delivery_fee_from != null ? 'от ' + store.currentRestaurant.delivery_fee_from + ' TMT' : (parseFloat(store.currentRestaurant.delivery_fee) === 0 ? 'Бесплатно' : store.currentRestaurant.delivery_fee + ' TMT') }}</strong>
             </span>
             <span class="w-1.5 h-1.5 rounded-full dark:bg-slate-700 hidden sm:inline bg-slate-100"></span>
             <span class="flex items-center gap-1.5">

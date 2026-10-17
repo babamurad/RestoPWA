@@ -71,7 +71,8 @@
             'dark:bg-slate-700/80 border dark:border-slate-600/50 dark:text-slate-300 bg-slate-100 border-slate-400 text-slate-700': zoneStatus === 'zone_missing' || zoneStatus === 'error',
           }"
         >
-          <span v-if="zoneStatus === 'inside'">✓ Доставляем</span>
+          <span v-if="zoneStatus === 'inside' && zoneDistrict">✓ {{ zoneDistrict }} — доставка {{ zoneFee }} TMT</span>
+          <span v-else-if="zoneStatus === 'inside'">✓ Доставляем</span>
           <span v-else-if="zoneStatus === 'outside'">✗ Вне зоны</span>
           <span v-else>Зона не задана</span>
         </div>
@@ -427,6 +428,15 @@ const stepOpenedAt = Date.now();
 const zoneStatus  = computed(() => hasSelectedPoint.value ? zoneChecker.zoneStatus.value : 'idle');
 const reverseAddr = computed(() => hasSelectedPoint.value ? zoneChecker.reverseAddr.value : null);
 const confidence  = computed(() => hasSelectedPoint.value ? zoneChecker.confidence.value : null);
+const zoneDistrict = computed(() => hasSelectedPoint.value ? zoneChecker.district.value : null);
+const zoneFee      = computed(() => hasSelectedPoint.value ? zoneChecker.deliveryFee.value : null);
+
+// District pricing: the price for the chosen address replaces the cart's "от" estimate
+watch(zoneChecker.deliveryFee, (fee) => {
+  if (fee !== null) {
+    cartStore.setDistrictFee(fee);
+  }
+});
 
 // Счётчик перемещений карты для аналитики P0.4
 let pinMoveCount = 0;

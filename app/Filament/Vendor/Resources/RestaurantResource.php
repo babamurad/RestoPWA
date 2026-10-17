@@ -2,31 +2,41 @@
 
 namespace App\Filament\Vendor\Resources;
 
+use App\Domains\Geo\Models\District;
+use App\Domains\Geo\Services\GeoService;
 use App\Domains\Vendor\Models\Restaurant;
+use Filament\Actions;
+use Filament\Actions\Action;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 
 class RestaurantResource extends Resource
 {
     protected static ?string $model = Restaurant::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-home-modern';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-home-modern';
 
     protected static ?string $modelLabel = 'Настройки ресторана';
+
     protected static ?string $pluralModelLabel = 'Настройки ресторана';
-    protected static string | \UnitEnum | null $navigationGroup = 'Настройки';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Настройки';
 
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                \Filament\Schemas\Components\Group::make()
+                Group::make()
                     ->schema([
-                        \Filament\Schemas\Components\Section::make('Основная информация')
+                        Section::make('Основная информация')
                             ->schema([
                                 Forms\Components\TextInput::make('name')
                                     ->label('Название')
@@ -38,8 +48,8 @@ class RestaurantResource extends Resource
                                     ->maxLength(65535)
                                     ->columnSpanFull(),
                             ]),
-                            
-                        \Filament\Schemas\Components\Section::make('Медиа и статус')
+
+                        Section::make('Медиа и статус')
                             ->schema([
                                 Forms\Components\FileUpload::make('image')
                                     ->label('Логотип')
@@ -71,35 +81,50 @@ class RestaurantResource extends Resource
                             ])->columns(2),
                     ])->columnSpan(['lg' => 2]),
 
-                \Filament\Schemas\Components\Group::make()
+                Group::make()
                     ->schema([
-                        \Filament\Schemas\Components\Section::make('Условия доставки и курьеры')
+                        Section::make('Условия доставки и курьеры')
                             ->schema([
                                 Forms\Components\TextInput::make('delivery_time')
                                     ->label('Среднее время доставки (мин)')
                                     ->placeholder('20-30'),
                                 Forms\Components\TextInput::make('delivery_fee')
-                                    ->label('Стоимость доставки')
+                                    ->label('Стоимость доставки (если цены по районам не заданы)')
                                     ->numeric()
-                                    ->prefix('₽'),
+                                    ->suffix('TMT'),
                                 Forms\Components\TextInput::make('min_order')
                                     ->label('Минимальная сумма заказа')
                                     ->numeric()
                                     ->prefix('₽'),
-                                Forms\Components\TextInput::make('courier_fixed_fee')
-                                    ->label('Фикс. выплата курьеру (за заказ)')
-                                    ->numeric()
-                                    ->prefix('₽')
-                                    ->default(0),
-                                Forms\Components\TextInput::make('courier_percent_fee')
-                                    ->label('Процент курьеру (от суммы)')
-                                    ->numeric()
-                                    ->suffix('%')
-                                    ->default(0),
                             ])->columns(1),
                     ])->columnSpan(['lg' => 1]),
 
-                \Filament\Schemas\Components\Section::make('Расписание работы')
+                Section::make('Цены доставки по районам')
+                    ->description('Укажите цену для каждого района, куда доставляете. В районы без цены доставка не выполняется. Вся сумма доставки идёт курьеру.')
+                    ->schema([
+                        Forms\Components\Repeater::make('deliveryPrices')
+                            ->hiddenLabel()
+                            ->relationship()
+                            ->schema([
+                                Forms\Components\Select::make('district_id')
+                                    ->label('Район')
+                                    ->options(fn () => District::active()->orderBy('sort_order')->orderBy('name')->pluck('name', 'id'))
+                                    ->required()
+                                    ->distinct()
+                                    ->disableOptionsWhenSelectedInSiblingRepeaterItems(),
+                                Forms\Components\TextInput::make('price')
+                                    ->label('Цена доставки')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->suffix('TMT')
+                                    ->required(),
+                            ])
+                            ->columns(2)
+                            ->addActionLabel('Добавить район')
+                            ->defaultItems(0),
+                    ])->columnSpanFull(),
+
+                Section::make('Расписание работы')
                     ->schema([
                         Forms\Components\Repeater::make('schedules')
                             ->relationship()
@@ -128,7 +153,7 @@ class RestaurantResource extends Resource
                                     ->default(false),
                             ])
                             ->columns(4)
-                            ->itemLabel(fn (array $state): ?string => match ((string)($state['weekday'] ?? '')) {
+                            ->itemLabel(fn (array $state): ?string => match ((string) ($state['weekday'] ?? '')) {
                                 '0' => 'Понедельник',
                                 '1' => 'Вторник',
                                 '2' => 'Среда',
@@ -139,10 +164,10 @@ class RestaurantResource extends Resource
                                 default => null,
                             })
                             ->defaultItems(0)
-                            ->collapsible()
+                            ->collapsible(),
                     ])->columnSpanFull(),
 
-                \Filament\Schemas\Components\Section::make('Зона доставки')
+                Section::make('Зона доставки')
                     ->description('Настройте полигон доставки в формате GeoJSON')
                     ->schema([
                         Forms\Components\ViewField::make('delivery_zones')
@@ -150,24 +175,31 @@ class RestaurantResource extends Resource
                             ->view('filament.forms.components.delivery-zone-map')
                             ->columnSpanFull(),
 
-                        \Filament\Schemas\Components\Section::make('Просмотр координат (GeoJSON)')
+                        Section::make('Просмотр координат (GeoJSON)')
                             ->collapsed()
                             ->compact()
                             ->schema([
                                 Forms\Components\Placeholder::make('delivery_zones_json')
                                     ->label('Текущий GeoJSON')
                                     ->content(function ($record) {
-                                        if (!$record || !$record->delivery_zones) return 'Пусто';
+                                        if (! $record || ! $record->delivery_zones) {
+                                            return 'Пусто';
+                                        }
+
                                         return json_encode($record->delivery_zones, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-                                    })
+                                    }),
                             ]),
                         Forms\Components\Placeholder::make('delivery_zone_status')
                             ->label('Статус зоны')
                             ->content(function ($record) {
-                                if (! $record) return 'Сохраните, чтобы проверить.';
+                                if (! $record) {
+                                    return 'Сохраните, чтобы проверить.';
+                                }
                                 $zones = $record->getZonesArray();
-                                if (empty($zones)) return '⚠️ Зона не настроена. Заказы не будут приниматься.';
-                                
+                                if (empty($zones)) {
+                                    return '⚠️ Зона не настроена. Заказы не будут приниматься.';
+                                }
+
                                 $polygonCount = 0;
                                 if (isset($zones['type']) && $zones['type'] === 'MultiPolygon' && isset($zones['coordinates'])) {
                                     $polygonCount = count($zones['coordinates']);
@@ -176,14 +208,14 @@ class RestaurantResource extends Resource
                                 } else {
                                     $polygonCount = count($zones);
                                 }
-                                
+
                                 return '✅ Зона настроена ('.$polygonCount.' полигонов).';
                             }),
 
-                        \Filament\Schemas\Components\Fieldset::make('check_point_fieldset')
+                        Fieldset::make('check_point_fieldset')
                             ->label('Проверить точку на карте')
                             ->schema([
-                                \Filament\Schemas\Components\Grid::make(3)
+                                Grid::make(3)
                                     ->schema([
                                         Forms\Components\TextInput::make('check_lat')
                                             ->label('Широта')
@@ -194,7 +226,7 @@ class RestaurantResource extends Resource
                                             ->numeric()
                                             ->placeholder('63.5593'),
                                         \Filament\Schemas\Components\Actions::make([
-                                            \Filament\Actions\Action::make('check_point')
+                                            Action::make('check_point')
                                                 ->label('Проверить')
                                                 ->button()
                                                 ->color('warning')
@@ -202,28 +234,30 @@ class RestaurantResource extends Resource
                                                 ->action(function ($get, ?Restaurant $record) {
                                                     $lat = $get('check_lat');
                                                     $lon = $get('check_lon');
-                                                    if (!$lat || !$lon) {
-                                                        \Filament\Notifications\Notification::make()
+                                                    if (! $lat || ! $lon) {
+                                                        Notification::make()
                                                             ->title('Ошибка')
                                                             ->body('Пожалуйста, введите широту и долготу.')
                                                             ->danger()
                                                             ->send();
+
                                                         return;
                                                     }
-                                                    if (!$record) {
-                                                        \Filament\Notifications\Notification::make()
+                                                    if (! $record) {
+                                                        Notification::make()
                                                             ->title('Ошибка')
                                                             ->body('Пожалуйста, сохраните ресторан перед проверкой точки.')
                                                             ->danger()
                                                             ->send();
+
                                                         return;
                                                     }
 
-                                                    $geoService = app(\App\Domains\Geo\Services\GeoService::class);
+                                                    $geoService = app(GeoService::class);
                                                     $result = $geoService->checkDeliveryZone((float) $lat, (float) $lon, $record->id);
-                                                    
+
                                                     $color = $result->isAllowed() ? 'success' : 'danger';
-                                                    $statusLabel = match($result->status) {
+                                                    $statusLabel = match ($result->status) {
                                                         'inside' => 'Внутри зоны доставки',
                                                         'outside' => 'Вне зоны доставки',
                                                         'zone_missing' => 'Зона доставки не настроена',
@@ -232,14 +266,14 @@ class RestaurantResource extends Resource
                                                         default => $result->status,
                                                     };
 
-                                                    \Filament\Notifications\Notification::make()
+                                                    Notification::make()
                                                         ->title('Результат проверки')
                                                         ->body("Статус: **{$statusLabel}**\n\nСообщение: {$result->messageForUser()}")
                                                         ->color($color)
                                                         ->persistent()
                                                         ->send();
-                                                })
-                                        ])->alignEnd()
+                                                }),
+                                        ])->alignEnd(),
                                     ]),
                             ]),
                     ])->columnSpanFull(),
@@ -269,6 +303,7 @@ class RestaurantResource extends Resource
                     ->label('Зона')
                     ->getStateUsing(function ($record) {
                         $zones = $record->getZonesArray();
+
                         return empty($zones) ? 'Не настроена' : 'Готова';
                     })
                     ->badge()
