@@ -6,6 +6,7 @@ namespace App\Domains\Order\Models;
 
 use App\Casts\MoneyCast;
 use App\Domains\Logistics\Models\Courier;
+use App\Domains\Review\Models\Review;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Models\User;
 use App\Models\VendorSettlement;
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -133,6 +135,11 @@ class Order extends Model
     public function isPickup(): bool
     {
         return $this->delivery_type === self::DELIVERY_TYPE_PICKUP;
+    }
+
+    public function review(): HasOne
+    {
+        return $this->hasOne(Review::class);
     }
 
     public function restaurant(): BelongsTo

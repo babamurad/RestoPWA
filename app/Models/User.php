@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Domains\Logistics\Models\Courier;
+use App\Domains\Review\Models\Review;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
@@ -32,6 +33,15 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     protected $attributes = [
         'role' => 'client',
     ];
+
+    protected static function booted(): void
+    {
+        // Same as for orders: let ReviewObserver recalculate restaurant ratings
+        // instead of losing the user's reviews to the DB cascade.
+        static::deleting(function (User $user) {
+            Review::where('user_id', $user->id)->get()->each->delete();
+        });
+    }
 
     protected function casts(): array
     {

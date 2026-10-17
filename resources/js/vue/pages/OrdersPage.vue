@@ -78,20 +78,87 @@
           <span class="text-xs dark:text-slate-400 font-semibold text-slate-600">
             Сумма: <strong class="dark:text-slate-100 text-sm font-bold ml-1 text-slate-900">{{ order.total }} TMT</strong>
           </span>
-          <button 
-            @click="repeatOrder(order)"
-            class="px-3.5 py-1.5 dark:bg-slate-800 dark:hover:bg-slate-700 hover:text-orange-400 text-xs font-bold rounded-lg transition-colors border dark:border-slate-700/30 active:scale-95 bg-white hover:bg-slate-100 border-slate-300"
-          >
-            Повторить
-          </button>
+          <div class="flex items-center gap-2">
+            <span v-if="order.review" class="text-xs font-bold text-amber-500" :aria-label="`Ваша оценка ${order.review.rating} из 5`">
+              ★ {{ order.review.rating }}
+            </span>
+            <button
+              v-else-if="order.can_review"
+              @click="openReview(order)"
+              class="px-3.5 py-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold rounded-lg border border-amber-500/30 hover:bg-amber-500/20 active:scale-95 transition-colors"
+            >
+              Оценить
+            </button>
+            <button 
+              @click="repeatOrder(order)"
+              class="px-3.5 py-1.5 dark:bg-slate-800 dark:hover:bg-slate-700 hover:text-orange-400 text-xs font-bold rounded-lg transition-colors border dark:border-slate-700/30 active:scale-95 bg-white hover:bg-slate-100 border-slate-300"
+            >
+              Повторить
+            </button>
+          </div>
         </div>
       </div>
+    </div>
+
+    <!-- Review modal -->
+    <div
+      v-if="reviewTarget"
+      class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4"
+      @click.self="closeReview"
+    >
+      <form
+        @submit.prevent="submitReview"
+        class="w-full max-w-sm rounded-3xl p-6 dark:bg-slate-900 bg-white border dark:border-slate-800 border-slate-200 shadow-2xl"
+        role="dialog"
+        aria-labelledby="review-title"
+      >
+        <h3 id="review-title" class="text-base font-black dark:text-slate-100 text-slate-900">Оцените заказ</h3>
+        <p class="text-xs mt-1 dark:text-slate-400 text-slate-600">{{ getRestaurantName(reviewTarget.vendor_id) }}</p>
+
+        <div class="flex justify-center gap-2 my-5" role="radiogroup" aria-label="Оценка">
+          <button
+            v-for="n in 5"
+            :key="n"
+            type="button"
+            role="radio"
+            :aria-checked="reviewRating === n"
+            :aria-label="`${n} из 5`"
+            @click="reviewRating = n"
+            class="text-3xl leading-none transition-transform active:scale-90"
+            :class="n <= reviewRating ? 'text-amber-400' : 'dark:text-slate-700 text-slate-300'"
+          >★</button>
+        </div>
+
+        <textarea
+          v-model="reviewComment"
+          maxlength="1000"
+          rows="3"
+          placeholder="Что понравилось или что можно улучшить? (необязательно)"
+          class="w-full rounded-xl px-3 py-2 text-xs dark:bg-slate-950/50 bg-slate-50 border dark:border-slate-700/50 border-slate-300 dark:text-slate-100 text-slate-900 focus:outline-none focus:border-orange-500/80"
+        ></textarea>
+
+        <p v-if="reviewError" class="mt-2 text-xs text-rose-500">{{ reviewError }}</p>
+
+        <div class="mt-4 flex gap-2">
+          <button type="button" @click="closeReview" class="flex-1 py-2.5 text-xs font-bold rounded-xl border dark:border-slate-700 border-slate-300 dark:text-slate-300 text-slate-700">
+            Отмена
+          </button>
+          <button
+            type="submit"
+            :disabled="reviewRating === 0 || reviewSending"
+            class="flex-1 py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white disabled:opacity-50"
+          >
+            {{ reviewSending ? 'Отправка...' : 'Отправить' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
+import ordersApi from '../api/orders';
 import { useRouter } from 'vue-router';
 import { useOrdersStore } from '../stores/orders';
 import { useRestaurantsStore } from '../stores/restaurants';
@@ -155,6 +222,51 @@ const getOrderItemsSummary = (order) => {
 };
 
 // One-click Repeat Order Action
+// Review modal
+const reviewTarget = ref(null);
+const reviewRating = ref(0);
+const reviewComment = ref('');
+const reviewSending = ref(false);
+const reviewError = ref('');
+
+const openReview = (order) => {
+  reviewTarget.value = order;
+  reviewRating.value = 0;
+  reviewComment.value = '';
+  reviewError.value = '';
+};
+
+const closeReview = () => {
+  if (!reviewSending.value) {
+    reviewTarget.value = null;
+  }
+};
+
+const submitReview = async () => {
+  if (reviewRating.value === 0) return;
+  reviewSending.value = true;
+  reviewError.value = '';
+  try {
+    await ordersApi.reviewOrder(reviewTarget.value.id, {
+      rating: reviewRating.value,
+      comment: reviewComment.value.trim() || null,
+    });
+    reviewTarget.value.review = { rating: reviewRating.value };
+    reviewTarget.value.can_review = false;
+    reviewTarget.value = null;
+  } catch (err) {
+    const status = err.response?.status;
+    if (status === 409) {
+      reviewTarget.value.can_review = false;
+      reviewError.value = 'Вы уже оценили этот заказ.';
+    } else {
+      reviewError.value = err.response?.data?.message || 'Не удалось отправить отзыв. Попробуйте ещё раз.';
+    }
+  } finally {
+    reviewSending.value = false;
+  }
+};
+
 const repeatOrder = (order) => {
   if (!order.items || !Array.isArray(order.items)) return;
   

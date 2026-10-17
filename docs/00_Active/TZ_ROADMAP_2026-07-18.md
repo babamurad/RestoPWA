@@ -91,12 +91,12 @@ Docker не нужен, чтобы прогонять тесты на пуш —
 
 ## 5. P1 — важно для удержания пользователей, не блокирует первый заказ
 
-### 5.1 Отзывы и рейтинг
-- [ ] Таблица `reviews` (order_id уникальный, user_id, restaurant_id, rating 1-5, courier_rating опционально, comment, vendor_reply, is_hidden для модерации).
-- [ ] Отзыв можно оставить только по своему заказу в статусе `delivered`, один раз.
-- [ ] `Restaurant.rating`/`review_count` пересчитывать агрегатом при создании отзыва, не хранить вручную.
-- [ ] `POST /api/v1/orders/{id}/review`, `GET /api/v1/restaurants/{vendor}/reviews`, `POST /api/v1/vendor/reviews/{id}/reply`.
-- [ ] Убрать хардкод `restaurant.rating || '4.5'` на фронте.
+### 5.1 ✔️ Отзывы и рейтинг
+- [x] Таблица `reviews` (order_id уникальный, user_id, restaurant_id, rating 1-5, courier_rating опционально, comment, vendor_reply, is_hidden для модерации).
+- [x] Отзыв можно оставить только по своему заказу в статусе `delivered`, один раз.
+- [x] `Restaurant.rating`/`review_count` пересчитывать агрегатом при создании отзыва, не хранить вручную.
+- [x] `POST /api/v1/orders/{id}/review`, `GET /api/v1/restaurants/{vendor}/reviews`, `POST /api/v1/vendor/reviews/{id}/reply`. (Ответ ресторана и модерация сделаны в Filament, без отдельного API; courier_rating не делался.)
+- [x] Убрать хардкод `restaurant.rating || '4.5'` на фронте.
 
 ### 5.2 Локализация (i18n)
 - [ ] Добавить `lang/tk` (туркменский) рядом с существующими `en`/`ru` — сейчас язык оформления и рынок (`+993`) не совпадают с покрытием переводов.
@@ -127,7 +127,7 @@ Docker не нужен, чтобы прогонять тесты на пуш —
 ### 6.2 Поиск, фильтры, избранное
 - [ ] `GET /api/v1/restaurants?search=` — поиск по названию (сейчас кнопка поиска на главной без обработчика).
 - [ ] Реальные фильтры по кухне/тегам — либо новая таблица тегов, либо использовать существующее JSON-поле `Restaurant.settings`. Сейчас категории на главной захардкожены и фильтруют по несуществующему полю.
-- [ ] Убрать `mockRestaurantsFallback` (фейковые рестораны на пустой ответ API) — маскирует реальные проблемы с данными при демо/QA.
+- [x] Убрать `mockRestaurantsFallback` (фейковые рестораны на пустой ответ API) — маскирует реальные проблемы с данными при демо/QA.
 - [ ] `user_favorites` (user_id, restaurant_id, unique-пара), `POST/DELETE /api/v1/favorites/{restaurant}`, `GET /api/v1/favorites`.
 - [ ] Убрать/подключить декоративный промо-баннер на главной ("Скидка 20%") — сейчас никуда не ведёт.
 

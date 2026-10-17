@@ -137,7 +137,11 @@
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5">
                 <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd" />
               </svg>
-              {{ restaurant.rating || '4.5' }}
+              <template v-if="restaurant.review_count > 0">
+                {{ Number(restaurant.rating).toFixed(1) }}
+                <span class="font-semibold dark:text-slate-400 text-slate-500">({{ restaurant.review_count }})</span>
+              </template>
+              <span v-else class="font-bold dark:text-slate-300 text-slate-600">Новый</span>
             </div>
 
             <!-- Delivery time badge -->
@@ -199,43 +203,6 @@ const categories = ref([
   { id: 'drinks', name: 'Напитки', icon: '🥤' }
 ]);
 
-// Fallback mock data in case API returns nothing
-const mockRestaurantsFallback = [
-  {
-    id: 1,
-    name: 'Burger & Co',
-    slug: 'burger-co',
-    rating: '4.8',
-    delivery_time: '20-30',
-    delivery_fee: '5',
-    min_order: '30',
-    description: 'Легендарные бургеры из мраморной говядины с авторскими соусами',
-    category: 'burgers'
-  },
-  {
-    id: 2,
-    name: 'Bella Italia',
-    slug: 'bella-italia',
-    rating: '4.7',
-    delivery_time: '30-40',
-    delivery_fee: '0',
-    min_order: '50',
-    description: 'Настоящая неаполитанская пицца на тонком тесте из дровяной печи',
-    category: 'pizza'
-  },
-  {
-    id: 3,
-    name: 'Sushi master',
-    slug: 'sushi-master',
-    rating: '4.9',
-    delivery_time: '40-50',
-    delivery_fee: '8',
-    min_order: '40',
-    description: 'Свежайшие роллы, суши и гунканы по традиционным рецептам',
-    category: 'sushi'
-  }
-];
-
 const handleImageError = (e) => {
   e.target.src = 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=600&auto=format&fit=crop&q=80'; // Fallback food pattern
 };
@@ -245,9 +212,7 @@ const openMenu = (slug) => {
 };
 
 const filteredRestaurants = computed(() => {
-  let list = store.restaurants && store.restaurants.length > 0 
-    ? [...store.restaurants] 
-    : [...mockRestaurantsFallback];
+  let list = [...(store.restaurants || [])];
   
   // Filter by category
   if (activeCategory.value !== 'all') {

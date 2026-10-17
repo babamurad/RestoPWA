@@ -5,20 +5,24 @@ declare(strict_types=1);
 namespace App\Domains\Vendor\Models;
 
 use App\Casts\MoneyCast;
+use App\Domains\Geo\Services\GeoJsonNormalizer;
 use App\Domains\Menu\Models\Category;
 use App\Domains\Menu\Models\Product;
-
+use App\Domains\Review\Models\Review;
+use App\Models\User;
 use Carbon\Carbon;
 use Database\Factories\RestaurantFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Facades\DB;
-use App\Domains\Geo\Services\GeoJsonNormalizer;
 
 /**
  * @property string $id
@@ -40,11 +44,10 @@ use App\Domains\Geo\Services\GeoJsonNormalizer;
  * @property string|null $pause_reason
  * @property string $timezone
  * @property-read bool $is_open_now
- * @property-read \Illuminate\Database\Eloquent\Collection|RestaurantSchedule[] $schedules
+ * @property-read Collection|RestaurantSchedule[] $schedules
  */
 class Restaurant extends Model
 {
-
     use HasFactory;
     use HasUuids;
 
@@ -63,7 +66,7 @@ class Restaurant extends Model
             if ($restaurant->isDirty('delivery_zones')) {
                 if (DB::getDriverName() !== 'sqlite' && static::checkPostGis()) {
                     $val = $restaurant->attributes['delivery_zones'] ?? null;
-                    if (!($val instanceof \Illuminate\Database\Query\Expression)) {
+                    if (! ($val instanceof Expression)) {
                         $restaurant->tempDeliveryZones = is_string($val) ? json_decode($val, true) : $val;
                         unset($restaurant->attributes['delivery_zones']);
                     }
@@ -132,14 +135,14 @@ class Restaurant extends Model
         if (self::$hasPostgis !== null) {
             return self::$hasPostgis;
         }
-        
+
         try {
             $result = DB::select("SELECT proname FROM pg_proc WHERE proname = 'addgeometrycolumn' LIMIT 1");
-            self::$hasPostgis = !empty($result);
+            self::$hasPostgis = ! empty($result);
         } catch (\Throwable $e) {
             self::$hasPostgis = false;
         }
-        
+
         return self::$hasPostgis;
     }
 
@@ -163,13 +166,14 @@ class Restaurant extends Model
                 // Fallback for PostGIS binary if not automatically converted by DB driver
                 try {
                     if (DB::getDriverName() !== 'sqlite' && self::checkPostGis()) {
-                        $geojson = DB::selectOne("SELECT ST_AsGeoJSON(?) as geo", [$value])?->geo;
+                        $geojson = DB::selectOne('SELECT ST_AsGeoJSON(?) as geo', [$value])?->geo;
+
                         return $geojson ? json_decode($geojson, true) : null;
                     }
                 } catch (\Exception $e) {
                     // Ignore and fallback
                 }
-                
+
                 return is_string($value) ? json_decode($value, true) : null;
             },
             set: function ($value) {
@@ -194,32 +198,35 @@ class Restaurant extends Model
     {
         if (empty($value)) {
             $this->delivery_zones = null;
-            if (DB::getDriverName() === 'sqlite' || !self::checkPostGis()) {
+            if (DB::getDriverName() === 'sqlite' || ! self::checkPostGis()) {
                 $this->save();
             } else {
                 DB::update('UPDATE restaurants SET delivery_zones = NULL WHERE id = ?', [$this->id]);
                 $this->refresh();
             }
+
             return;
         }
 
         $normalized = GeoJsonNormalizer::toMultiPolygon($value);
         if (empty($normalized)) {
             $this->delivery_zones = null;
-            if (DB::getDriverName() === 'sqlite' || !self::checkPostGis()) {
+            if (DB::getDriverName() === 'sqlite' || ! self::checkPostGis()) {
                 $this->save();
             } else {
                 DB::update('UPDATE restaurants SET delivery_zones = NULL WHERE id = ?', [$this->id]);
                 $this->refresh();
             }
+
             return;
         }
 
         $json = json_encode($normalized);
 
-        if (DB::getDriverName() === 'sqlite' || !self::checkPostGis()) {
+        if (DB::getDriverName() === 'sqlite' || ! self::checkPostGis()) {
             $this->delivery_zones = $json;
             $this->save();
+
             return;
         }
 
@@ -241,6 +248,7 @@ class Restaurant extends Model
 
         if (is_string($zones)) {
             $decoded = json_decode($zones, true);
+
             return is_array($decoded) ? $decoded : [];
         }
 
@@ -289,14 +297,19 @@ class Restaurant extends Model
     /**
      * Get the owner of the restaurant.
      */
-    public function owner(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function owner(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class, 'owner_id');
+        return $this->belongsTo(User::class, 'owner_id');
     }
 
     /**
      * Get the schedules for the restaurant.
      */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class, 'restaurant_id');
+    }
+
     public function schedules(): HasMany
     {
         return $this->hasMany(RestaurantSchedule::class, 'restaurant_id');
@@ -311,7 +324,7 @@ class Restaurant extends Model
             return false;
         }
 
-        if (!$this->relationLoaded('schedules')) {
+        if (! $this->relationLoaded('schedules')) {
             $this->load('schedules');
         }
 
@@ -319,22 +332,22 @@ class Restaurant extends Model
             return true; // Open by default if no schedule defined
         }
 
-        $now = \Carbon\Carbon::now($this->timezone ?: 'Asia/Ashgabat');
+        $now = Carbon::now($this->timezone ?: 'Asia/Ashgabat');
         $weekday = $now->dayOfWeekIso - 1; // 0 = Monday, 6 = Sunday
 
         $schedule = $this->schedules->firstWhere('weekday', $weekday);
 
-        if (!$schedule || $schedule->is_closed) {
+        if (! $schedule || $schedule->is_closed) {
             return false;
         }
 
-        if (!$schedule->opens_at || !$schedule->closes_at) {
+        if (! $schedule->opens_at || ! $schedule->closes_at) {
             return true;
         }
 
-        $opensAt = \Carbon\Carbon::parse($schedule->opens_at, $this->timezone ?: 'Asia/Ashgabat');
-        $closesAt = \Carbon\Carbon::parse($schedule->closes_at, $this->timezone ?: 'Asia/Ashgabat');
-        $currentTime = \Carbon\Carbon::createFromFormat('H:i:s', $now->format('H:i:s'), $this->timezone ?: 'Asia/Ashgabat');
+        $opensAt = Carbon::parse($schedule->opens_at, $this->timezone ?: 'Asia/Ashgabat');
+        $closesAt = Carbon::parse($schedule->closes_at, $this->timezone ?: 'Asia/Ashgabat');
+        $currentTime = Carbon::createFromFormat('H:i:s', $now->format('H:i:s'), $this->timezone ?: 'Asia/Ashgabat');
 
         if ($closesAt->lt($opensAt)) {
             // Overnight shift (e.g. 22:00 - 02:00)

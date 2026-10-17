@@ -6,8 +6,8 @@ use App\Domains\Menu\Models\Category;
 use App\Domains\Menu\Models\Product;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Domains\Vendor\Services\TenantContext;
-use App\Models\User;
 use App\Enums\UserRole;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -43,10 +43,10 @@ class RestaurantSeeder extends Seeder
                             [63.7, 39.0],
                             [63.7, 39.2],
                             [63.4, 39.2],
-                            [63.4, 39.0]
-                        ]
-                    ]
-                ]
+                            [63.4, 39.0],
+                        ],
+                    ],
+                ],
             ];
 
             $existing = Restaurant::withoutGlobalScopes()->where('slug', $restaurantData['slug'])->first();
@@ -75,8 +75,8 @@ class RestaurantSeeder extends Seeder
                 'description' => 'Аутентичная итальянская пицца из дровяной печи. Тонкое тесто, свежие ингредиенты.',
                 'image' => 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&h=300&fit=crop',
                 'cover_image' => 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&h=400&fit=crop',
-                'rating' => 4.8,
-                'review_count' => 1247,
+                'rating' => null, // computed from reviews (ReviewObserver)
+                'review_count' => 0,
                 'delivery_time' => '25-35 мин',
                 'delivery_fee' => 0,
                 'min_order' => 800,
@@ -94,8 +94,8 @@ class RestaurantSeeder extends Seeder
                 'description' => 'Сочные бургеры из мраморной говядины. Ручная работа, свежие булочки.',
                 'image' => 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=300&fit=crop',
                 'cover_image' => 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&h=400&fit=crop',
-                'rating' => 4.6,
-                'review_count' => 892,
+                'rating' => null, // computed from reviews (ReviewObserver)
+                'review_count' => 0,
                 'delivery_time' => '30-40 мин',
                 'delivery_fee' => 99,
                 'min_order' => 600,
@@ -112,8 +112,8 @@ class RestaurantSeeder extends Seeder
                 'description' => 'Аутентичная японская кухня. Свежайшая рыба, мастера-сушисты.',
                 'image' => 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&h=300&fit=crop',
                 'cover_image' => 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=800&h=400&fit=crop',
-                'rating' => 4.9,
-                'review_count' => 2156,
+                'rating' => null, // computed from reviews (ReviewObserver)
+                'review_count' => 0,
                 'delivery_time' => '40-50 мин',
                 'delivery_fee' => 149,
                 'min_order' => 1000,
@@ -130,8 +130,8 @@ class RestaurantSeeder extends Seeder
                 'description' => 'Полезные и вкусные салаты. Свежие овощи, качественные ингредиенты.',
                 'image' => 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop',
                 'cover_image' => 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&h=400&fit=crop',
-                'rating' => 4.5,
-                'review_count' => 567,
+                'rating' => null, // computed from reviews (ReviewObserver)
+                'review_count' => 0,
                 'delivery_time' => '20-30 мин',
                 'delivery_fee' => 0,
                 'min_order' => 500,
@@ -147,8 +147,8 @@ class RestaurantSeeder extends Seeder
                 'description' => 'Десерты ручной работы. Торты, пирожные, мороженое.',
                 'image' => 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=400&h=300&fit=crop',
                 'cover_image' => 'https://images.unsplash.com/photo-1558301211-0d8c8ddee6ec?w=800&h=400&fit=crop',
-                'rating' => 4.7,
-                'review_count' => 743,
+                'rating' => null, // computed from reviews (ReviewObserver)
+                'review_count' => 0,
                 'delivery_time' => '25-35 мин',
                 'delivery_fee' => 99,
                 'min_order' => 400,
@@ -164,8 +164,8 @@ class RestaurantSeeder extends Seeder
                 'description' => 'Специалитет кофе и свежая выпечка. Идеальное место для завтрака.',
                 'image' => 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop',
                 'cover_image' => 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&h=400&fit=crop',
-                'rating' => 4.4,
-                'review_count' => 428,
+                'rating' => null, // computed from reviews (ReviewObserver)
+                'review_count' => 0,
                 'delivery_time' => '15-25 мин',
                 'delivery_fee' => 0,
                 'min_order' => 300,

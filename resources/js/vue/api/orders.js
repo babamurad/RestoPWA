@@ -33,5 +33,13 @@ export default {
     async getOrderById(orderId) {
         const response = await apiClient.get(`/orders/${orderId}`);
         return response.data;
+    },
+
+    /**
+     * Оставить отзыв о доставленном заказе (оценка 1-5 и комментарий)
+     */
+    async reviewOrder(orderId, payload) {
+        const response = await apiClient.post(`/orders/${orderId}/review`, payload);
+        return response.data;
     }
 };

@@ -44,7 +44,8 @@
           <div class="flex flex-wrap items-center gap-3">
             <h2 class="text-xl md:text-2xl font-black dark:text-slate-100 font-outfit tracking-wide leading-tight text-slate-900">{{ store.currentRestaurant.name }}</h2>
             <div class="px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-black flex items-center gap-1">
-              ★ {{ store.currentRestaurant.rating || '4.5' }}
+              <template v-if="store.currentRestaurant.review_count > 0">★ {{ Number(store.currentRestaurant.rating).toFixed(1) }}</template>
+              <template v-else>Новый</template>
             </div>
           </div>
           <p class="text-xs dark:text-slate-400 mt-2 font-medium leading-relaxed max-w-xl text-slate-600">{{ store.currentRestaurant.description || 'Изысканные фирменные блюда из свежих ингредиентов с быстрой доставкой.' }}</p>
@@ -206,6 +207,9 @@
       </div>
     </div>
 
+    <!-- Reviews -->
+    <RestaurantReviews v-if="route.params.slug" :slug="route.params.slug" />
+
     <!-- Product Modal component -->
     <ProductModal 
       v-if="selectedProduct"
@@ -263,6 +267,7 @@ import { useRoute } from 'vue-router';
 import { useRestaurantsStore } from '../stores/restaurants';
 import { useCartStore } from '../stores/cart';
 import ProductModal from '../components/ProductModal.vue';
+import RestaurantReviews from '../components/RestaurantReviews.vue';
 
 const route = useRoute();
 const store = useRestaurantsStore();
