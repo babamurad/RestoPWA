@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Domains\Order\Services;
 
 use App\Domains\Order\Models\Order;
+use App\Domains\Payment\Services\PaymentService;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Enums\PaymentStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -36,7 +38,7 @@ class OrderService
                 'idempotency_key' => $data['idempotency_key'] ?? null,
                 'status' => self::STATUS_PENDING,
                 'delivery_type' => $data['delivery_type'] ?? Order::DELIVERY_TYPE_DELIVERY,
-                'payment_status' => 'pending',
+                'payment_status' => PaymentStatus::UNPAID,
                 'address' => $data['address'] ?? [],
                 'items' => $data['items'],
                 'total' => $data['total'],
@@ -47,6 +49,8 @@ class OrderService
                 'is_offline' => $data['is_offline'] ?? false,
                 'metadata' => $data['metadata'] ?? null,
             ]);
+
+            app(PaymentService::class)->start($order);
 
             $order->statusHistory()->create([
                 'from_status' => null,

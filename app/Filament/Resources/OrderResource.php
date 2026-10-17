@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Domains\Logistics\Models\Courier;
 use App\Domains\Order\Models\Order;
+use App\Enums\PaymentStatus;
 use App\Filament\Resources\OrderResource\Pages;
 use BackedEnum;
 use Filament\Actions;
@@ -37,6 +38,7 @@ class OrderResource extends Resource
                             ->disabled(),
                         Forms\Components\TextInput::make('payment_status')
                             ->label('Оплата')
+                            ->formatStateUsing(fn ($state) => $state instanceof PaymentStatus ? $state->label() : (PaymentStatus::tryFrom((string) $state)?->label() ?? $state))
                             ->disabled(),
                         Forms\Components\TextInput::make('courier.user.name')
                             ->label('Курьер')
@@ -84,6 +86,11 @@ class OrderResource extends Resource
                     ->label('Сумма')
                     ->money('RUB')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('payment_status')
+                    ->label('Оплата')
+                    ->badge()
+                    ->formatStateUsing(fn (PaymentStatus $state): string => $state->label())
+                    ->color(fn (PaymentStatus $state): string => $state === PaymentStatus::PAID ? 'success' : 'warning'),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Статус')
                     ->sortable()

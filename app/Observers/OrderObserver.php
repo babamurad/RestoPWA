@@ -6,6 +6,7 @@ namespace App\Observers;
 
 use App\Domains\Logistics\Models\CourierEarning;
 use App\Domains\Order\Models\Order;
+use App\Domains\Payment\Services\PaymentService;
 use App\Events\OrderStatusUpdated;
 use App\Jobs\SendSmsJob;
 use App\Models\User;
@@ -50,6 +51,15 @@ class OrderObserver
                 $this->calculateCourierEarning($order);
             }
             $this->calculateMarketplaceCommission($order);
+        }
+
+        // Customer got the order (courier delivery or pickup closed on the kanban)
+        if (in_array($newStatus, ['delivered', 'completed'], true)) {
+            app(PaymentService::class)->captureCashOnCompletion($order);
+        }
+
+        if ($newStatus === Order::STATUS_CANCELLED) {
+            app(PaymentService::class)->cancelPending($order);
         }
     }
 

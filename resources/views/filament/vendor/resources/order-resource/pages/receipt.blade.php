@@ -154,7 +154,7 @@
     
     <div class="footer">
         <p>Спасибо за заказ!</p>
-        <p>Оплата: {{ $order->payment_status === 'paid' ? 'Оплачено' : 'Ожидает оплаты' }}</p>
+        <p>Оплата: {{ $order->payment_status?->label() }}</p>
     </div>
 </body>
 </html>
