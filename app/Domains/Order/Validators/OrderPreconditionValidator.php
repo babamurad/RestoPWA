@@ -15,8 +15,7 @@ final readonly class OrderPreconditionValidator
 {
     public function __construct(
         private GeoService $geoService,
-    ) {
-    }
+    ) {}
 
     /**
      * Validate all preconditions before order creation.
@@ -113,6 +112,11 @@ final readonly class OrderPreconditionValidator
 
     private function validateAddress(array $data): ?OrderRejectReason
     {
+        // Pickup: the customer comes to the restaurant, no address or zone needed.
+        if (($data['delivery_type'] ?? null) === Order::DELIVERY_TYPE_PICKUP) {
+            return null;
+        }
+
         $address = $data['address'] ?? [];
 
         if (empty($address)) {

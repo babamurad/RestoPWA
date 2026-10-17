@@ -3,23 +3,27 @@
 namespace App\Filament\Vendor\Resources;
 
 use App\Domains\Order\Models\Order;
+use Filament\Actions;
 use Filament\Forms;
+use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Filament\Actions;
 
 class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
     protected static ?string $modelLabel = 'Заказ';
+
     protected static ?string $pluralModelLabel = 'Заказы';
-    protected static string | \UnitEnum | null $navigationGroup = 'Продажи';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Продажи';
 
     public static function form(Schema $schema): Schema
     {
@@ -72,12 +76,12 @@ class OrderResource extends Resource
     {
         return $schema
             ->components([
-                \Filament\Schemas\Components\Section::make('Основная информация')
+                Section::make('Основная информация')
                     ->schema([
-                        \Filament\Infolists\Components\TextEntry::make('id')
+                        TextEntry::make('id')
                             ->label('ID заказа')
-                            ->formatStateUsing(fn (string $state): string => '#' . substr($state, 0, 8)),
-                        \Filament\Infolists\Components\TextEntry::make('status')
+                            ->formatStateUsing(fn (string $state): string => '#'.substr($state, 0, 8)),
+                        TextEntry::make('status')
                             ->label('Статус')
                             ->badge()
                             ->color(fn (string $state): string => match ($state) {
@@ -89,38 +93,43 @@ class OrderResource extends Resource
                                 'cancelled' => 'danger',
                                 default => 'gray',
                             }),
-                        \Filament\Infolists\Components\TextEntry::make('total')
+                        TextEntry::make('total')
                             ->label('Сумма')
                             ->money('RUB'),
-                        \Filament\Infolists\Components\TextEntry::make('created_at')
+                        TextEntry::make('created_at')
                             ->label('Дата создания')
                             ->dateTime(),
                     ])->columns(2),
 
-                \Filament\Schemas\Components\Section::make('Адрес и контакт')
+                Section::make('Адрес и контакт')
                     ->schema([
-                        \Filament\Infolists\Components\TextEntry::make('user.name')
+                        TextEntry::make('user.name')
                             ->label('Клиент')
                             ->placeholder('Гость'),
-                        \Filament\Infolists\Components\TextEntry::make('address.address')
-                            ->label('Адрес'),
-                        \Filament\Infolists\Components\TextEntry::make('address.phone')
+                        TextEntry::make('delivery_type')
+                            ->label('Тип')
+                            ->badge()
+                            ->formatStateUsing(fn (string $state): string => $state === 'pickup' ? 'Самовывоз' : 'Доставка'),
+                        TextEntry::make('address.address')
+                            ->label('Адрес')
+                            ->hidden(fn ($record): bool => $record->isPickup()),
+                        TextEntry::make('address.phone')
                             ->label('Телефон'),
-                        \Filament\Infolists\Components\TextEntry::make('comment')
+                        TextEntry::make('comment')
                             ->label('Комментарий')
                             ->columnSpanFull(),
                     ])->columns(3),
 
-                \Filament\Schemas\Components\Section::make('Товары')
+                Section::make('Товары')
                     ->schema([
-                        \Filament\Infolists\Components\RepeatableEntry::make('items')
+                        RepeatableEntry::make('items')
                             ->label('')
                             ->schema([
-                                \Filament\Infolists\Components\TextEntry::make('name')
+                                TextEntry::make('name')
                                     ->label('Название'),
-                                \Filament\Infolists\Components\TextEntry::make('quantity')
+                                TextEntry::make('quantity')
                                     ->label('Кол-во'),
-                                \Filament\Infolists\Components\TextEntry::make('price')
+                                TextEntry::make('price')
                                     ->label('Цена')
                                     ->money('RUB'),
                             ])->columns(3),
@@ -134,7 +143,7 @@ class OrderResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
-                    ->formatStateUsing(fn (string $state): string => '#' . substr($state, 0, 8))
+                    ->formatStateUsing(fn (string $state): string => '#'.substr($state, 0, 8))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Клиент')
@@ -143,6 +152,11 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('total')
                     ->label('Сумма')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('delivery_type')
+                    ->label('Тип')
+                    ->badge()
+                    ->color(fn (string $state): string => $state === 'pickup' ? 'info' : 'gray')
+                    ->formatStateUsing(fn (string $state): string => $state === 'pickup' ? 'Самовывоз' : 'Доставка'),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Статус')
                     ->badge()

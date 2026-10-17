@@ -131,10 +131,10 @@ class OrderController
 
             $deliveryFee = 0;
             $vendorId = $request->input('vendor_id');
-            // delivery_type is not persisted on the order yet, so a client-sent
-            // "pickup" must not waive the fee: the order would still be dispatched
-            // to the given address as a regular delivery.
-            if ($vendorId && is_array($request->input('address'))) {
+            // Pickup orders are stored with delivery_type=pickup and are never
+            // offered to couriers, so they carry no delivery fee.
+            $isPickup = $request->input('delivery_type') === Order::DELIVERY_TYPE_PICKUP;
+            if ($vendorId && ! $isPickup && is_array($request->input('address'))) {
                 try {
                     $geoService = app(GeoService::class);
                     $lat = (float) $request->input('address.lat');
@@ -183,6 +183,7 @@ class OrderController
                 'address.geolocate_accuracy_m' => 'nullable|numeric',
                 'total' => 'required|integer|min:0',
                 'delivery_fee' => 'nullable|integer|min:0',
+                'delivery_type' => 'nullable|in:delivery,pickup',
                 'delivery_time' => 'nullable|string',
                 'payment_method' => 'nullable|string',
                 'comment' => 'nullable|string',

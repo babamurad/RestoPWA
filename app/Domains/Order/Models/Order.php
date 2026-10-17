@@ -5,17 +5,18 @@ declare(strict_types=1);
 namespace App\Domains\Order\Models;
 
 use App\Casts\MoneyCast;
+use App\Domains\Logistics\Models\Courier;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Models\User;
+use App\Models\VendorSettlement;
 use Carbon\Carbon;
+use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Domains\Logistics\Models\Courier;
-use Database\Factories\OrderFactory;
-use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -54,6 +55,10 @@ class Order extends Model
     public const STATUS_DELIVERING = 'delivering';
 
     public const STATUS_DELIVERED = 'delivered';
+
+    public const DELIVERY_TYPE_DELIVERY = 'delivery';
+
+    public const DELIVERY_TYPE_PICKUP = 'pickup';
 
     public const STATUS_CANCELLED = 'cancelled';
 
@@ -94,6 +99,7 @@ class Order extends Model
         'courier_id',
         'idempotency_key',
         'status',
+        'delivery_type',
         'payment_status',
         'address',
         'items',
@@ -124,6 +130,11 @@ class Order extends Model
         ];
     }
 
+    public function isPickup(): bool
+    {
+        return $this->delivery_type === self::DELIVERY_TYPE_PICKUP;
+    }
+
     public function restaurant(): BelongsTo
     {
         return $this->belongsTo(Restaurant::class, 'vendor_id', 'id');
@@ -131,7 +142,7 @@ class Order extends Model
 
     public function settlement(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\VendorSettlement::class, 'vendor_settlement_id');
+        return $this->belongsTo(VendorSettlement::class, 'vendor_settlement_id');
     }
 
     public function user(): BelongsTo

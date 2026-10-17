@@ -24,7 +24,11 @@
                         <div class="text-base font-bold text-gray-900 dark:text-white mb-1">
                             {{ number_format($order['total'], 0, ',', ' ') }} ₽
                         </div>
-                        @if(!empty($order['address']))
+                        @if(($order['delivery_type'] ?? 'delivery') === 'pickup')
+                            <div class="mb-2">
+                                <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-800">Самовывоз</span>
+                            </div>
+                        @elseif(!empty($order['address']))
                             <div class="text-xs text-gray-500 dark:text-gray-400 mb-2 line-clamp-1">
                                 {{ $order['address']['address'] ?? $order['address']['manual_address'] ?? $order['address']['street'] ?? '' }}
                             </div>

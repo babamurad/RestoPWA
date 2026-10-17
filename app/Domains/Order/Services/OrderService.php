@@ -35,6 +35,7 @@ class OrderService
                 'user_id' => $data['user_id'],
                 'idempotency_key' => $data['idempotency_key'] ?? null,
                 'status' => self::STATUS_PENDING,
+                'delivery_type' => $data['delivery_type'] ?? Order::DELIVERY_TYPE_DELIVERY,
                 'payment_status' => 'pending',
                 'address' => $data['address'] ?? [],
                 'items' => $data['items'],

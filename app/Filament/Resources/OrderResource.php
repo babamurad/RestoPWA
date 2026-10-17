@@ -18,7 +18,7 @@ class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
 
-    protected static string | BackedEnum | null $navigationIcon = null;
+    protected static string|BackedEnum|null $navigationIcon = null;
 
     protected static ?string $navigationLabel = 'Заказы';
 
@@ -75,6 +75,11 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('courier.user.name')
                     ->label('Курьер')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('delivery_type')
+                    ->label('Тип')
+                    ->badge()
+                    ->color(fn (string $state): string => $state === 'pickup' ? 'info' : 'gray')
+                    ->formatStateUsing(fn (string $state): string => $state === 'pickup' ? 'Самовывоз' : 'Доставка'),
                 Tables\Columns\TextColumn::make('total')
                     ->label('Сумма')
                     ->money('RUB')
@@ -93,7 +98,7 @@ class OrderResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Статус')
-                    ->options(collect(Order::STATUSES)->map(fn($status) => $status['label'])->toArray()),
+                    ->options(collect(Order::STATUSES)->map(fn ($status) => $status['label'])->toArray()),
                 Tables\Filters\SelectFilter::make('vendor_id')
                     ->label('Ресторан')
                     ->relationship('restaurant', 'name'),
@@ -114,7 +119,7 @@ class OrderResource extends Resource
                     ->form([
                         Forms\Components\Select::make('new_status')
                             ->label('Новый статус')
-                            ->options(collect(Order::STATUSES)->map(fn($status) => $status['label'])->toArray())
+                            ->options(collect(Order::STATUSES)->map(fn ($status) => $status['label'])->toArray())
                             ->required(),
                     ])
                     ->action(function (Order $order, array $data) {
@@ -130,7 +135,7 @@ class OrderResource extends Resource
                                 return Courier::with('user')
                                     ->where(function ($query) use ($record) {
                                         $query->where('vendor_id', $record->vendor_id)
-                                              ->orWhereNull('vendor_id');
+                                            ->orWhereNull('vendor_id');
                                     })
                                     ->get()
                                     ->pluck('user.name', 'id');
@@ -138,13 +143,19 @@ class OrderResource extends Resource
                             ->required(),
                     ])
                     ->action(function (Order $order, array $data) {
+                        // Pickup orders are never delivered by a courier.
+                        if ($order->isPickup()) {
+                            return;
+                        }
+
                         $order->update([
                             'courier_id' => $data['courier_id'],
                             'status' => Order::STATUS_READY_FOR_PICKUP,
                         ]);
                     })
                     ->icon('heroicon-m-truck')
-                    ->visible(fn (Order $record) => in_array($record->status, [Order::STATUS_CONFIRMED, Order::STATUS_PREPARING, Order::STATUS_READY_FOR_PICKUP])),
+                    ->visible(fn (Order $record) => ! $record->isPickup()
+                        && in_array($record->status, [Order::STATUS_CONFIRMED, Order::STATUS_PREPARING, Order::STATUS_READY_FOR_PICKUP])),
                 Actions\ViewAction::make(),
             ])
             ->bulkActions([

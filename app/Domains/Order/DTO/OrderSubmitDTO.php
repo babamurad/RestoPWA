@@ -20,8 +20,8 @@ final readonly class OrderSubmitDTO
         public string $traceId,
         public string $customerName,
         public string $customerPhone,
-    ) {
-    }
+        public string $deliveryType = 'delivery',
+    ) {}
 
     public static function fromArray(array $data, string $traceId): self
     {
@@ -44,6 +44,7 @@ final readonly class OrderSubmitDTO
             traceId: $traceId,
             customerName: (string) ($data['customer_name'] ?? ''),
             customerPhone: (string) ($data['customer_phone'] ?? ''),
+            deliveryType: (string) ($data['delivery_type'] ?? 'delivery'),
         );
     }
 
@@ -68,6 +69,7 @@ final readonly class OrderSubmitDTO
             'trace_id' => $this->traceId,
             'customer_name' => $this->customerName,
             'customer_phone' => $this->customerPhone,
+            'delivery_type' => $this->deliveryType,
         ];
     }
 
@@ -89,6 +91,7 @@ final readonly class OrderSubmitDTO
             'items' => $items,
             'total' => $this->total,
             'delivery_fee' => $this->deliveryFee,
+            'delivery_type' => $this->deliveryType,
             'delivery_time' => $this->deliveryTime,
             'payment_method' => $this->paymentMethod,
             'comment' => $this->comment,
