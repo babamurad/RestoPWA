@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Vendor\Models;
 
 use App\Casts\MoneyCast;
+use App\Domains\Geo\Services\DistrictDeliveryPricing;
 use App\Domains\Geo\Services\GeoJsonNormalizer;
 use App\Domains\Menu\Models\Category;
 use App\Domains\Menu\Models\Product;
@@ -305,6 +306,21 @@ class Restaurant extends Model
     /**
      * Get the schedules for the restaurant.
      */
+    /**
+     * District pricing: cheapest district price ("доставка от X TMT"), null when
+     * the restaurant uses the flat delivery_fee. The exact price is known only
+     * once the address (district) is chosen.
+     */
+    public function getDeliveryFeeFromAttribute(): ?float
+    {
+        return app(DistrictDeliveryPricing::class)->minimumPrice($this);
+    }
+
+    public function deliveryPrices(): HasMany
+    {
+        return $this->hasMany(RestaurantDeliveryPrice::class);
+    }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class, 'restaurant_id');

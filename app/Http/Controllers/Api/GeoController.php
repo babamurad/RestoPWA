@@ -25,8 +25,8 @@ class GeoController extends Controller
     {
         $validated = $request->validate([
             'vendor_id' => 'required|uuid|exists:restaurants,id',
-            'lat'       => 'required|numeric|between:-90,90',
-            'lon'       => 'required|numeric|between:-180,180',
+            'lat' => 'required|numeric|between:-90,90',
+            'lon' => 'required|numeric|between:-180,180',
         ]);
 
         try {
@@ -38,16 +38,19 @@ class GeoController extends Controller
 
             return $this->success([
                 'in_zone' => $result->isAllowed(),
-                'status'  => $result->status,
+                'status' => $result->status,
                 'message' => $result->messageForUser(),
+                // District pricing: the price for this address (null = restaurant's flat fee)
+                'delivery_fee' => $result->deliveryFee,
+                'district' => $result->districtName,
             ]);
         } catch (\Throwable $e) {
-            Log::error('[GeoController] zone-check error: ' . $e->getMessage());
+            Log::error('[GeoController] zone-check error: '.$e->getMessage());
 
             // Graceful fallback: allow checkout, don't block user
             return $this->success([
                 'in_zone' => true,
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => 'Не удалось проверить зону доставки.',
             ]);
         }
@@ -72,9 +75,9 @@ class GeoController extends Controller
 
             if (! $result) {
                 return $this->success([
-                    'address'    => null,
+                    'address' => null,
                     'confidence' => 'low',
-                    'provider'   => null,
+                    'provider' => null,
                 ]);
             }
 
@@ -83,25 +86,25 @@ class GeoController extends Controller
             // - address has street+house number pattern = medium
             // - anything else = low
             $confidence = match (true) {
-                ($result['provider'] ?? '') === 'local'           => 'high',
+                ($result['provider'] ?? '') === 'local' => 'high',
                 preg_match('/\d/', $result['address'] ?? '') === 1 => 'medium',
-                default                                            => 'low',
+                default => 'low',
             };
 
             return $this->success([
-                'address'    => $result['address'],
+                'address' => $result['address'],
                 'confidence' => $confidence,
-                'provider'   => $result['provider'] ?? null,
-                'lat'        => $result['lat'],
-                'lon'        => $result['lon'],
+                'provider' => $result['provider'] ?? null,
+                'lat' => $result['lat'],
+                'lon' => $result['lon'],
             ]);
         } catch (\Throwable $e) {
-            Log::error('[GeoController] reverse error: ' . $e->getMessage());
+            Log::error('[GeoController] reverse error: '.$e->getMessage());
 
             return $this->success([
-                'address'    => null,
+                'address' => null,
                 'confidence' => 'low',
-                'provider'   => null,
+                'provider' => null,
             ]);
         }
     }
@@ -113,12 +116,12 @@ class GeoController extends Controller
     public function telemetry(Request $request): JsonResponse
     {
         try {
-            Log::channel('stack')->info('[Telemetry] ' . ($request->input('event', 'unknown')), [
-                'session_id'  => $request->input('session_id'),
-                'event'       => $request->input('event'),
-                'payload'     => $request->except(['session_id', 'event']),
-                'ip'          => $request->ip(),
-                'user_agent'  => $request->userAgent(),
+            Log::channel('stack')->info('[Telemetry] '.($request->input('event', 'unknown')), [
+                'session_id' => $request->input('session_id'),
+                'event' => $request->input('event'),
+                'payload' => $request->except(['session_id', 'event']),
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
             ]);
         } catch (\Throwable) {
             // silently ignore

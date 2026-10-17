@@ -669,6 +669,12 @@ class GeoService
      */
     public function checkDeliveryZone(float $lat, float $lon, string $vendorId): DeliveryZoneCheckResult
     {
+        $restaurant = Restaurant::find($vendorId);
+        $pricing = app(DistrictDeliveryPricing::class);
+        if ($restaurant && $pricing->usesDistrictPricing($restaurant)) {
+            return $this->checkDistrictZone($restaurant, $lat, $lon, $pricing);
+        }
+
         $driver = DB::getDriverName();
         $hasPostGis = $this->checkPostGis();
 
@@ -899,6 +905,35 @@ class GeoService
     }
 
     /**
+     * District pricing mode: the restaurant delivers only to districts it priced.
+     */
+    private function checkDistrictZone(Restaurant $restaurant, float $lat, float $lon, DistrictDeliveryPricing $pricing): DeliveryZoneCheckResult
+    {
+        $price = $pricing->quote($restaurant, $lat, $lon);
+        $context = ['vendor_id' => $restaurant->id, 'lat' => $lat, 'lon' => $lon, 'mode' => 'district'];
+
+        if (! $price) {
+            $this->logGeocodingEvent('outside', 'district', null, $lat, $lon, 'NO_DISTRICT_PRICE', 'Ресторан не доставляет в этот район', $restaurant->id);
+
+            return new DeliveryZoneCheckResult(
+                status: 'outside',
+                allowed: false,
+                message: 'Ресторан не доставляет в этот район.',
+                debugContext: $context,
+            );
+        }
+
+        return new DeliveryZoneCheckResult(
+            status: 'inside',
+            allowed: true,
+            message: 'Доставка в район «'.$price->district->name.'».',
+            debugContext: $context + ['district_id' => $price->district_id],
+            deliveryFee: (float) $price->price,
+            districtName: $price->district->name,
+        );
+    }
+
+    /**
      * Calculate delivery fee (in currency units) for a specific vendor at a given point.
      *
      * Uses Restaurant::delivery_fee — the same value the restaurateur edits in
@@ -913,8 +948,14 @@ class GeoService
         }
 
         $fee = (float) $restaurant->delivery_fee;
+        $zone = $this->checkDeliveryZone($lat, $lon, $vendorId);
 
-        if (! $this->isPointInDeliveryZone($lat, $lon, $vendorId)) {
+        // District pricing: the district's price (orders outside are rejected by the zone check)
+        if ($zone->deliveryFee !== null) {
+            return $zone->deliveryFee;
+        }
+
+        if (! $zone->isAllowed()) {
             return (float) ($restaurant->settings['delivery_fee_outside'] ?? $fee);
         }
 

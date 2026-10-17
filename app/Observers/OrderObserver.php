@@ -110,18 +110,9 @@ class OrderObserver
 
     private function calculateCourierEarning(Order $order): void
     {
-        $restaurant = $order->restaurant;
-        if (! $restaurant) {
-            return;
-        }
-
-        $fixed = (float) $restaurant->courier_fixed_fee;
-        $percent = (float) $restaurant->courier_percent_fee;
-
-        $amount = $fixed;
-        if ($percent > 0) {
-            $amount += ($order->total * $percent) / 100;
-        }
+        // The courier gets the whole delivery fee the customer paid
+        // (the district's price set by the restaurant).
+        $amount = (float) $order->delivery_fee;
 
         if ($amount > 0) {
             CourierEarning::firstOrCreate([

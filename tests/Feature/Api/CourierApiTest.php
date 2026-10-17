@@ -4,11 +4,12 @@ namespace Tests\Feature\Api;
 
 use App\Domains\Logistics\Models\Courier;
 use App\Domains\Order\Models\Order;
-use App\Models\User;
+use App\Domains\Vendor\Models\Restaurant;
 use App\Enums\UserRole;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Group;
+use Tests\TestCase;
 
 class CourierApiTest extends TestCase
 {
@@ -64,7 +65,7 @@ class CourierApiTest extends TestCase
         $courier = Courier::create(['user_id' => $user->id, 'status' => 'offline']);
 
         $response = $this->actingAs($user)->postJson('/api/v1/courier/status', [
-            'status' => 'available'
+            'status' => 'available',
         ]);
 
         $response->assertStatus(200);
@@ -95,9 +96,11 @@ class CourierApiTest extends TestCase
     }
 
     #[Group('courier')]
-    public function test_courier_earns_money_on_delivery(): void
+    public function test_courier_earns_the_whole_delivery_fee(): void
     {
-        $restaurant = \App\Domains\Vendor\Models\Restaurant::factory()->create([
+        // Business rule: the courier gets the whole delivery fee the customer paid
+        // (the restaurant's price for the district); courier_fixed/percent fees no longer apply.
+        $restaurant = Restaurant::factory()->create([
             'courier_fixed_fee' => 10,
             'courier_percent_fee' => 5,
         ]);
@@ -110,6 +113,7 @@ class CourierApiTest extends TestCase
             'courier_id' => $courier->id,
             'status' => Order::STATUS_DELIVERING,
             'total' => 100000,
+            'delivery_fee' => 1500, // 15.00 TMT (MoneyCast stores minor units)
         ]);
 
         $response = $this->actingAs($user)->postJson("/api/v1/courier/orders/{$order->id}/status", [
@@ -118,15 +122,14 @@ class CourierApiTest extends TestCase
 
         $response->assertStatus(200);
 
-        // Fixed = 10, Percent = 5% of 1000 (= 100000 cents via MoneyCast) = 50. Total = 60.
         $this->assertDatabaseHas('courier_earnings', [
             'order_id' => $order->id,
             'courier_id' => $courier->id,
-            'amount' => 60.00,
+            'amount' => 15.00,
         ]);
 
-        $earningsResponse = $this->actingAs($user)->getJson("/api/v1/courier/earnings");
+        $earningsResponse = $this->actingAs($user)->getJson('/api/v1/courier/earnings');
         $earningsResponse->assertStatus(200);
-        $earningsResponse->assertJsonPath('data.0.amount', 60);
+        $earningsResponse->assertJsonPath('data.0.amount', 15);
     }
 }

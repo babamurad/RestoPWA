@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 class CartController extends Controller
 {
     use ApiResponses;
+
     /**
      * Sync cart items with server-side data (prices, availability).
      */
@@ -117,7 +118,10 @@ class CartController extends Controller
             ];
         }
 
-        $deliveryFee = $restaurant->delivery_fee;
+        // District pricing: the exact fee depends on the address, so the cart shows
+        // the cheapest district price as an estimate until checkout picks a district.
+        $deliveryFeeFrom = $restaurant->delivery_fee_from;
+        $deliveryFee = $deliveryFeeFrom ?? $restaurant->delivery_fee;
         $total = $subtotal + $deliveryFee;
 
         Log::info('[Cart Sync] Completed', [
@@ -135,6 +139,7 @@ class CartController extends Controller
             'items' => $validatedItems,
             'subtotal' => $subtotal,
             'delivery_fee' => (float) $deliveryFee,
+            'delivery_fee_is_estimate' => $deliveryFeeFrom !== null,
             'total' => (float) $total,
             'min_order' => (float) $restaurant->min_order,
             'is_min_order_met' => $subtotal >= $restaurant->min_order,

@@ -141,7 +141,10 @@
             </div>
             <div class="flex justify-between">
               <span>Доставка</span>
-              <span class="dark:text-slate-200 text-slate-800">{{ cartStore.deliveryFee === 0 ? 'Бесплатно' : cartStore.deliveryFee + ' TMT' }}</span>
+              <span class="dark:text-slate-200 text-slate-800">
+                <template v-if="cartStore.deliveryFeeIsEstimate">от {{ cartStore.deliveryFee }} TMT</template>
+                <template v-else>{{ cartStore.deliveryFee === 0 ? 'Бесплатно' : cartStore.deliveryFee + ' TMT' }}</template>
+              </span>
             </div>
           </div>
 
