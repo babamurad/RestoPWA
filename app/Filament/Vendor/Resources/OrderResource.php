@@ -3,6 +3,7 @@
 namespace App\Filament\Vendor\Resources;
 
 use App\Domains\Order\Models\Order;
+use App\Enums\PaymentStatus;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Infolists\Components\RepeatableEntry;
@@ -29,7 +30,7 @@ class OrderResource extends Resource
     {
         return $schema
             ->components([
-                Forms\Components\Section::make('Статус заказа')
+                Section::make('Статус заказа')
                     ->schema([
                         Forms\Components\Select::make('status')
                             ->label('Статус')
@@ -46,16 +47,11 @@ class OrderResource extends Resource
                             ->required(),
                         Forms\Components\Select::make('payment_status')
                             ->label('Статус оплаты')
-                            ->options([
-                                'pending' => 'Ожидает оплаты',
-                                'paid' => 'Оплачен',
-                                'failed' => 'Ошибка',
-                                'refunded' => 'Возврат',
-                            ])
+                            ->options(PaymentStatus::options())
                             ->required(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Детали заказа')
+                Section::make('Детали заказа')
                     ->schema([
                         Forms\Components\TextInput::make('id')
                             ->label('ID заказа')
@@ -157,6 +153,16 @@ class OrderResource extends Resource
                     ->badge()
                     ->color(fn (string $state): string => $state === 'pickup' ? 'info' : 'gray')
                     ->formatStateUsing(fn (string $state): string => $state === 'pickup' ? 'Самовывоз' : 'Доставка'),
+                Tables\Columns\TextColumn::make('payment_status')
+                    ->label('Оплата')
+                    ->badge()
+                    ->formatStateUsing(fn (PaymentStatus $state): string => $state->label())
+                    ->color(fn (PaymentStatus $state): string => match ($state) {
+                        PaymentStatus::PAID => 'success',
+                        PaymentStatus::REFUNDED => 'gray',
+                        PaymentStatus::PAYMENT_FAILED => 'danger',
+                        default => 'warning',
+                    }),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Статус')
                     ->badge()

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Domains\Order\Models\Order;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Enums\PaymentStatus;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -20,7 +21,7 @@ class OrderFactory extends Factory
             'vendor_id' => Restaurant::factory(),
             'user_id' => User::factory(),
             'status' => 'pending',
-            'payment_status' => 'pending',
+            'payment_status' => PaymentStatus::UNPAID,
             'address' => [
                 'name' => fake()->name(),
                 'phone' => fake()->phoneNumber(),

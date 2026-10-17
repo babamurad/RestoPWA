@@ -6,8 +6,10 @@ namespace App\Domains\Order\Models;
 
 use App\Casts\MoneyCast;
 use App\Domains\Logistics\Models\Courier;
+use App\Domains\Payment\Models\PaymentTransaction;
 use App\Domains\Review\Models\Review;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Enums\PaymentStatus;
 use App\Models\User;
 use App\Models\VendorSettlement;
 use Carbon\Carbon;
@@ -26,7 +28,7 @@ use Illuminate\Support\Facades\Auth;
  * @property string $vendor_id
  * @property string $user_id
  * @property string $status
- * @property string $payment_status
+ * @property PaymentStatus $payment_status
  * @property array $address
  * @property array $items
  * @property mixed $total
@@ -124,6 +126,7 @@ class Order extends Model
         return [
             'address' => 'array',
             'items' => 'array',
+            'payment_status' => PaymentStatus::class,
             'total' => MoneyCast::class,
             'delivery_fee' => MoneyCast::class,
             'commission_amount' => MoneyCast::class,
@@ -135,6 +138,11 @@ class Order extends Model
     public function isPickup(): bool
     {
         return $this->delivery_type === self::DELIVERY_TYPE_PICKUP;
+    }
+
+    public function paymentTransactions(): HasMany
+    {
+        return $this->hasMany(PaymentTransaction::class);
     }
 
     public function review(): HasOne

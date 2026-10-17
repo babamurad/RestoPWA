@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Domains\Menu\Models\Product;
 use App\Domains\Order\Models\Order;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Enums\PaymentStatus;
 use App\Models\User;
 use Illuminate\Console\Command;
 
@@ -55,7 +56,7 @@ class TestSalesScenario extends Command
             'vendor_id' => $restaurant->id,
             'user_id' => $customer->id,
             'status' => Order::STATUS_PENDING,
-            'payment_status' => 'pending',
+            'payment_status' => PaymentStatus::UNPAID,
             'address' => [
                 'name' => $customer->name,
                 'phone' => '+7 999 123-45-67',

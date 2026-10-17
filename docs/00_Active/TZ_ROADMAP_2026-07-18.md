@@ -78,13 +78,14 @@ Docker не нужен, чтобы прогонять тесты на пуш —
 
 ---
 
-## 4. P0-подготовка (без реального провайдера) — оплата
+## 4. ✔️ P0-подготовка (без реального провайдера) — оплата
 
 Раз банковский договор ещё не подписан, цель сейчас — **не остаться потом с недельной переделкой**, а спроектировать так, чтобы подключение провайдера позже было "воткнуть адаптер", а не "переписать checkout".
 
-- [ ] Завести таблицу `payment_transactions` уже сейчас (order_id, provider, provider_transaction_id, type, status, amount, currency, raw_payload, idempotency_key) — даже без реального провайдера, чтобы `cash`-платежи тоже проходили через единую модель (`type=payment, provider=cash, status=succeeded`). Это упрощает будущее добавление онлайн-оплаты без миграции старых заказов.
-- [ ] Расширить `orders.payment_status` до нормального enum (`unpaid`, `awaiting_payment`, `paid`, `refunded`, `payment_failed`) вместо свободной строки.
+- [x] Завести таблицу `payment_transactions` уже сейчас (order_id, provider, provider_transaction_id, type, status, amount, currency, raw_payload, idempotency_key) — даже без реального провайдера, чтобы `cash`-платежи тоже проходили через единую модель (`type=payment, provider=cash, status=succeeded`). Это упрощает будущее добавление онлайн-оплаты без миграции старых заказов.
+- [x] Расширить `orders.payment_status` до нормального enum (`unpaid`, `awaiting_payment`, `paid`, `refunded`, `payment_failed`) вместо свободной строки.
 - [ ] Не проектировать конкретный webhook/SDK-код, пока нет провайдера — бессмысленно гадать под чей контракт (Stripe/локальный банк/Click/Payme — все разные). Когда банк определится, реализовать `PaymentGatewayInterface` с одной реализацией под их API.
+> Сделано: `App\Domains\Payment\Contracts\PaymentGateway` + `CashGateway`; новый провайдер = ещё одна реализация + строка в `PaymentService::GATEWAYS`.
 - [ ] Держать в UI честную коммуникацию: пункт "Онлайн-оплата" либо скрыт, либо помечен как "скоро", чтобы не создавать у клиента ложных ожиданий.
 
 ---
