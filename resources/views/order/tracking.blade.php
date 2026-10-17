@@ -174,13 +174,13 @@
                                                     ? $item['price'] * ($item['quantity'] ?? 1) 
                                                     : 0));
                                     @endphp
-                                    <p class="text-xs font-bold text-slate-900 dark:text-slate-100">{{ number_format($itemPrice, 0, '.', ' ') }} ₽</p>
+                                    <p class="text-xs font-bold text-slate-900 dark:text-slate-100">{{ number_format($itemPrice, 0, '.', ' ') }} TMT</p>
                                 </div>
                             @endforeach
                         </div>
                         <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800/40 flex items-center justify-between">
                             <span class="text-sm font-bold text-slate-500 uppercase tracking-widest">{{ __('pages.tracking.total') }}</span>
-                            <span class="text-xl font-bold text-orange-500">{{ number_format($order->total, 0, '.', ' ') }} ₽</span>
+                            <span class="text-xl font-bold text-orange-500">{{ number_format($order->total, 0, '.', ' ') }} TMT</span>
                         </div>
                     </div>
 

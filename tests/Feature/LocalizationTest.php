@@ -11,6 +11,7 @@ use App\Jobs\SendSmsJob;
 use App\Models\User;
 use App\Services\PushNotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Queue;
 use Mockery;
 use Tests\TestCase;
@@ -121,8 +122,8 @@ class LocalizationTest extends TestCase
             $name = basename($file);
             $this->assertFileExists(lang_path("tk/{$name}"), "lang/tk/{$name} is missing");
 
-            $ru = array_keys(\Illuminate\Support\Arr::dot(require $file));
-            $tk = array_keys(\Illuminate\Support\Arr::dot(require lang_path("tk/{$name}")));
+            $ru = array_keys(Arr::dot(require $file));
+            $tk = array_keys(Arr::dot(require lang_path("tk/{$name}")));
             $this->assertSame([], array_values(array_diff($ru, $tk)), "lang/tk/{$name} misses keys");
         }
     }

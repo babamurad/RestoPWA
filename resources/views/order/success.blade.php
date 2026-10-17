@@ -35,7 +35,7 @@
                     </div>
                     <div class="flex justify-between items-center border-t border-slate-200 dark:border-slate-800/40 pt-5">
                         <span class="font-bold text-slate-500 dark:text-slate-500 uppercase tracking-widest text-xs">{{ __('pages.success.total_to_pay') }}</span>
-                        <span class="text-2xl md:text-3xl font-black text-orange-500">{{ number_format($order->total, 0, '.', ' ') }} ₽</span>
+                        <span class="text-2xl md:text-3xl font-black text-orange-500">{{ number_format($order->total, 0, '.', ' ') }} TMT</span>
                     </div>
                 </div>
             </div>
