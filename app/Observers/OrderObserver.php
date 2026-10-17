@@ -11,6 +11,7 @@ use App\Jobs\SendSmsJob;
 use App\Models\User;
 use App\Services\PushNotificationService;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OrderObserver
@@ -52,15 +53,22 @@ class OrderObserver
      */
     private function broadcastStatus(Order $order): void
     {
-        try {
-            Broadcast::queue(new OrderStatusUpdated($order->id, $order->status, [], $order->vendor_id));
-        } catch (\Throwable $e) {
-            Log::warning('[OrderObserver] Status broadcast failed', [
-                'order_id' => $order->id,
-                'status' => $order->status,
-                'exception' => $e->getMessage(),
-            ]);
-        }
+        $event = new OrderStatusUpdated($order->id, $order->status, [], $order->vendor_id);
+
+        // Orders are created/accepted inside DB transactions: send only after
+        // commit, otherwise listeners (kanban) re-read the DB before the change
+        // is visible. Runs immediately when no transaction is open; dropped on rollback.
+        DB::afterCommit(function () use ($event) {
+            try {
+                Broadcast::queue($event);
+            } catch (\Throwable $e) {
+                Log::warning('[OrderObserver] Status broadcast failed', [
+                    'order_id' => $event->orderId,
+                    'status' => $event->status,
+                    'exception' => $e->getMessage(),
+                ]);
+            }
+        });
     }
 
     private function calculateMarketplaceCommission(Order $order): void

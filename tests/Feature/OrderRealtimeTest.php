@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Broadcasting\BroadcastException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 use Mockery;
 use Tests\TestCase;
@@ -61,6 +62,39 @@ class OrderRealtimeTest extends TestCase
         }));
 
         $order->update(['status' => Order::STATUS_CONFIRMED]);
+    }
+
+    public function test_status_broadcast_waits_for_transaction_commit(): void
+    {
+        $order = Order::factory()->create(['status' => Order::STATUS_PENDING]);
+
+        $committed = false;
+        Broadcast::shouldReceive('queue')->once()->with(Mockery::on(function () use (&$committed) {
+            // Must not fire while the transaction is still open
+            return $committed;
+        }));
+
+        DB::transaction(function () use ($order, &$committed) {
+            $order->update(['status' => Order::STATUS_CONFIRMED]);
+            $committed = true; // set right before the transaction closure returns
+        });
+    }
+
+    public function test_status_broadcast_is_dropped_on_rollback(): void
+    {
+        $order = Order::factory()->create(['status' => Order::STATUS_PENDING]);
+
+        Broadcast::shouldReceive('queue')->never();
+
+        try {
+            DB::transaction(function () use ($order) {
+                $order->update(['status' => Order::STATUS_CONFIRMED]);
+                throw new \RuntimeException('rollback');
+            });
+        } catch (\RuntimeException) {
+        }
+
+        $this->assertSame(Order::STATUS_PENDING, $order->fresh()->status);
     }
 
     public function test_broadcast_failure_does_not_block_status_change(): void
