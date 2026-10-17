@@ -1,17 +1,21 @@
 <?php
 
+use App\Domains\Logistics\Http\Controllers\Api\CourierOrderController;
 use App\Domains\Menu\Http\Controllers\MenuController;
 use App\Domains\Menu\Models\Category;
 use App\Domains\Menu\Models\Product;
 use App\Domains\Order\Http\Controllers\Api\OrderController as DomainOrderController;
+use App\Domains\Review\Http\Controllers\ReviewController;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\GeoController;
 use App\Http\Controllers\Api\OrderController;
-use App\Http\Controllers\PushController;
+use App\Http\Controllers\Api\Profile\AddressController;
+use App\Http\Controllers\Api\Profile\PaymentMethodController;
+use App\Http\Controllers\Api\Profile\SupportController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\PushController;
 use App\Http\Middleware\SetTenantContext;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('ping', fn () => response()->json(['status' => 'ok']))->name('api.ping');
@@ -34,8 +38,11 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->gro
     Route::get('restaurants/{vendor}', function (Restaurant $vendor) {
         $vendor->load('schedules');
         $vendor->setAppends(['is_open_now']);
+
         return response()->json($vendor);
     })->name('api.restaurants.show');
+
+    Route::get('restaurants/{vendor}/reviews', [ReviewController::class, 'index'])->name('api.restaurants.reviews');
 
     Route::get('categories', fn () => response()->json(['data' => Category::where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'sort_order', 'parent_id'])]))->name('api.categories.index');
 
@@ -56,24 +63,27 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->gro
     Route::middleware('auth')->group(function () {
         Route::get('orders', [OrderController::class, 'index'])->name('api.v1.orders.index');
         Route::get('orders/{id}', [OrderController::class, 'show'])->name('api.v1.orders.show');
+        Route::post('orders/{id}/review', [ReviewController::class, 'store'])
+            ->middleware('throttle:10,1')
+            ->name('api.v1.orders.review');
         Route::post('push/subscribe', [PushController::class, 'subscribe'])->name('api.push.subscribe');
         Route::post('push/unsubscribe', [PushController::class, 'unsubscribe'])->name('api.push.unsubscribe');
 
         // Profile features
         Route::prefix('profile')->group(function () {
-            Route::apiResource('addresses', \App\Http\Controllers\Api\Profile\AddressController::class)->except(['show']);
-            Route::apiResource('payments', \App\Http\Controllers\Api\Profile\PaymentMethodController::class)->only(['index', 'store', 'destroy']);
-            Route::apiResource('support', \App\Http\Controllers\Api\Profile\SupportController::class)->only(['index', 'store']);
+            Route::apiResource('addresses', AddressController::class)->except(['show']);
+            Route::apiResource('payments', PaymentMethodController::class)->only(['index', 'store', 'destroy']);
+            Route::apiResource('support', SupportController::class)->only(['index', 'store']);
         });
 
         // Courier API
         Route::prefix('courier')->group(function () {
-            Route::get('orders', [\App\Domains\Logistics\Http\Controllers\Api\CourierOrderController::class, 'index'])->name('api.courier.orders');
-            Route::post('orders/{id}/accept', [\App\Domains\Logistics\Http\Controllers\Api\CourierOrderController::class, 'accept'])->name('api.courier.accept');
-            Route::post('orders/{id}/status', [\App\Domains\Logistics\Http\Controllers\Api\CourierOrderController::class, 'updateStatus'])->name('api.courier.status');
-            Route::post('location', [\App\Domains\Logistics\Http\Controllers\Api\CourierOrderController::class, 'updateLocation'])->name('api.courier.location');
-            Route::post('status', [\App\Domains\Logistics\Http\Controllers\Api\CourierOrderController::class, 'updateProfileStatus'])->name('api.courier.profile_status');
-            Route::get('earnings', [\App\Domains\Logistics\Http\Controllers\Api\CourierOrderController::class, 'earnings'])->name('api.courier.earnings');
+            Route::get('orders', [CourierOrderController::class, 'index'])->name('api.courier.orders');
+            Route::post('orders/{id}/accept', [CourierOrderController::class, 'accept'])->name('api.courier.accept');
+            Route::post('orders/{id}/status', [CourierOrderController::class, 'updateStatus'])->name('api.courier.status');
+            Route::post('location', [CourierOrderController::class, 'updateLocation'])->name('api.courier.location');
+            Route::post('status', [CourierOrderController::class, 'updateProfileStatus'])->name('api.courier.profile_status');
+            Route::get('earnings', [CourierOrderController::class, 'earnings'])->name('api.courier.earnings');
         });
 
         Route::post('orders/{id}/assign', [OrderController::class, 'assignCourier'])->name('api.v1.orders.assign');

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Domains\Logistics\Models\Courier;
 use App\Domains\Order\Models\Order;
+use App\Domains\Review\Http\Controllers\ReviewController;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ApiResponses;
 use Illuminate\Http\JsonResponse;
@@ -34,7 +35,7 @@ class OrderController extends Controller
         $orders = Order::where('user_id', $userId)
             ->with(['statusHistory' => function ($query) {
                 $query->latest()->limit(5);
-            }])
+            }, 'review'])
             ->latest()
             ->get()
             ->map(function (Order $order) {
@@ -53,6 +54,9 @@ class OrderController extends Controller
                     'is_offline' => $order->is_offline ?? false,
                     'created_at' => $order->created_at->toIso8601String(),
                     'updated_at' => $order->updated_at->toIso8601String(),
+                    'review' => $order->review ? ['rating' => $order->review->rating] : null,
+                    'can_review' => ! $order->review
+                        && in_array($order->status, ReviewController::REVIEWABLE_STATUSES, true),
                     'status_history' => $order->statusHistory->map(function ($history) {
                         return [
                             'from_status' => $history->from_status,
