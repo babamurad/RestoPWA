@@ -58,6 +58,12 @@ class PaymentService
      */
     public function captureCashOnCompletion(Order $order): void
     {
+        // Orders placed before payment_transactions existed have no payment yet:
+        // open it now so they don't stay "unpaid" forever after delivery.
+        if (! PaymentTransaction::where('order_id', $order->id)->exists()) {
+            $this->start($order);
+        }
+
         $transaction = $this->pendingPayment($order);
         if (! $transaction || $transaction->provider !== 'cash') {
             return;

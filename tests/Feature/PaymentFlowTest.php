@@ -135,6 +135,24 @@ class PaymentFlowTest extends TestCase
         $this->assertSame(PaymentTransaction::STATUS_SUCCEEDED, $this->payment($order)->status);
     }
 
+    public function test_order_created_before_payments_existed_is_paid_on_delivery(): void
+    {
+        // An order already in progress at deploy time: no payment transaction yet
+        $order = Order::factory()->create([
+            'vendor_id' => $this->restaurant->id,
+            'status' => Order::STATUS_DELIVERING,
+            'payment_method' => 'cash',
+            'total' => 11200,
+        ]);
+        PaymentTransaction::where('order_id', $order->id)->delete();
+
+        $order->update(['status' => Order::STATUS_DELIVERED]);
+
+        $this->assertSame(PaymentStatus::PAID, $order->fresh()->payment_status);
+        $this->assertSame(PaymentTransaction::STATUS_SUCCEEDED, $this->payment($order)->status);
+        $this->assertSame(11200, $this->payment($order)->amount);
+    }
+
     public function test_method_without_gateway_does_not_break_order_creation(): void
     {
         $order = $this->createOrder('card');
