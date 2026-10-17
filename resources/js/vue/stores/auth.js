@@ -61,6 +61,13 @@ export const useAuthStore = defineStore('auth', {
                 }
             }
         },
+        // Wipes the account on the server; throws the axios error (422/409) for the UI
+        async deleteAccount(password) {
+            await apiClient.delete('/profile', { data: password ? { password } : {} });
+            this.user = null;
+            this.isAuthenticated = false;
+            this.hasChecked = true;
+        },
         async logout() {
             this.isLoading = true;
             try {

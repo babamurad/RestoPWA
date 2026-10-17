@@ -28,6 +28,15 @@ export default {
         title: 'Işlenip düzülýär',
         text: 'Bu funksiýa ýakyn täzelenmelerde peýda bolar!',
     },
+    delete_account: {
+        link: 'Hasaby pozmak',
+        title: 'Hasaby pozmalymy?',
+        text: 'Adyňyz, telefon belgiňiz, email, salgylaryňyz we ýüzlenmeleriňiz yzyna gaýtarylmazdan pozular. Sargytlaryň taryhy restoranlarda siziň maglumatlaryňyz bolmazdan galar, teswirler bolsa näbelli bolar.',
+        password_label: 'Tassyklamak üçin paroly giriziň',
+        password_required: 'Paroly giriziň',
+        confirm: 'Bütinleý pozmak',
+        done: 'Hasap pozuldy',
+    },
     saving: 'Ýatda saklanýar...',
     addresses: {
         title: 'Meniň salgylarym',

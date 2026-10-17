@@ -235,10 +235,10 @@ class Order extends Model
         $addressStr = ! empty($parts) ? implode(', ', $parts) : null;
 
         $details = array_filter([
-            $this->address['landmark'] ? 'ор. '.$this->address['landmark'] : null,
-            $this->address['entrance'] ? 'п. '.$this->address['entrance'] : null,
-            $this->address['floor'] ? 'эт. '.$this->address['floor'] : null,
-            $this->address['apartment'] ? 'кв. '.$this->address['apartment'] : null,
+            ! empty($this->address['landmark']) ? 'ор. '.$this->address['landmark'] : null,
+            ! empty($this->address['entrance']) ? 'п. '.$this->address['entrance'] : null,
+            ! empty($this->address['floor']) ? 'эт. '.$this->address['floor'] : null,
+            ! empty($this->address['apartment']) ? 'кв. '.$this->address['apartment'] : null,
         ]);
 
         if ($addressStr && ! empty($details)) {

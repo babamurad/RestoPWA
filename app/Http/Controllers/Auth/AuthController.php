@@ -141,6 +141,8 @@ class AuthController extends Controller
                 'role' => $user->role?->value ?? $user->role,
                 'avatar' => $user->avatar,
                 'locale' => $user->locale,
+                // Account deletion asks for the password only when there is one
+                'has_password' => $user->password !== null,
             ],
         ]);
     }
