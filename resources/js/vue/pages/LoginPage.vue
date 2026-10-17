@@ -1,12 +1,17 @@
 <template>
   <div class="px-4 py-12 max-w-md mx-auto min-h-[80vh] flex flex-col justify-center font-inter">
+    <!-- Language choice for guests -->
+    <div class="flex justify-end mb-4">
+      <LanguageSwitcher />
+    </div>
+
     <div class="bg-gradient-to-tr from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700/40 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
       <!-- Decorative radial gradient background glow -->
       <div class="absolute -right-24 -top-24 w-64 h-64 rounded-full bg-orange-500/10 blur-3xl group-hover:bg-orange-500/15 transition-colors duration-500"></div>
       
       <div class="text-center mb-8 relative z-10">
-        <h2 class="text-2xl font-black dark:text-slate-100 font-outfit tracking-wide mb-2 text-slate-900">Вход в аккаунт</h2>
-        <p class="text-xs dark:text-slate-400 font-medium text-slate-600">Войдите, чтобы отслеживать заказы и сохранять адреса</p>
+        <h2 class="text-2xl font-black dark:text-slate-100 font-outfit tracking-wide mb-2 text-slate-900">{{ t('auth.login.title') }}</h2>
+        <p class="text-xs dark:text-slate-400 font-medium text-slate-600">{{ t('auth.login.subtitle') }}</p>
       </div>
 
       <form @submit.prevent="handleLogin" class="space-y-6 relative z-10">
@@ -18,7 +23,7 @@
 
         <!-- Email Field -->
         <div class="space-y-2">
-          <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">Email</label>
+          <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">{{ t('auth.email') }}</label>
           <div class="relative">
             <input 
               v-model="form.email" 
@@ -32,7 +37,7 @@
 
         <!-- Password Field -->
         <div class="space-y-2">
-          <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">Пароль</label>
+          <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">{{ t('auth.password') }}</label>
           <div class="relative">
             <input 
               v-model="form.password" 
@@ -51,7 +56,7 @@
           class="w-full py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm rounded-xl shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
         >
           <span v-if="authStore.isLoading" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-          <span>{{ authStore.isLoading ? 'Выполняется вход...' : 'Войти' }}</span>
+          <span>{{ authStore.isLoading ? t('auth.login.submitting') : t('auth.login.submit') }}</span>
         </button>
       </form>
 
@@ -59,7 +64,7 @@
       <div class="mt-6 relative z-10">
         <div class="relative flex items-center mb-4">
           <div class="flex-grow border-t dark:border-slate-700 border-slate-300"></div>
-          <span class="flex-shrink mx-3 text-[10px] dark:text-slate-500 font-semibold uppercase text-slate-400">или</span>
+          <span class="flex-shrink mx-3 text-[10px] dark:text-slate-500 font-semibold uppercase text-slate-400">{{ t('auth.or') }}</span>
           <div class="flex-grow border-t dark:border-slate-700 border-slate-300"></div>
         </div>
         <a
@@ -72,23 +77,21 @@
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
-          Войти через Google
+          {{ t('auth.login.google') }}
         </a>
-        <p class="mt-2 text-[11px] text-center dark:text-slate-500 text-slate-500 font-medium">
-          Продолжая через Google, вы принимаете
-          <a href="/legal/terms" target="_blank" rel="noopener" class="text-orange-400 hover:underline">соглашение</a>,
-          <a href="/legal/offer" target="_blank" rel="noopener" class="text-orange-400 hover:underline">оферту</a>
-          и
-          <a href="/legal/privacy" target="_blank" rel="noopener" class="text-orange-400 hover:underline">политику конфиденциальности</a>.
-        </p>
+        <i18n-t keypath="auth.google_consent" tag="p" scope="global" class="mt-2 text-[11px] text-center dark:text-slate-500 text-slate-500 font-medium">
+          <template #terms><a href="/legal/terms" target="_blank" rel="noopener" class="text-orange-400 hover:underline">{{ t('auth.links.terms_short') }}</a></template>
+          <template #offer><a href="/legal/offer" target="_blank" rel="noopener" class="text-orange-400 hover:underline">{{ t('auth.links.offer_short') }}</a></template>
+          <template #privacy><a href="/legal/privacy" target="_blank" rel="noopener" class="text-orange-400 hover:underline">{{ t('auth.links.privacy') }}</a></template>
+        </i18n-t>
       </div>
 
       <!-- Footer navigation -->
       <div class="mt-6 text-center relative z-10 border-t dark:border-slate-800 pt-6 border-slate-200">
         <p class="text-xs dark:text-slate-400 font-semibold text-slate-600">
-          Еще нет аккаунта? 
+          {{ t('auth.login.no_account') }}
           <router-link :to="{ name: 'register', query: { redirect: $route.query.redirect } }" class="text-orange-400 hover:text-orange-350 transition-colors ml-1 font-bold">
-            Зарегистрироваться
+            {{ t('auth.login.register_link') }}
           </router-link>
         </p>
       </div>
@@ -99,11 +102,14 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
+import LanguageSwitcher from '../components/LanguageSwitcher.vue';
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+const { t } = useI18n();
 
 const form = reactive({
   email: '',
@@ -113,7 +119,7 @@ const form = reactive({
 const errorMsg = ref('');
 
 if (route.query.error === 'google_auth_failed') {
-  errorMsg.value = 'Не удалось войти через Google. Пожалуйста, попробуйте снова.';
+  errorMsg.value = t('auth.login.google_failed');
 }
 
 const handleLogin = async () => {
@@ -123,7 +129,7 @@ const handleLogin = async () => {
     const redirectPath = route.query.redirect || '/profile';
     router.push(redirectPath);
   } catch (err) {
-    errorMsg.value = err.message || 'Ошибка входа. Проверьте правильность email и пароля.';
+    errorMsg.value = err.message || t('auth.login.failed');
   }
 };
 </script>

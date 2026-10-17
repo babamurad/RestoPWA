@@ -1,6 +1,6 @@
 {
-  "_orders-nQLqd1QI.js": {
-    "file": "assets/orders-nQLqd1QI.js",
+  "_orders-BTCgYLVv.js": {
+    "file": "assets/orders-BTCgYLVv.js",
     "name": "orders",
     "imports": [
       "resources/js/app.js"
@@ -20,7 +20,7 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-Gz2sqJpe.js",
+    "file": "assets/app-B4KQQ6wT.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -50,21 +50,21 @@
     ]
   },
   "resources/js/vue/pages/CheckoutPage.vue": {
-    "file": "assets/CheckoutPage-CfFyB4t-.js",
+    "file": "assets/CheckoutPage-CGFnM71k.js",
     "name": "CheckoutPage",
     "src": "resources/js/vue/pages/CheckoutPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
       "_runtime-dom.esm-bundler-CLeXgAct.js",
-      "_orders-nQLqd1QI.js"
+      "_orders-BTCgYLVv.js"
     ],
     "css": [
       "assets/CheckoutPage-De30qs6-.css"
     ]
   },
   "resources/js/vue/pages/LoginPage.vue": {
-    "file": "assets/LoginPage-Cck4-CY1.js",
+    "file": "assets/LoginPage-DLAubZyV.js",
     "name": "LoginPage",
     "src": "resources/js/vue/pages/LoginPage.vue",
     "isDynamicEntry": true,
@@ -74,18 +74,18 @@
     ]
   },
   "resources/js/vue/pages/OrdersPage.vue": {
-    "file": "assets/OrdersPage-DFUIW-zY.js",
+    "file": "assets/OrdersPage-BzahZ75V.js",
     "name": "OrdersPage",
     "src": "resources/js/vue/pages/OrdersPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
       "_runtime-dom.esm-bundler-CLeXgAct.js",
-      "_orders-nQLqd1QI.js"
+      "_orders-BTCgYLVv.js"
     ]
   },
   "resources/js/vue/pages/RegisterPage.vue": {
-    "file": "assets/RegisterPage-zXqQ3g6l.js",
+    "file": "assets/RegisterPage-CEp60Qw5.js",
     "name": "RegisterPage",
     "src": "resources/js/vue/pages/RegisterPage.vue",
     "isDynamicEntry": true,
@@ -95,7 +95,7 @@
     ]
   },
   "resources/js/vue/pages/profile/AddressesPage.vue": {
-    "file": "assets/AddressesPage-BXiJamdn.js",
+    "file": "assets/AddressesPage-BnMfC0uE.js",
     "name": "AddressesPage",
     "src": "resources/js/vue/pages/profile/AddressesPage.vue",
     "isDynamicEntry": true,
@@ -105,7 +105,7 @@
     ]
   },
   "resources/js/vue/pages/profile/PaymentsPage.vue": {
-    "file": "assets/PaymentsPage-CluGByQn.js",
+    "file": "assets/PaymentsPage-DkZ6kumV.js",
     "name": "PaymentsPage",
     "src": "resources/js/vue/pages/profile/PaymentsPage.vue",
     "isDynamicEntry": true,
@@ -115,7 +115,7 @@
     ]
   },
   "resources/js/vue/pages/profile/SupportPage.vue": {
-    "file": "assets/SupportPage-lMnsow93.js",
+    "file": "assets/SupportPage-CoezBE0t.js",
     "name": "SupportPage",
     "src": "resources/js/vue/pages/profile/SupportPage.vue",
     "isDynamicEntry": true,

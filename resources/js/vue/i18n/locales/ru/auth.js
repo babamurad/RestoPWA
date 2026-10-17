@@ -4,11 +4,13 @@ export default {
     or: 'или',
     email: 'Email',
     password: 'Пароль',
-    google_consent: {
-        prefix: 'Продолжая через Google, вы принимаете',
-        terms: 'соглашение',
-        offer: 'оферту',
-        and: 'и',
+    // {terms}, {offer}, {privacy} are links rendered by <i18n-t>
+    google_consent: 'Продолжая через Google, вы принимаете {terms}, {offer} и {privacy}.',
+    links: {
+        terms_short: 'соглашение',
+        offer_short: 'оферту',
+        terms: 'пользовательское соглашение',
+        offer: 'публичную оферту',
         privacy: 'политику конфиденциальности',
     },
     login: {
@@ -32,13 +34,7 @@ export default {
         password_placeholder: 'Минимум 8 символов',
         password_confirmation: 'Подтверждение пароля',
         password_confirmation_placeholder: 'Повторите пароль',
-        consent: {
-            prefix: 'Я принимаю',
-            terms: 'пользовательское соглашение',
-            offer: 'публичную оферту',
-            and: 'и',
-            privacy: 'политику конфиденциальности',
-        },
+        consent: 'Я принимаю {terms}, {offer} и {privacy}',
         submit: 'Зарегистрироваться',
         submitting: 'Регистрация...',
         google: 'Зарегистрироваться через Google',

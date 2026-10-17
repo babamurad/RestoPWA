@@ -4,15 +4,17 @@ export default {
     or: 'ýa-da',
     email: 'Email',
     password: 'Parol',
-    google_consent: {
-        prefix: 'Google arkaly dowam etmek bilen, siz',
+    // {terms}, {offer}, {privacy} are links rendered by <i18n-t>
+    google_consent: 'Google arkaly dowam etmek bilen, siz {terms}, {offer} we {privacy} kabul edýärsiňiz.',
+    links: {
+        terms_short: 'ylalaşygy',
+        offer_short: 'teklibi',
         terms: 'ulanyjy ylalaşygyny',
         offer: 'açyk teklibi',
-        and: 'we',
-        privacy: 'gizlinlik syýasatyny kabul edýärsiňiz',
+        privacy: 'gizlinlik syýasatyny',
     },
     login: {
-        title: 'Hasaba gir',
+        title: 'Hasaba giriş',
         subtitle: 'Sargytlaryňyzy yzarlamak we salgylaryňyzy ýatda saklamak üçin giriň',
         submit: 'Gir',
         submitting: 'Girilýär...',
@@ -32,13 +34,7 @@ export default {
         password_placeholder: 'Iň az 8 nyşan',
         password_confirmation: 'Paroly tassyklaň',
         password_confirmation_placeholder: 'Paroly gaýtalaň',
-        consent: {
-            prefix: 'Men',
-            terms: 'ulanyjy ylalaşygyny',
-            offer: 'açyk teklibi',
-            and: 'we',
-            privacy: 'gizlinlik syýasatyny kabul edýärin',
-        },
+        consent: 'Men {terms}, {offer} we {privacy} kabul edýärin',
         submit: 'Hasaba dur',
         submitting: 'Hasaba alynýar...',
         google: 'Google arkaly hasaba dur',
