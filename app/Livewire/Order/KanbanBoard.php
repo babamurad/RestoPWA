@@ -22,7 +22,7 @@ class KanbanBoard extends Component
         }
 
         return [
-            "echo-private:restaurant.{$this->vendorId},OrderStatusUpdated" => 'loadOrders',
+            "echo-private:restaurant.{$this->vendorId},.order.status.updated" => 'loadOrders',
         ];
     }
 
@@ -89,6 +89,7 @@ class KanbanBoard extends Component
             foreach ($this->columns as &$column) {
                 $column['orders'] = [];
             }
+
             return;
         }
 

@@ -224,18 +224,40 @@
                 restaurantMarker: null,
                 destinationMarker: null,
 
+                // true while the private order channel is subscribed over websocket
+                realtime: false,
+
                 init() {
-                    this.subscribeToOrderChannel();
-                    
                     if (this.currentStatus === 'delivering') {
                         this.initMap();
-                        this.subscribeToTrackingChannel();
                     }
 
-                    // Polling fallback for guests or connection issues
+                    this.whenEcho(() => this.subscribeToOrderChannel());
+
+                    // Polling: the only source of updates for guests or without
+                    // websocket, and a rare safety refresh when realtime works.
                     if (this.signedApiUrl) {
-                        setInterval(() => this.pollStatus(), 5000);
+                        this.schedulePoll();
                     }
+                },
+
+                // Alpine starts before the Vite module that creates window.Echo.
+                whenEcho(callback) {
+                    if (window.Echo) {
+                        return callback();
+                    }
+                    window.addEventListener('load', () => {
+                        if (window.Echo) {
+                            callback();
+                        }
+                    }, { once: true });
+                },
+
+                schedulePoll() {
+                    setTimeout(async () => {
+                        await this.pollStatus();
+                        this.schedulePoll();
+                    }, this.realtime ? 30000 : 5000);
                 },
 
                 async pollStatus() {
@@ -246,6 +268,9 @@
                             const normalizedStatus = data.status === 'delivered' ? 'completed' : data.status;
                             if (normalizedStatus !== this.currentStatus) {
                                 this.currentStatus = normalizedStatus;
+                                if (normalizedStatus === 'delivering' && !this.map) {
+                                    this.initMap();
+                                }
                             }
                         }
                         if (data.status_history) {
@@ -260,24 +285,30 @@
                 },
 
                 subscribeToOrderChannel() {
-                    if (typeof Echo !== 'undefined') {
-                        Echo.private('orders.' + this.orderId)
-                            .listen('order.status.updated', (event) => {
-                                const normalizedStatus = event.status === 'delivered' ? 'completed' : event.status;
+                    window.Echo.connector.pusher?.connection.bind('state_change', (states) => {
+                        if (states.current !== 'connected') {
+                            this.realtime = false;
+                        }
+                    });
+
+                    window.Echo.private('order.' + this.orderId)
+                        .subscribed(() => { this.realtime = true; })
+                        .error(() => { this.realtime = false; })
+                        .listen('.order.status.updated', (event) => {
+                            const normalizedStatus = event.status === 'delivered' ? 'completed' : event.status;
+                            if (normalizedStatus !== this.currentStatus) {
                                 this.currentStatus = normalizedStatus;
                                 this.showNotification('Статус заказа изменен', this.getStatusText(normalizedStatus));
-                                this.pollStatus();
-                            });
-                    }
-                },
-
-                subscribeToTrackingChannel() {
-                    if (typeof Echo !== 'undefined') {
-                        Echo.channel('tracking.' + this.orderId)
-                            .listen('courier.location.updated', (event) => {
-                                this.updateCourierLocation(event.lat, event.lon, event.heading);
-                            });
-                    }
+                                if (normalizedStatus === 'delivering' && !this.map) {
+                                    this.initMap();
+                                }
+                            }
+                            // Refresh the status history timeline
+                            this.pollStatus();
+                        })
+                        .listen('.courier.location.updated', (event) => {
+                            this.updateCourierLocation(event.lat, event.lon, event.heading);
+                        });
                 },
 
                 initMap() {
