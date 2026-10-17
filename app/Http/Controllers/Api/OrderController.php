@@ -121,6 +121,10 @@ class OrderController extends Controller
             return $this->error('Forbidden', 403);
         }
 
+        if ($order->isPickup()) {
+            return $this->error('Pickup order has no delivery', 422);
+        }
+
         $courier = Courier::find($request->input('courier_id'));
         if (! $courier) {
             return $this->error('Courier not found', 404);
