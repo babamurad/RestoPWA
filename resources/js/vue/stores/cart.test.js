@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 
 vi.mock('../api/client', () => ({
-    default: { post: vi.fn() },
+    // i18n (imported by the store) sets the X-Locale header on the client
+    default: { post: vi.fn(), defaults: { headers: { common: {} } } },
 }));
 
 import apiClient from '../api/client';

@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { t } from '../i18n';
 
 export const useRestaurantsStore = defineStore('restaurants', {
   state: () => ({
@@ -28,13 +29,13 @@ export const useRestaurantsStore = defineStore('restaurants', {
       try {
         const response = await fetch('/api/v1/restaurants');
         if (!response.ok) {
-          throw new Error('Не удалось загрузить список ресторанов');
+          throw new Error(t('home.errors.load_restaurants'));
         }
         const data = await response.json();
         this.restaurants = data;
       } catch (err) {
         console.error('Error fetching restaurants:', err);
-        this.error = err.message || 'Ошибка загрузки данных';
+        this.error = err.message || t('home.errors.load_data');
       } finally {
         this.loading = false;
       }
@@ -48,7 +49,7 @@ export const useRestaurantsStore = defineStore('restaurants', {
         // 1. Fetch restaurant general details
         const detailsRes = await fetch(`/api/v1/restaurants/${slug}`);
         if (!detailsRes.ok) {
-          throw new Error('Ресторан не найден');
+          throw new Error(t('menu.errors.not_found'));
         }
         this.currentRestaurant = await detailsRes.json();
 
@@ -60,7 +61,7 @@ export const useRestaurantsStore = defineStore('restaurants', {
 
         const menuRes = await fetch(menuUrl);
         if (!menuRes.ok) {
-          throw new Error('Не удалось загрузить меню ресторана');
+          throw new Error(t('menu.errors.load_menu'));
         }
 
         const menuData = await menuRes.json();
@@ -82,7 +83,7 @@ export const useRestaurantsStore = defineStore('restaurants', {
         this.priceFilters = menuData.filters || { min: 0, max: 1000 };
       } catch (err) {
         console.error('Error fetching menu details:', err);
-        this.error = err.message || 'Ошибка загрузки меню';
+        this.error = err.message || t('menu.errors.load_menu_generic');
         this.currentRestaurant = null;
         this.categories = [];
         this.products = [];

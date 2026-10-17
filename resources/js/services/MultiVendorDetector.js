@@ -1,3 +1,5 @@
+import { t } from '../vue/i18n';
+
 /**
  * Detects multi-vendor conflicts in cart items.
  * Returns { isConflict: boolean, vendorIds: string[], message: string }
@@ -17,7 +19,7 @@ export function detectMultiVendorConflict(items) {
         return {
             isConflict: true,
             vendorIds,
-            message: `В корзине товары из ${vendorIds.length} разных ресторанов`,
+            message: t('cart.multi_vendor', { count: vendorIds.length }),
         };
     }
 

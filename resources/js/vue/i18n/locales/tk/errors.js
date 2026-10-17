@@ -1,0 +1,26 @@
+// Order rejection reasons (keys match OrderRejectReason values)
+export default {
+    order: {
+        empty_cart: 'Sebet boş. Sargyt bermek üçin harytlary goşuň.',
+        no_vendor: 'Restoran saýlanmady. Menýuýa gaýdyp, restorany saýlaň.',
+        multi_vendor: 'Sebetde dürli restoranlaryň harytlary bar. Bir restorany saýlaň.',
+        invalid_vendor: 'Saýlanan restoran elýeterli däl.',
+        vendor_not_found: 'Restoran tapylmady.',
+        invalid_items: 'Sargydyň düzümi nädogry.',
+        item_not_found: 'Käbir harytlar tapylmady.',
+        item_unavailable: 'Käbir harytlar wagtlaýyn elýeterli däl.',
+        invalid_price: 'Harydyň bahasy nädogry görkezildi.',
+        invalid_total: 'Sargydyň jemi bahasy nädogry hasaplandy.',
+        missing_address: 'Eltip bermek salgysy görkezilmedi.',
+        invalid_coordinates: 'Salgynyň koordinatlaryny kesgitläp bolmady.',
+        outside_delivery_zone: 'Salgy eltip bermek zolagyndan daşarda ýerleşýär.',
+        invalid_phone: 'Dogry telefon belgisini görkeziň.',
+        missing_name: 'Adyňyzy görkeziň.',
+        invalid_payment_method: 'Töleg usulyny saýlaň.',
+        unauthorized: 'Sargyt bermek üçin profiliňize giriň.',
+        network: 'Birikmede näsazlyk. Interneti barlaň we gaýtadan synanyşyň.',
+        validation: 'Meýdançalaryň dogry doldurylandygyny barlaň.',
+        server_error: 'Serwerde ýalňyşlyk ýüze çykdy. Soňrak synanyşyň.',
+        below_min_order: 'Sargydyň jemi iň az mukdardan pes.',
+    },
+};

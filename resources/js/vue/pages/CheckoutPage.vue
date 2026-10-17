@@ -7,7 +7,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
         </svg>
       </button>
-      <h2 class="text-xl font-bold dark:text-slate-100 font-outfit tracking-wide text-slate-900">Оформление заказа</h2>
+      <h2 class="text-xl font-bold dark:text-slate-100 font-outfit tracking-wide text-slate-900">{{ t('checkout.title') }}</h2>
     </div>
 
     <!-- Steps Indicator -->
@@ -48,7 +48,7 @@
       <!-- Loading overlay during submission -->
       <div v-if="ordersStore.isLoading" class="absolute inset-0 dark:bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center bg-slate-50">
         <div class="w-12 h-12 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mb-4"></div>
-        <p class="text-sm font-bold dark:text-slate-200 animate-pulse text-slate-800">Отправка заказа...</p>
+        <p class="text-sm font-bold dark:text-slate-200 animate-pulse text-slate-800">{{ t('checkout.submitting') }}</p>
       </div>
     </div>
   </div>
@@ -57,6 +57,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useCartStore } from '../stores/cart';
 import { useOrdersStore } from '../stores/orders';
 import { useAuthStore } from '../stores/auth';
@@ -66,6 +67,7 @@ import CheckoutAddressStep from '../components/checkout/CheckoutAddressStep.vue'
 import CheckoutPaymentStep from '../components/checkout/CheckoutPaymentStep.vue';
 import CheckoutConfirmStep from '../components/checkout/CheckoutConfirmStep.vue';
 
+const { t } = useI18n();
 const router = useRouter();
 const cartStore = useCartStore();
 const ordersStore = useOrdersStore();
@@ -74,13 +76,13 @@ const authStore = useAuthStore();
 const currentStep = ref(0);
 const traceId = ref(self.crypto.randomUUID());
 
-const steps = [
-  { title: 'Доставка', component: CheckoutAddressStep },
-  { title: 'Оплата', component: CheckoutPaymentStep },
-  { title: 'Подтверждение', component: CheckoutConfirmStep }
-];
+const steps = computed(() => [
+  { title: t('checkout.steps.delivery'), component: CheckoutAddressStep },
+  { title: t('checkout.steps.payment'), component: CheckoutPaymentStep },
+  { title: t('checkout.steps.confirm'), component: CheckoutConfirmStep }
+]);
 
-const currentStepComponent = computed(() => steps[currentStep.value].component);
+const currentStepComponent = computed(() => steps.value[currentStep.value].component);
 
 // Global order state passed to children
 const orderData = ref({
@@ -127,7 +129,7 @@ const updateOrderData = (data) => {
 };
 
 const nextStep = () => {
-  if (currentStep.value < steps.length - 1) {
+  if (currentStep.value < steps.value.length - 1) {
     currentStep.value++;
   }
 };
@@ -162,7 +164,7 @@ const submitOrder = async () => {
     address: {
       lat: orderData.value.lat || 39.0886,
       lon: orderData.value.lon || 63.5593,
-      address: orderData.value.address ? orderData.value.address : (orderData.value.delivery_type === 'delivery' ? 'Точка на карте' : 'Самовывоз'),
+      address: orderData.value.address ? orderData.value.address : (orderData.value.delivery_type === 'delivery' ? t('checkout.fallback.map_point') : t('checkout.fallback.pickup')),
       entrance: orderData.value.entrance || null,
       floor: orderData.value.floor || null,
       apartment: orderData.value.apartment || null,
@@ -174,7 +176,7 @@ const submitOrder = async () => {
       geolocate_status: orderData.value.geolocate_status || null,
       geolocate_accuracy_m: orderData.value.geolocate_accuracy_m || null
     },
-    customerName: authStore.user?.name || 'Покупатель',
+    customerName: authStore.user?.name || t('checkout.fallback.customer'),
     customerPhone: cleanPhone,
     deliveryFee: Math.round(finalDeliveryFee * 100),
     deliveryTime: 'asap',
@@ -223,17 +225,17 @@ const submitOrder = async () => {
 
         if (window.Swal) {
           window.Swal.fire({
-            title: 'Заказ сохранён!',
-            text: 'Соединение с интернетом отсутствует. Заказ будет отправлен автоматически, как только вы будете онлайн!',
+            title: t('checkout.offline.title'),
+            text: t('checkout.offline.text'),
             icon: 'success',
-            confirmButtonText: 'Отлично',
+            confirmButtonText: t('checkout.offline.confirm'),
             confirmButtonColor: '#f97316',
             customClass: { popup: 'rounded-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100' },
           }).then(() => {
             router.push('/profile');
           });
         } else {
-          alert('Соединение потеряно. Заказ сохранён и будет отправлен при появлении сети!');
+          alert(t('checkout.offline.alert'));
           router.push('/profile');
         }
         return;
@@ -252,14 +254,14 @@ const submitOrder = async () => {
     // Fallback: normal error handling
     if (window.Swal) {
       window.Swal.fire({
-        title: 'Ошибка',
-        text: ordersStore.error || 'Не удалось оформить заказ. Попробуйте позже.',
+        title: t('common.error'),
+        text: ordersStore.error || t('checkout.submit_failed'),
         icon: 'error',
         confirmButtonColor: '#f97316',
         customClass: { popup: 'rounded-2xl dark:bg-slate-900 dark:text-slate-100 bg-slate-50 text-slate-900' },
       });
     } else {
-      alert(ordersStore.error || 'Ошибка оформления заказа');
+      alert(ordersStore.error || t('checkout.submit_failed_short'));
     }
   }
 };

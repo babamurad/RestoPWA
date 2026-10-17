@@ -1,0 +1,41 @@
+// Home page (restaurant catalog)
+export default {
+    delivery_to: 'Доставка по адресу',
+    demo_address: 'ул. Туркменбаши, д. 45',
+    promo: {
+        badge: 'Скидка 20%',
+        title: 'Первый заказ вкуснее!',
+        text: 'Заказывайте в любимых ресторанах со скидкой на доставку прямо сейчас.',
+        cta: 'Выбрать ресторан',
+    },
+    popular_categories: 'Популярные категории',
+    all: 'Все',
+    categories: {
+        all: 'Все',
+        burgers: 'Бургеры',
+        pizza: 'Пицца',
+        sushi: 'Суши',
+        desserts: 'Сладости',
+        drinks: 'Напитки',
+    },
+    best_places: 'Выбирайте из лучших мест',
+    sort_rating: 'По рейтингу',
+    sort_delivery: 'Быстрая доставка',
+    empty_title: 'Ничего не найдено',
+    empty_text: 'Попробуйте изменить параметры фильтрации.',
+    new_badge: 'Новый',
+    minutes: '{time} мин',
+    default_description: 'Изысканные блюда от шеф-повара с доставкой',
+    delivery_label: 'Доставка:',
+    min_order_label: 'Мин. заказ:',
+    legal: {
+        aria: 'Документы',
+        terms: 'Пользовательское соглашение',
+        offer: 'Публичная оферта',
+        privacy: 'Политика конфиденциальности',
+    },
+    errors: {
+        load_restaurants: 'Не удалось загрузить список ресторанов',
+        load_data: 'Ошибка загрузки данных',
+    },
+};

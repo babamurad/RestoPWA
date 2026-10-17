@@ -10,9 +10,9 @@
           </svg>
         </div>
         <div>
-          <span class="text-xs dark:text-slate-400 block font-medium uppercase tracking-wider text-slate-600">Доставка по адресу</span>
+          <span class="text-xs dark:text-slate-400 block font-medium uppercase tracking-wider text-slate-600">{{ t('home.delivery_to') }}</span>
           <span class="text-sm dark:text-slate-100 font-bold hover:text-orange-400 cursor-pointer transition-colors flex items-center gap-1 text-slate-900">
-            ул. Туркменбаши, д. 45
+            {{ t('home.demo_address') }}
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3 h-3 text-orange-500">
               <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
             </svg>
@@ -36,16 +36,16 @@
       
       <div class="relative z-10 max-w-xs md:max-w-md">
         <span class="inline-block px-3 py-1 rounded-full bg-white/20 text-xs font-bold text-white uppercase tracking-wider mb-3 backdrop-blur-sm">
-          Скидка 20%
+          {{ t('home.promo.badge') }}
         </span>
         <h2 class="text-2xl md:text-3xl font-extrabold text-white leading-tight mb-2 font-outfit">
-          Первый заказ вкуснее!
+          {{ t('home.promo.title') }}
         </h2>
         <p class="text-sm text-orange-100 mb-6 font-medium">
-          Заказывайте в любимых ресторанах со скидкой на доставку прямо сейчас.
+          {{ t('home.promo.text') }}
         </p>
         <button class="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-100 dark:hover:bg-slate-100 text-orange-600 font-bold text-sm shadow-md transition-all active:scale-95 duration-200">
-          Выбрать ресторан
+          {{ t('home.promo.cta') }}
         </button>
       </div>
     </div>
@@ -53,8 +53,8 @@
     <!-- Horizontal Categories Carousel -->
     <div class="mb-8">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-bold dark:text-slate-100 tracking-wide font-outfit text-slate-900">Популярные категории</h3>
-        <span class="text-xs text-orange-500 font-bold hover:underline cursor-pointer">Все</span>
+        <h3 class="text-lg font-bold dark:text-slate-100 tracking-wide font-outfit text-slate-900">{{ t('home.popular_categories') }}</h3>
+        <span class="text-xs text-orange-500 font-bold hover:underline cursor-pointer">{{ t('home.all') }}</span>
       </div>
       <div class="flex gap-4 overflow-x-auto pb-3 scrollbar-hide -mx-4 px-4 mask-right">
         <div 
@@ -69,7 +69,7 @@
           ]"
         >
           <span class="text-2xl mb-1.5">{{ cat.icon }}</span>
-          <span class="text-xs font-bold whitespace-nowrap">{{ cat.name }}</span>
+          <span class="text-xs font-bold whitespace-nowrap">{{ t('home.categories.' + cat.id) }}</span>
         </div>
       </div>
     </div>
@@ -77,19 +77,19 @@
     <!-- Restaurants Grid -->
     <div>
       <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-bold dark:text-slate-100 tracking-wide font-outfit text-slate-900">Выбирайте из лучших мест</h3>
+        <h3 class="text-lg font-bold dark:text-slate-100 tracking-wide font-outfit text-slate-900">{{ t('home.best_places') }}</h3>
         <div class="flex gap-2">
           <button 
             @click="sortBy = 'rating'"
             :class="['text-xs px-3 py-1.5 rounded-lg border font-bold transition-all', sortBy === 'rating' ? 'bg-orange-500/10 border-orange-500/40 text-orange-400' : 'dark:bg-slate-800/40 dark:border-slate-700/50 dark:text-slate-400 dark:hover:bg-slate-800 bg-white border-slate-300 text-slate-600 hover:bg-white']"
           >
-            По рейтингу
+            {{ t('home.sort_rating') }}
           </button>
           <button 
             @click="sortBy = 'delivery'"
             :class="['text-xs px-3 py-1.5 rounded-lg border font-bold transition-all', sortBy === 'delivery' ? 'bg-orange-500/10 border-orange-500/40 text-orange-400' : 'dark:bg-slate-800/40 dark:border-slate-700/50 dark:text-slate-400 dark:hover:bg-slate-800 bg-white border-slate-300 text-slate-600 hover:bg-white']"
           >
-            Быстрая доставка
+            {{ t('home.sort_delivery') }}
           </button>
         </div>
       </div>
@@ -110,8 +110,8 @@
       <!-- Empty State -->
       <div v-else-if="filteredRestaurants.length === 0" class="text-center py-16">
         <span class="text-4xl mb-4 block">🔍</span>
-        <h4 class="text-lg font-bold dark:text-slate-200 mb-1 text-slate-800">Ничего не найдено</h4>
-        <p class="text-xs dark:text-slate-400 text-slate-600">Попробуйте изменить параметры фильтрации.</p>
+        <h4 class="text-lg font-bold dark:text-slate-200 mb-1 text-slate-800">{{ t('home.empty_title') }}</h4>
+        <p class="text-xs dark:text-slate-400 text-slate-600">{{ t('home.empty_text') }}</p>
       </div>
 
       <!-- Restaurants list -->
@@ -141,7 +141,7 @@
                 {{ Number(restaurant.rating).toFixed(1) }}
                 <span class="font-semibold dark:text-slate-400 text-slate-500">({{ restaurant.review_count }})</span>
               </template>
-              <span v-else class="font-bold dark:text-slate-300 text-slate-600">Новый</span>
+              <span v-else class="font-bold dark:text-slate-300 text-slate-600">{{ t('home.new_badge') }}</span>
             </div>
 
             <!-- Delivery time badge -->
@@ -149,7 +149,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
-              {{ restaurant.delivery_time || '25-35' }} мин
+              {{ t('home.minutes', { time: restaurant.delivery_time || '25-35' }) }}
             </div>
           </div>
 
@@ -158,15 +158,15 @@
             <h4 class="text-base font-bold dark:text-slate-100 group-hover:text-orange-400 transition-colors flex items-center justify-between text-slate-900">
               {{ restaurant.name }}
             </h4>
-            <p class="text-xs dark:text-slate-400 mt-1 line-clamp-1 font-medium text-slate-600">{{ restaurant.description || 'Изысканные блюда от шеф-повара с доставкой' }}</p>
+            <p class="text-xs dark:text-slate-400 mt-1 line-clamp-1 font-medium text-slate-600">{{ restaurant.description || t('home.default_description') }}</p>
             
             <div class="flex items-center gap-4 mt-3 pt-3 border-t dark:border-slate-700/30 text-xs dark:text-slate-400 font-semibold border-slate-300 text-slate-600">
               <span class="flex items-center gap-1">
-                Доставка: <strong class="dark:text-slate-200 text-slate-800">{{ restaurant.delivery_fee_from != null ? 'от ' + restaurant.delivery_fee_from + ' TMT' : (parseFloat(restaurant.delivery_fee) === 0 ? 'Бесплатно' : restaurant.delivery_fee + ' TMT') }}</strong>
+                {{ t('home.delivery_label') }} <strong class="dark:text-slate-200 text-slate-800">{{ restaurant.delivery_fee_from != null ? t('common.from_price', { amount: restaurant.delivery_fee_from }) : (parseFloat(restaurant.delivery_fee) === 0 ? t('common.free') : t('common.price', { amount: restaurant.delivery_fee })) }}</strong>
               </span>
               <span class="w-1.5 h-1.5 rounded-full dark:bg-slate-700 bg-slate-100"></span>
               <span class="flex items-center gap-1">
-                Мин. заказ: <strong class="dark:text-slate-200 text-slate-800">{{ restaurant.min_order || '15' }} TMT</strong>
+                {{ t('home.min_order_label') }} <strong class="dark:text-slate-200 text-slate-800">{{ t('common.price', { amount: restaurant.min_order || '15' }) }}</strong>
               </span>
             </div>
           </div>
@@ -175,10 +175,10 @@
     </div>
 
     <!-- Legal documents (public) -->
-    <footer class="mt-10 mb-6 flex flex-wrap justify-center gap-x-4 gap-y-2 text-[11px] font-semibold text-slate-500 dark:text-slate-500" aria-label="Документы">
-      <a href="/legal/terms" target="_blank" rel="noopener" class="hover:text-orange-500">Пользовательское соглашение</a>
-      <a href="/legal/offer" target="_blank" rel="noopener" class="hover:text-orange-500">Публичная оферта</a>
-      <a href="/legal/privacy" target="_blank" rel="noopener" class="hover:text-orange-500">Политика конфиденциальности</a>
+    <footer class="mt-10 mb-6 flex flex-wrap justify-center gap-x-4 gap-y-2 text-[11px] font-semibold text-slate-500 dark:text-slate-500" :aria-label="t('home.legal.aria')">
+      <a href="/legal/terms" target="_blank" rel="noopener" class="hover:text-orange-500">{{ t('home.legal.terms') }}</a>
+      <a href="/legal/offer" target="_blank" rel="noopener" class="hover:text-orange-500">{{ t('home.legal.offer') }}</a>
+      <a href="/legal/privacy" target="_blank" rel="noopener" class="hover:text-orange-500">{{ t('home.legal.privacy') }}</a>
     </footer>
   </div>
 </template>
@@ -186,8 +186,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useRestaurantsStore } from '../stores/restaurants';
 
+const { t } = useI18n();
 const router = useRouter();
 const store = useRestaurantsStore();
 
@@ -195,12 +197,12 @@ const activeCategory = ref('all');
 const sortBy = ref('rating');
 
 const categories = ref([
-  { id: 'all', name: 'Все', icon: '🍽️' },
-  { id: 'burgers', name: 'Бургеры', icon: '🍔' },
-  { id: 'pizza', name: 'Пицца', icon: '🍕' },
-  { id: 'sushi', name: 'Суши', icon: '🍣' },
-  { id: 'desserts', name: 'Сладости', icon: '🍰' },
-  { id: 'drinks', name: 'Напитки', icon: '🥤' }
+  { id: 'all', icon: '🍽️' },
+  { id: 'burgers', icon: '🍔' },
+  { id: 'pizza', icon: '🍕' },
+  { id: 'sushi', icon: '🍣' },
+  { id: 'desserts', icon: '🍰' },
+  { id: 'drinks', icon: '🥤' }
 ]);
 
 const handleImageError = (e) => {

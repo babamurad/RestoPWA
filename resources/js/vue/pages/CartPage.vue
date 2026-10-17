@@ -7,7 +7,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
         </svg>
       </router-link>
-      <h2 class="text-xl font-bold dark:text-slate-100 font-outfit tracking-wide text-slate-900">Моя корзина</h2>
+      <h2 class="text-xl font-bold dark:text-slate-100 font-outfit tracking-wide text-slate-900">{{ t('cart.title') }}</h2>
     </div>
 
     <!-- Empty State -->
@@ -18,12 +18,12 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
         </svg>
       </div>
-      <h3 class="text-lg font-bold dark:text-slate-200 mb-2 font-outfit text-slate-800">Корзина пуста</h3>
+      <h3 class="text-lg font-bold dark:text-slate-200 mb-2 font-outfit text-slate-800">{{ t('cart.empty_title') }}</h3>
       <p class="text-sm dark:text-slate-400 max-w-xs mb-8 font-medium text-slate-600">
-        Кажется, вы еще не добавили ни одного блюда в корзину. Выберите ресторан, чтобы начать заказ!
+        {{ t('cart.empty_text') }}
       </p>
       <router-link to="/" class="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-2xl shadow-lg shadow-orange-500/20 active:scale-95 transition-all text-xs">
-        Перейти в каталог
+        {{ t('cart.go_to_catalog') }}
       </router-link>
     </div>
 
@@ -35,18 +35,18 @@
         <transition name="fade">
           <div v-if="cartStore.syncLoading" class="text-xs text-orange-400 font-bold bg-orange-500/5 border border-orange-500/10 p-3 rounded-2xl flex items-center gap-2 select-none animate-pulse">
             <span class="w-2.5 h-2.5 rounded-full bg-orange-500 animate-ping"></span>
-            Синхронизация цен и наличия с сервером...
+            {{ t('cart.syncing') }}
           </div>
         </transition>
 
         <!-- Price Change Warning block -->
         <div v-if="cartStore.priceChanges.length > 0" class="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl text-xs text-amber-400 font-semibold space-y-2 select-none">
           <div class="flex items-center gap-2 font-black uppercase tracking-wider">
-            <span>⚠️</span> Внимание! Цены на некоторые позиции изменились:
+            <span>⚠️</span> {{ t('cart.price_changes_title') }}
           </div>
           <ul class="list-disc pl-5 space-y-1">
             <li v-for="change in cartStore.priceChanges" :key="change.product_id">
-              «{{ change.name }}»: старая цена {{ change.old_price }} TMT → новая цена {{ change.new_price }} TMT.
+              {{ t('cart.price_change_line', { name: change.name, old_price: change.old_price, new_price: change.new_price }) }}
             </li>
           </ul>
         </div>
@@ -54,15 +54,15 @@
         <!-- Unavailable Items warning block -->
         <div v-if="cartStore.unavailableItems.length > 0" class="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl text-xs text-rose-400 font-semibold space-y-2 select-none">
           <div class="flex items-center gap-2 font-black uppercase tracking-wider">
-            <span>🚫</span> Следующие товары были удалены, так как они временно недоступны:
+            <span>🚫</span> {{ t('cart.unavailable_title') }}
           </div>
           <ul class="list-disc pl-5 space-y-1">
             <li v-for="item in cartStore.unavailableItems" :key="item.product_id">
-              «{{ item.name }}»: {{ item.reason || 'Временно недоступно' }}
+              «{{ item.name }}»: {{ item.reason || t('cart.unavailable_default') }}
             </li>
           </ul>
           <button @click="cartStore.unavailableItems = []" class="mt-2 text-[10px] underline hover:text-white font-black">
-            Скрыть предупреждение
+            {{ t('cart.hide_warning') }}
           </button>
         </div>
 
@@ -71,7 +71,7 @@
           <div class="flex items-center gap-3">
             <span class="text-2xl">🍔</span>
             <div>
-              <span class="text-xs dark:text-slate-400 block font-black uppercase tracking-wider text-slate-600">Заказ из ресторана</span>
+              <span class="text-xs dark:text-slate-400 block font-black uppercase tracking-wider text-slate-600">{{ t('cart.order_from') }}</span>
               <h4 class="text-sm font-black dark:text-slate-100 group-hover:text-orange-400 hover:underline cursor-pointer text-slate-900" @click="$router.push(`/restaurants/${cartStore.vendorSlug}`)">
                 {{ cartStore.vendorName }}
               </h4>
@@ -81,7 +81,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
               <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
             </svg>
-            Очистить
+            {{ t('cart.clear') }}
           </button>
         </div>
 
@@ -101,9 +101,9 @@
               />
               <div class="min-w-0 flex-1">
                 <h5 class="text-sm font-bold dark:text-slate-100 truncate text-slate-900">{{ item.name }}</h5>
-                <p v-if="item.weight" class="text-[10px] dark:text-slate-400 mt-0.5 text-slate-600">Вес: {{ item.weight }} г</p>
-                <p class="text-xs dark:text-slate-400 mt-1 font-semibold text-slate-600">{{ item.price }} TMT x {{ item.quantity }}</p>
-                <div class="text-xs font-black text-orange-400 mt-1.5">{{ (item.price * item.quantity).toFixed(0) }} TMT</div>
+                <p v-if="item.weight" class="text-[10px] dark:text-slate-400 mt-0.5 text-slate-600">{{ t('cart.weight', { weight: item.weight }) }}</p>
+                <p class="text-xs dark:text-slate-400 mt-1 font-semibold text-slate-600">{{ t('common.price', { amount: item.price }) }} x {{ item.quantity }}</p>
+                <div class="text-xs font-black text-orange-400 mt-1.5">{{ t('common.price', { amount: (item.price * item.quantity).toFixed(0) }) }}</div>
               </div>
             </div>
 
@@ -130,20 +130,20 @@
       <!-- Order Summary Card -->
       <div class="lg:col-span-1 select-none">
         <div class="dark:bg-slate-800 border dark:border-slate-800/80 rounded-3xl p-6 shadow-xl sticky top-6 space-y-6 bg-white border-slate-200">
-          <h4 class="text-base font-extrabold dark:text-slate-100 font-outfit tracking-wide text-slate-900">Детали заказа</h4>
+          <h4 class="text-base font-extrabold dark:text-slate-100 font-outfit tracking-wide text-slate-900">{{ t('cart.summary_title') }}</h4>
           
           <div class="space-y-3.5 text-sm dark:text-slate-400 font-semibold border-b dark:border-slate-700/30 pb-5 text-slate-600 border-slate-300">
             <div class="flex justify-between">
-              <span>Стоимость блюд</span>
+              <span>{{ t('cart.items_cost') }}</span>
               <span class="dark:text-slate-200 text-slate-800">
-                {{ cartStore.syncLoading ? cartStore.localSubtotal.toFixed(0) : cartStore.subtotal }} TMT
+                {{ t('common.price', { amount: cartStore.syncLoading ? cartStore.localSubtotal.toFixed(0) : cartStore.subtotal }) }}
               </span>
             </div>
             <div class="flex justify-between">
-              <span>Доставка</span>
+              <span>{{ t('cart.delivery') }}</span>
               <span class="dark:text-slate-200 text-slate-800">
-                <template v-if="cartStore.deliveryFeeIsEstimate">от {{ cartStore.deliveryFee }} TMT</template>
-                <template v-else>{{ cartStore.deliveryFee === 0 ? 'Бесплатно' : cartStore.deliveryFee + ' TMT' }}</template>
+                <template v-if="cartStore.deliveryFeeIsEstimate">{{ t('common.from_price', { amount: cartStore.deliveryFee }) }}</template>
+                <template v-else>{{ cartStore.deliveryFee === 0 ? t('common.free') : t('common.price', { amount: cartStore.deliveryFee }) }}</template>
               </span>
             </div>
           </div>
@@ -151,17 +151,17 @@
           <!-- Minimum Order warning block -->
           <div v-if="!cartStore.isMinOrderMet" class="bg-rose-500/10 border border-rose-500/20 p-3 rounded-2xl text-[11px] text-rose-400 font-semibold leading-relaxed flex gap-2">
             <span>🚨</span>
-            <div>
-              Минимальная сумма заказа составляет {{ cartStore.minOrder }} TMT. Пожалуйста, добавьте еще блюд на 
-              <strong class="underline font-black">{{ (cartStore.minOrder - cartStore.subtotal).toFixed(0) }} TMT</strong>.
-            </div>
+            <i18n-t keypath="cart.min_order_warning" tag="div">
+              <template #amount>{{ cartStore.minOrder }}</template>
+              <template #rest><strong class="underline font-black">{{ t('common.price', { amount: (cartStore.minOrder - cartStore.subtotal).toFixed(0) }) }}</strong></template>
+            </i18n-t>
           </div>
 
           <!-- Total price -->
           <div class="flex justify-between items-baseline">
-            <span class="text-sm font-bold dark:text-slate-400 font-outfit text-slate-600">Итого</span>
+            <span class="text-sm font-bold dark:text-slate-400 font-outfit text-slate-600">{{ t('cart.total') }}</span>
             <span class="text-2xl font-black text-orange-500 font-outfit">
-              {{ cartStore.syncLoading ? cartStore.localTotal.toFixed(0) : cartStore.total }} TMT
+              {{ t('common.price', { amount: cartStore.syncLoading ? cartStore.localTotal.toFixed(0) : cartStore.total }) }}
             </span>
           </div>
 
@@ -171,7 +171,7 @@
             :disabled="!cartStore.isMinOrderMet"
             class="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:disabled:from-slate-800 dark:disabled:to-slate-800 dark:disabled:text-slate-500 disabled:cursor-not-allowed text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-500"
           >
-            Оформить заказ
+            {{ t('cart.checkout') }}
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-4 h-4">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
             </svg>
@@ -187,7 +187,9 @@ import { onMounted } from 'vue';
 import { useCartStore } from '../stores/cart';
 
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const router = useRouter();
 const cartStore = useCartStore();
 
@@ -202,12 +204,12 @@ const decreaseQty = (item) => {
 const clearCart = () => {
   if (window.Swal) {
     window.Swal.fire({
-      title: 'Очистить корзину?',
-      text: 'Все добавленные блюда будут безвозвратно удалены.',
+      title: t('cart.clear_confirm.title'),
+      text: t('cart.clear_confirm.text'),
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Да, очистить',
-      cancelButtonText: 'Отмена',
+      confirmButtonText: t('cart.clear_confirm.confirm'),
+      cancelButtonText: t('common.cancel'),
       confirmButtonColor: '#ef4444',
       cancelButtonColor: '#334155',
       background: '#0f172a',
@@ -218,8 +220,8 @@ const clearCart = () => {
       if (result.isConfirmed) {
         cartStore.clearCart();
         window.Swal.fire({
-          title: 'Очищено',
-          text: 'Корзина успешно очищена',
+          title: t('cart.clear_confirm.done_title'),
+          text: t('cart.clear_confirm.done_text'),
           icon: 'success',
           timer: 1500,
           showConfirmButton: false,
@@ -230,7 +232,7 @@ const clearCart = () => {
       }
     });
   } else {
-    if (confirm('Вы уверены, что хотите полностью очистить корзину?')) {
+    if (confirm(t('cart.clear_confirm.fallback'))) {
       cartStore.clearCart();
     }
   }
