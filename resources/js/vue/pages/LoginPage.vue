@@ -74,6 +74,13 @@
           </svg>
           Войти через Google
         </a>
+        <p class="mt-2 text-[11px] text-center dark:text-slate-500 text-slate-500 font-medium">
+          Продолжая через Google, вы принимаете
+          <a href="/legal/terms" target="_blank" rel="noopener" class="text-orange-400 hover:underline">соглашение</a>,
+          <a href="/legal/offer" target="_blank" rel="noopener" class="text-orange-400 hover:underline">оферту</a>
+          и
+          <a href="/legal/privacy" target="_blank" rel="noopener" class="text-orange-400 hover:underline">политику конфиденциальности</a>.
+        </p>
       </div>
 
       <!-- Footer navigation -->

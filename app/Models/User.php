@@ -3,26 +3,26 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Casts\Attribute;
-use App\Domains\Vendor\Models\Restaurant;
 use App\Domains\Logistics\Models\Courier;
+use App\Domains\Vendor\Models\Restaurant;
+use App\Enums\UserRole;
+use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
-use App\Enums\UserRole;
 
-#[Fillable(['name', 'email', 'password', 'phone', 'role', 'google_id', 'avatar'])]
+#[Fillable(['name', 'email', 'password', 'phone', 'role', 'google_id', 'avatar', 'terms_accepted_at', 'terms_version'])]
 #[Hidden(['password', 'remember_token', 'google_id'])]
 class User extends Authenticatable implements FilamentUser, HasTenants
 {
@@ -38,6 +38,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'terms_accepted_at' => 'datetime',
             'role' => UserRole::class,
         ];
     }
@@ -128,18 +129,22 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         return Attribute::make(
             // Геттер: всегда возвращает с +
             get: fn (?string $value) => $value ? (str_starts_with($value, '+') ? $value : '+'.$value) : null,
-            
+
             // Сеттер: нормализует перед сохранением
             set: function (?string $value) {
-                if (empty($value)) return ['phone' => null];
-                
+                if (empty($value)) {
+                    return ['phone' => null];
+                }
+
                 // Убираем всё кроме цифр, потом добавляем +
                 $digits = preg_replace('/\D+/', '', $value);
-                
+
                 // Защита от мусора
-                if (strlen($digits) < 8) return ['phone' => null];
-                
-                return ['phone' => '+' . $digits];
+                if (strlen($digits) < 8) {
+                    return ['phone' => null];
+                }
+
+                return ['phone' => '+'.$digits];
             }
         );
     }

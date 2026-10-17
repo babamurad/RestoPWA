@@ -1,15 +1,11 @@
 <?php
 
 use App\Domains\Order\Http\Controllers\OrderTrackingController;
-use App\Domains\Order\Models\Order;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\SocialAuthController;
+use App\Http\Controllers\LegalController;
 use App\Http\Controllers\OrderSuccessController;
-use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\Vendor\KanbanController;
-use App\Domains\Order\Http\Controllers\Api\OrderController as ApiOrderController;
-use App\Http\Middleware\SetTenantContext;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('app'))->name('home');
@@ -31,9 +27,10 @@ Route::get('/checkout', fn () => view('app'))->name('checkout');
 Route::get('/orders', fn () => redirect('/profile'))->name('orders.index');
 Route::get('/profile', fn () => view('app'))->name('profile.edit');
 
-
-
 Route::view('/offline', 'offline');
+
+Route::get('/legal/{document}', [LegalController::class, 'show'])
+    ->name('legal.show');
 
 Route::get('/order/{orderId}/track', [OrderTrackingController::class, 'track'])
     ->name('order.track')->middleware('auth');
@@ -61,8 +58,6 @@ Route::match(['get', 'head'], '/api/ping', function () {
         ],
     ]);
 })->name('api.ping');
-
-
 
 // Vendor orders kanban board
 Route::get('/vendor/orders/kanban', [KanbanController::class, 'index'])

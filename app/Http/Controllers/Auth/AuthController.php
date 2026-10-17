@@ -64,7 +64,7 @@ class AuthController extends Controller
         if ($request->filled('phone')) {
             $phone = preg_replace('/\D/', '', (string) $request->phone);
             if (strlen($phone) === 8) {
-                $request->merge(['phone' => '+993' . $phone]);
+                $request->merge(['phone' => '+993'.$phone]);
             }
         }
 
@@ -73,6 +73,9 @@ class AuthController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => ['required', 'confirmed', Password::min(8)],
             'phone' => ['nullable', 'regex:/^\+993\d{8}$/', 'unique:users,phone'],
+            'terms_accepted' => 'accepted',
+        ], [
+            'terms_accepted.accepted' => 'Необходимо принять пользовательское соглашение и политику конфиденциальности.',
         ]);
 
         $user = User::create([
@@ -80,6 +83,8 @@ class AuthController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'phone' => $validated['phone'] ?? null,
+            'terms_accepted_at' => now(),
+            'terms_version' => config('legal.version'),
         ]);
 
         Auth::login($user);
