@@ -11,8 +11,11 @@ use App\Domains\Menu\Models\Product;
 use App\Domains\Order\Models\Order;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Enums\UserRole;
+use App\Filament\Resources\OrderResource\Pages\ManageOrders;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Mockery;
 use Tests\TestCase;
 
@@ -189,5 +192,43 @@ class OrderPickupTest extends TestCase
             ->assertStatus(422);
 
         $this->assertNull($order->fresh()->courier_id);
+    }
+
+    public function test_pickup_order_already_assigned_to_courier_is_hidden_and_cannot_be_closed(): void
+    {
+        $courier = $this->makeCourier();
+        $order = Order::factory()->create([
+            'status' => Order::STATUS_DELIVERING,
+            'delivery_type' => Order::DELIVERY_TYPE_PICKUP,
+            'courier_id' => $courier->id,
+        ]);
+
+        $list = $this->actingAs($courier->user)->getJson('/api/v1/courier/orders');
+        $list->assertOk();
+        $this->assertNotContains($order->id, collect($list->json('data.active'))->pluck('id'));
+
+        $this->actingAs($courier->user)
+            ->postJson("/api/v1/courier/orders/{$order->id}/status", ['status' => Order::STATUS_DELIVERED])
+            ->assertStatus(422);
+
+        $this->assertSame(Order::STATUS_DELIVERING, $order->fresh()->status);
+        $this->assertDatabaseMissing('courier_earnings', ['order_id' => $order->id]);
+    }
+
+    public function test_admin_panel_hides_assign_courier_action_for_pickup(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $pickup = Order::factory()->create([
+            'status' => Order::STATUS_PREPARING,
+            'delivery_type' => Order::DELIVERY_TYPE_PICKUP,
+        ]);
+        $delivery = Order::factory()->create(['status' => Order::STATUS_PREPARING]);
+
+        $this->actingAs($admin);
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        Livewire::test(ManageOrders::class)
+            ->assertTableActionHidden('assignCourier', $pickup)
+            ->assertTableActionVisible('assignCourier', $delivery);
     }
 }

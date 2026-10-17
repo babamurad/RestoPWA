@@ -143,13 +143,19 @@ class OrderResource extends Resource
                             ->required(),
                     ])
                     ->action(function (Order $order, array $data) {
+                        // Pickup orders are never delivered by a courier.
+                        if ($order->isPickup()) {
+                            return;
+                        }
+
                         $order->update([
                             'courier_id' => $data['courier_id'],
                             'status' => Order::STATUS_READY_FOR_PICKUP,
                         ]);
                     })
                     ->icon('heroicon-m-truck')
-                    ->visible(fn (Order $record) => in_array($record->status, [Order::STATUS_CONFIRMED, Order::STATUS_PREPARING, Order::STATUS_READY_FOR_PICKUP])),
+                    ->visible(fn (Order $record) => ! $record->isPickup()
+                        && in_array($record->status, [Order::STATUS_CONFIRMED, Order::STATUS_PREPARING, Order::STATUS_READY_FOR_PICKUP])),
                 Actions\ViewAction::make(),
             ])
             ->bulkActions([

@@ -41,6 +41,7 @@ class CourierOrderController extends Controller
         $availableOrders = $availableQuery->get();
 
         $activeOrders = Order::where('courier_id', $courierId)
+            ->where('delivery_type', Order::DELIVERY_TYPE_DELIVERY)
             ->whereIn('status', [Order::STATUS_READY_FOR_PICKUP, Order::STATUS_DELIVERING])
             ->get();
 
@@ -119,6 +120,10 @@ class CourierOrderController extends Controller
 
         if ($order->courier_id !== $user->courierProfile->id) {
             return response()->json(['message' => 'Order not assigned to you'], 403);
+        }
+
+        if ($order->isPickup()) {
+            return response()->json(['message' => 'Pickup order has no delivery'], 422);
         }
 
         $newStatus = $request->input('status');
