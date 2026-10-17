@@ -24,7 +24,12 @@ class CourierAssignmentAccessTest extends TestCase
     {
         $user = User::factory()->create(['role' => UserRole::COURIER]);
 
-        return Courier::create(['user_id' => $user->id, 'vendor_id' => $vendorId]);
+        $courier = Courier::create(['user_id' => $user->id]);
+        if ($vendorId) {
+            $courier->restaurants()->attach($vendorId);
+        }
+
+        return $courier;
     }
 
     #[Group('courier')]

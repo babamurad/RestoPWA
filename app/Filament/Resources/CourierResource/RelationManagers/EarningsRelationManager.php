@@ -2,11 +2,12 @@
 
 namespace App\Filament\Resources\CourierResource\RelationManagers;
 
+use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Schemas\Schema;
 
 class EarningsRelationManager extends RelationManager
 {
@@ -59,7 +60,7 @@ class EarningsRelationManager extends RelationManager
                     ->sortable(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                EditAction::make(),
             ]);
     }
 }

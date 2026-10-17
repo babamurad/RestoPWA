@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domains\Logistics\Http\Controllers\Api;
 
+use App\Domains\Logistics\Models\Courier;
+use App\Domains\Logistics\Models\CourierOffer;
+use App\Domains\Logistics\Services\CourierDispatcher;
 use App\Domains\Order\Models\Order;
 use App\Events\CourierLocationUpdated;
 use Illuminate\Http\JsonResponse;
@@ -30,14 +33,15 @@ class CourierOrderController extends Controller
             return response()->json(['message' => 'Courier profile not found'], 404);
         }
 
-        $vendorId = $user->courierProfile->vendor_id;
+        // Bound couriers see their restaurants' orders, the general pool sees all
+        $restaurantIds = $user->courierProfile->restaurantIds();
 
         $availableQuery = Order::where('status', Order::STATUS_READY_FOR_PICKUP)
             ->where('delivery_type', Order::DELIVERY_TYPE_DELIVERY)
             ->whereNull('courier_id');
 
-        if ($vendorId) {
-            $availableQuery->where('vendor_id', $vendorId);
+        if ($restaurantIds !== []) {
+            $availableQuery->whereIn('vendor_id', $restaurantIds);
         }
 
         $availableOrders = $availableQuery->get();
@@ -88,7 +92,7 @@ class CourierOrderController extends Controller
                 return response()->json(['message' => 'Order is not ready for pickup'], 400);
             }
 
-            if ($courier->vendor_id && $order->vendor_id !== $courier->vendor_id) {
+            if (! $courier->canServe($order->vendor_id)) {
                 return response()->json(['message' => 'Forbidden vendor'], 403);
             }
 
@@ -214,5 +218,83 @@ class CourierOrderController extends Controller
         $earnings = $courier->earnings()->with('order')->latest()->get();
 
         return response()->json(['data' => $earnings]);
+    }
+
+    /**
+     * GET /api/v1/courier/offers — orders automatically offered to me, still open.
+     */
+    public function offers(): JsonResponse
+    {
+        $courier = $this->currentCourier();
+        if ($courier instanceof JsonResponse) {
+            return $courier;
+        }
+
+        $offers = CourierOffer::with('order')
+            ->where('courier_id', $courier->id)
+            ->where('status', CourierOffer::STATUS_PENDING)
+            ->where('expires_at', '>', now())
+            ->latest()
+            ->get()
+            ->map(fn (CourierOffer $offer) => [
+                'offer_id' => $offer->id,
+                'expires_at' => $offer->expires_at->toIso8601String(),
+                'order' => $offer->order,
+            ]);
+
+        return response()->json(['data' => $offers]);
+    }
+
+    /**
+     * POST /api/v1/courier/offers/{id}/accept
+     */
+    public function acceptOffer(string $id, CourierDispatcher $dispatcher): JsonResponse
+    {
+        $courier = $this->currentCourier();
+        if ($courier instanceof JsonResponse) {
+            return $courier;
+        }
+
+        $offer = CourierOffer::findOrFail($id);
+
+        try {
+            $order = $dispatcher->accept($offer, $courier);
+        } catch (\RuntimeException $e) {
+            $code = in_array($e->getCode(), [403, 409], true) ? $e->getCode() : 409;
+
+            return response()->json(['message' => $e->getMessage()], $code);
+        }
+
+        return response()->json(['message' => 'Order accepted', 'data' => $order->fresh()]);
+    }
+
+    /**
+     * POST /api/v1/courier/offers/{id}/decline — the order goes to the next courier.
+     */
+    public function declineOffer(string $id, CourierDispatcher $dispatcher): JsonResponse
+    {
+        $courier = $this->currentCourier();
+        if ($courier instanceof JsonResponse) {
+            return $courier;
+        }
+
+        $offer = CourierOffer::findOrFail($id);
+        if ($offer->courier_id !== $courier->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $dispatcher->decline($offer);
+
+        return response()->json(['message' => 'Offer declined']);
+    }
+
+    private function currentCourier(): Courier|JsonResponse
+    {
+        $user = Auth::user();
+        if (! $user || ! $user->isCourier()) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        return $user->courierProfile ?? response()->json(['message' => 'Courier profile not found'], 404);
     }
 }

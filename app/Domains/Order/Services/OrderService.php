@@ -19,7 +19,8 @@ class OrderService
 
     public const STATUS_PREPARING = 'preparing';
 
-    public const STATUS_READY = 'ready';
+    // Same value as Order::STATUS_READY_FOR_PICKUP: couriers only see ready_for_pickup orders
+    public const STATUS_READY = 'ready_for_pickup';
 
     public const STATUS_DELIVERING = 'delivering';
 
