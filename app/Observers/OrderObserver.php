@@ -4,17 +4,30 @@ declare(strict_types=1);
 
 namespace App\Observers;
 
+use App\Domains\Logistics\Models\CourierEarning;
 use App\Domains\Order\Models\Order;
+use App\Events\OrderStatusUpdated;
+use App\Jobs\SendSmsJob;
+use App\Models\User;
 use App\Services\PushNotificationService;
+use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OrderObserver
 {
+    public function created(Order $order): void
+    {
+        $this->broadcastStatus($order);
+    }
+
     public function updated(Order $order): void
     {
         if (! $order->wasChanged('status')) {
             return;
         }
+
+        $this->broadcastStatus($order);
 
         $newStatus = $order->status;
 
@@ -30,16 +43,46 @@ class OrderObserver
         }
     }
 
+    /**
+     * Push the status to the order's and the restaurant's private channels.
+     *
+     * Broadcast::queue() sends the event to the websocket server without
+     * dispatching it to listeners: LogOrderStatusUpdate treats OrderStatusUpdated
+     * as a "change status" command and would update the order again.
+     * A websocket outage must never block an order update, so failures are only logged.
+     */
+    private function broadcastStatus(Order $order): void
+    {
+        $event = new OrderStatusUpdated($order->id, $order->status, [], $order->vendor_id);
+
+        // Orders are created/accepted inside DB transactions: send only after
+        // commit, otherwise listeners (kanban) re-read the DB before the change
+        // is visible. Runs immediately when no transaction is open; dropped on rollback.
+        DB::afterCommit(function () use ($event) {
+            try {
+                Broadcast::queue($event);
+            } catch (\Throwable $e) {
+                Log::warning('[OrderObserver] Status broadcast failed', [
+                    'order_id' => $event->orderId,
+                    'status' => $event->status,
+                    'exception' => $e->getMessage(),
+                ]);
+            }
+        });
+    }
+
     private function calculateMarketplaceCommission(Order $order): void
     {
         $restaurant = $order->restaurant;
-        if (!$restaurant) return;
+        if (! $restaurant) {
+            return;
+        }
 
         $percent = (float) $restaurant->commission_percent;
         if ($percent > 0 && $order->total > 0) {
             $commission = round(($order->total * $percent) / 100);
             $order->commission_amount = $commission;
-            // Need to save without triggering events to prevent infinite loops, 
+            // Need to save without triggering events to prevent infinite loops,
             // but since we're in observer and just updating a specific field, we can use saveQuietly
             $order->saveQuietly();
         }
@@ -48,18 +91,20 @@ class OrderObserver
     private function calculateCourierEarning(Order $order): void
     {
         $restaurant = $order->restaurant;
-        if (!$restaurant) return;
-        
+        if (! $restaurant) {
+            return;
+        }
+
         $fixed = (float) $restaurant->courier_fixed_fee;
         $percent = (float) $restaurant->courier_percent_fee;
-        
+
         $amount = $fixed;
         if ($percent > 0) {
             $amount += ($order->total * $percent) / 100;
         }
 
         if ($amount > 0) {
-            \App\Domains\Logistics\Models\CourierEarning::firstOrCreate([
+            CourierEarning::firstOrCreate([
                 'order_id' => $order->id,
                 'courier_id' => $order->courier_id,
             ], [
@@ -104,11 +149,11 @@ class OrderObserver
             );
 
             // Send SMS
-            $user = \App\Models\User::find($order->user_id);
+            $user = User::find($order->user_id);
             if ($user && $user->phone) {
                 // Only send SMS for important updates like delivering or delivered to save money
                 if (in_array($status, ['delivering', 'delivered'])) {
-                    \App\Jobs\SendSmsJob::dispatch($user->phone, "RestoPWA: $body");
+                    SendSmsJob::dispatch($user->phone, "RestoPWA: $body");
                 }
             }
         } catch (\Throwable $e) {

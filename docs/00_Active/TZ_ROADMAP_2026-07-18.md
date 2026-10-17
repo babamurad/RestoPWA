@@ -45,11 +45,12 @@
 - [x] При создании заказа пересчитывать цену модификаторов из `Product.modifiers` в БД, а не доверять `item.total_price` от клиента.
 - [x] Тест: заказ с подделанной ценой модификатора отклоняется / пересчитывается.
 
-### 3.3 Реальный реалтайм-трекинг вместо polling
+### 3.3 ✔️ Реальный реалтайм-трекинг вместо polling
 Backend (Reverb, события `OrderStatusUpdated`, `OrderAssigned`, `CourierLocationUpdated`, `routes/channels.php`) уже готов, но фронт не подключён.
+> Сделано: события реально отправляются (`OrderObserver`, геопозиция курьера), каналы `order.{id}` / `restaurant.{id}` приватные с проверкой владельца, Echo в `bootstrap.js` и Filament (`config/filament.php`), трекинг подписан на WS с polling-fallback. Осталось на проде: поднять `reverb:start` и выставить `BROADCAST_CONNECTION=reverb`.
 - [ ] Поднять Reverb-процесс (для OSPanel — уточнить, поддерживает ли он долгоживущие процессы; если нет, Reverb можно гонять локально просто как `php artisan reverb:start` отдельным процессом, панель тут не блокер).
-- [ ] Подключить `laravel-echo`/`@laravel/echo-vue` в `resources/js/bootstrap.js` (сейчас там только `window.axios`).
-- [ ] Заменить/дополнить `setInterval(pollStatus, 5000)` в `resources/views/order/tracking.blade.php` на подписку через `Echo.private('order.{id}')`, оставить polling как fallback при обрыве WS.
+- [x] Подключить `laravel-echo`/`@laravel/echo-vue` в `resources/js/bootstrap.js` (сейчас там только `window.axios`).
+- [x] Заменить/дополнить `setInterval(pollStatus, 5000)` в `resources/views/order/tracking.blade.php` на подписку через `Echo.private('order.{id}')`, оставить polling как fallback при обрыве WS.
 - [ ] Проверить, что `BROADCAST_CONNECTION` не остаётся `log` в проде.
 
 ### 3.4 Автоназначение курьера (авто-диспетчеризация)

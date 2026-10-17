@@ -14,9 +14,7 @@ class CourierLocationUpdated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public Courier $courier)
-    {
-    }
+    public function __construct(public Courier $courier) {}
 
     public function broadcastOn(): array
     {
@@ -26,10 +24,15 @@ class CourierLocationUpdated implements ShouldBroadcast
             ->get();
 
         foreach ($activeOrders as $order) {
-            $channels[] = new PrivateChannel('order.' . $order->id);
+            $channels[] = new PrivateChannel('order.'.$order->id);
         }
 
         return $channels;
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'courier.location.updated';
     }
 
     public function broadcastWith(): array

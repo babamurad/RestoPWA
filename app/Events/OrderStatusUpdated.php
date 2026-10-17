@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -37,11 +36,11 @@ class OrderStatusUpdated implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         $channels = [
-            new PrivateChannel('orders.'.$this->orderId),
+            new PrivateChannel('order.'.$this->orderId),
         ];
 
         if ($this->vendorId) {
-            $channels[] = new Channel('restaurant.'.$this->vendorId);
+            $channels[] = new PrivateChannel('restaurant.'.$this->vendorId);
         }
 
         return $channels;

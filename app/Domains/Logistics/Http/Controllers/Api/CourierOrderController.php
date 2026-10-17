@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Domains\Logistics\Http\Controllers\Api;
 
 use App\Domains\Order\Models\Order;
+use App\Events\CourierLocationUpdated;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CourierOrderController extends Controller
 {
@@ -161,6 +163,12 @@ class CourierOrderController extends Controller
                 'current_lat' => $request->input('lat'),
                 'current_lon' => $request->input('lon'),
             ]);
+
+            try {
+                broadcast(new CourierLocationUpdated($courier));
+            } catch (\Throwable $e) {
+                Log::warning('[Courier] Location broadcast failed', ['exception' => $e->getMessage()]);
+            }
         }
 
         return response()->json(['success' => true]);
