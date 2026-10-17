@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Domains\Logistics\Models\CourierEarning;
+use App\Domains\Logistics\Services\CourierDispatcher;
 use App\Domains\Order\Models\Order;
 use App\Domains\Payment\Services\PaymentService;
 use App\Events\OrderStatusUpdated;
@@ -34,8 +35,20 @@ class OrderObserver
 
     public function updated(Order $order): void
     {
+        $dispatcher = app(CourierDispatcher::class);
+
+        // Order got a courier (accepted offer, list, manual assignment): close other offers
+        if ($order->wasChanged('courier_id') && $order->courier_id !== null) {
+            $dispatcher->cancelPendingOffers($order);
+        }
+
         if (! $order->wasChanged('status')) {
             return;
+        }
+
+        // Ready for pickup with no courier yet: offer it to couriers automatically
+        if ($order->status === Order::STATUS_READY_FOR_PICKUP && $order->courier_id === null) {
+            DB::afterCommit(fn () => $dispatcher->dispatch($order));
         }
 
         $this->broadcastStatus($order);

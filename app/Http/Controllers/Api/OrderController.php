@@ -135,7 +135,7 @@ class OrderController extends Controller
         }
 
         // A courier bound to a restaurant may only deliver that restaurant's orders.
-        if ($courier->vendor_id && $courier->vendor_id !== $order->vendor_id) {
+        if (! $courier->canServe($order->vendor_id)) {
             return $this->error('Courier belongs to another restaurant', 422);
         }
 

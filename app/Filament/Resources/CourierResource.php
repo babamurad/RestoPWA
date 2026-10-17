@@ -6,9 +6,11 @@ use App\Domains\Logistics\Models\Courier;
 use App\Enums\UserRole;
 use App\Filament\Resources\CourierResource\Pages;
 use App\Models\User;
+use Filament\Actions;
+use Filament\Facades\Filament;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,9 +20,12 @@ class CourierResource extends Resource
 {
     protected static ?string $model = Courier::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-truck';
-    protected static string | \UnitEnum | null $navigationGroup = 'Логистика';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-truck';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Логистика';
+
     protected static ?string $modelLabel = 'Курьер';
+
     protected static ?string $pluralModelLabel = 'Курьеры';
 
     public static function form(Schema $schema): Schema
@@ -35,9 +40,12 @@ class CourierResource extends Resource
                     ->required()
                     ->searchable()
                     ->unique(ignoreRecord: true),
-                Forms\Components\Select::make('vendor_id')
-                    ->relationship('restaurant', 'name')
-                    ->label('Ресторан (если привязан)')
+                Forms\Components\Select::make('restaurants')
+                    ->relationship('restaurants', 'name')
+                    ->multiple()
+                    ->preload()
+                    ->label('Рестораны')
+                    ->helperText('Пусто — общий пул: курьер работает со всеми ресторанами. Привязанные курьеры получают заказы своих ресторанов первыми.')
                     ->searchable(),
                 Forms\Components\Select::make('vehicle_type')
                     ->label('Тип транспорта')
@@ -50,11 +58,7 @@ class CourierResource extends Resource
                     ->default('walking'),
                 Forms\Components\Select::make('status')
                     ->label('Статус')
-                    ->options([
-                        'offline' => 'Офлайн',
-                        'online' => 'Онлайн',
-                        'busy' => 'Занят (в пути)',
-                    ])
+                    ->options(Courier::STATUSES)
                     ->required()
                     ->default('offline'),
             ]);
@@ -67,8 +71,10 @@ class CourierResource extends Resource
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Имя')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('restaurant.name')
-                    ->label('Ресторан'),
+                Tables\Columns\TextColumn::make('restaurants.name')
+                    ->label('Рестораны')
+                    ->badge()
+                    ->placeholder('Общий пул'),
                 Tables\Columns\TextColumn::make('vehicle_type')
                     ->label('Транспорт')
                     ->badge()
@@ -82,29 +88,23 @@ class CourierResource extends Resource
                     ->label('Статус')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'offline' => 'gray',
-                        'online' => 'success',
-                        'busy' => 'warning',
+                        Courier::STATUS_AVAILABLE => 'success',
+                        Courier::STATUS_BUSY => 'warning',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'offline' => 'Офлайн',
-                        'online' => 'Онлайн',
-                        'busy' => 'В пути',
-                        default => $state,
-                    }),
+                    ->formatStateUsing(fn (string $state): string => Courier::STATUSES[$state] ?? $state),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('vendor_id')
-                    ->relationship('restaurant', 'name')
+                Tables\Filters\SelectFilter::make('restaurants')
+                    ->relationship('restaurants', 'name')
                     ->label('Ресторан'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Actions\EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -112,7 +112,7 @@ class CourierResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\EarningsRelationManager::class,
+            CourierResource\RelationManagers\EarningsRelationManager::class,
         ];
     }
 
@@ -128,10 +128,15 @@ class CourierResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
-        
+
+        // Restaurateur: couriers of their restaurants and the general pool
         if (Auth::user()->isRestaurateur()) {
-            return $query->where('vendor_id', Auth::user()->restaurant->id)
-                         ->orWhereNull('vendor_id');
+            $restaurantIds = Auth::user()->getTenants(Filament::getCurrentOrDefaultPanel())->pluck('id');
+
+            return $query->where(function (Builder $q) use ($restaurantIds) {
+                $q->whereDoesntHave('restaurants')
+                    ->orWhereHas('restaurants', fn (Builder $r) => $r->whereIn('restaurants.id', $restaurantIds));
+            });
         }
 
         return $query;

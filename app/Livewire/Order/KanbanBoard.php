@@ -42,7 +42,7 @@ class KanbanBoard extends Component
         'ready' => [
             'id' => 'ready',
             'title' => 'Готовы',
-            'statuses' => ['ready'],
+            'statuses' => ['ready', 'ready_for_pickup'],
             'orders' => [],
         ],
         'delivering' => [
@@ -54,7 +54,7 @@ class KanbanBoard extends Component
         'completed' => [
             'id' => 'completed',
             'title' => 'Завершены',
-            'statuses' => ['completed'],
+            'statuses' => ['completed', 'delivered'],
             'orders' => [],
         ],
     ];

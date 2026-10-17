@@ -140,10 +140,7 @@ class OrderResource extends Resource
                             ->label('Курьер')
                             ->options(function (Order $record) {
                                 return Courier::with('user')
-                                    ->where(function ($query) use ($record) {
-                                        $query->where('vendor_id', $record->vendor_id)
-                                            ->orWhereNull('vendor_id');
-                                    })
+                                    ->serving($record->vendor_id)
                                     ->get()
                                     ->pluck('user.name', 'id');
                             })
