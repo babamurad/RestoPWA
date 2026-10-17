@@ -6,7 +6,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -35,7 +34,7 @@ class SocialAuthController extends Controller
 
         $user = User::where('google_id', $googleUser->getId())->first();
 
-        if (!$user) {
+        if (! $user) {
             $user = User::where('email', $googleUser->getEmail())->first();
 
             if ($user) {
@@ -47,11 +46,14 @@ class SocialAuthController extends Controller
                     'google_id' => $googleUser->getId(),
                     'avatar' => $googleUser->getAvatar(),
                     'password' => null,
+                    // The Google button carries the "by continuing you accept…" notice.
+                    'terms_accepted_at' => now(),
+                    'terms_version' => config('legal.version'),
                 ]);
             }
         }
 
-        if (!$user->avatar && $googleUser->getAvatar()) {
+        if (! $user->avatar && $googleUser->getAvatar()) {
             $user->update(['avatar' => $googleUser->getAvatar()]);
         }
 

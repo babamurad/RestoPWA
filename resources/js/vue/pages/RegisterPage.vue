@@ -81,6 +81,23 @@
           />
         </div>
 
+        <!-- Legal consent -->
+        <label class="flex items-start gap-2.5 text-xs dark:text-slate-400 text-slate-600 font-semibold cursor-pointer select-none">
+          <input
+            v-model="form.terms_accepted"
+            type="checkbox"
+            required
+            class="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-orange-500 focus:ring-orange-500/50"
+          />
+          <span>
+            Я принимаю
+            <a href="/legal/terms" target="_blank" rel="noopener" class="text-orange-400 hover:underline">пользовательское соглашение</a>,
+            <a href="/legal/offer" target="_blank" rel="noopener" class="text-orange-400 hover:underline">публичную оферту</a>
+            и
+            <a href="/legal/privacy" target="_blank" rel="noopener" class="text-orange-400 hover:underline">политику конфиденциальности</a>
+          </span>
+        </label>
+
         <!-- Submit Button -->
         <button 
           type="submit" 
@@ -111,6 +128,13 @@
           </svg>
           Зарегистрироваться через Google
         </a>
+        <p class="mt-2 text-[11px] text-center dark:text-slate-500 text-slate-500 font-medium">
+          Продолжая через Google, вы принимаете
+          <a href="/legal/terms" target="_blank" rel="noopener" class="text-orange-400 hover:underline">соглашение</a>,
+          <a href="/legal/offer" target="_blank" rel="noopener" class="text-orange-400 hover:underline">оферту</a>
+          и
+          <a href="/legal/privacy" target="_blank" rel="noopener" class="text-orange-400 hover:underline">политику конфиденциальности</a>.
+        </p>
       </div>
 
       <!-- Footer navigation -->
@@ -145,7 +169,8 @@ const form = reactive({
   email: '',
   phone: '',
   password: '',
-  password_confirmation: ''
+  password_confirmation: '',
+  terms_accepted: false
 });
 
 const handleRegister = async () => {
@@ -158,6 +183,11 @@ const handleRegister = async () => {
 
   if (form.password !== form.password_confirmation) {
     errorMsg.value = 'Пароли не совпадают.';
+    return;
+  }
+
+  if (!form.terms_accepted) {
+    errorMsg.value = 'Необходимо принять пользовательское соглашение и политику конфиденциальности.';
     return;
   }
 

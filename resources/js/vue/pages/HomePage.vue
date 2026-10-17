@@ -169,6 +169,13 @@
         </div>
       </div>
     </div>
+
+    <!-- Legal documents (public) -->
+    <footer class="mt-10 mb-6 flex flex-wrap justify-center gap-x-4 gap-y-2 text-[11px] font-semibold text-slate-500 dark:text-slate-500" aria-label="Документы">
+      <a href="/legal/terms" target="_blank" rel="noopener" class="hover:text-orange-500">Пользовательское соглашение</a>
+      <a href="/legal/offer" target="_blank" rel="noopener" class="hover:text-orange-500">Публичная оферта</a>
+      <a href="/legal/privacy" target="_blank" rel="noopener" class="hover:text-orange-500">Политика конфиденциальности</a>
+    </footer>
   </div>
 </template>
 
