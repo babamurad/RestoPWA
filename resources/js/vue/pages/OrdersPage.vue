@@ -2,9 +2,9 @@
   <div class="px-4 py-6 max-w-xl mx-auto pb-24 font-inter animate-fade-in">
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
-      <h3 class="text-xl font-bold dark:text-slate-100 font-outfit tracking-wide text-slate-900">Мои заказы</h3>
+      <h3 class="text-xl font-bold dark:text-slate-100 font-outfit tracking-wide text-slate-900">{{ t('orders.title') }}</h3>
       <span class="text-xs dark:text-slate-400 font-semibold dark:bg-slate-800/40 px-3 py-1.5 rounded-full border dark:border-slate-800 text-slate-600 bg-white border-slate-200">
-        Всего: {{ ordersStore.orders.length }}
+        {{ t('orders.total_count', { n: ordersStore.orders.length }) }}
       </span>
     </div>
 
@@ -22,9 +22,9 @@
       <div class="w-16 h-16 dark:bg-slate-800/50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl border dark:border-slate-700/30 bg-white border-slate-300">
         📋
       </div>
-      <p class="text-sm dark:text-slate-400 font-medium leading-relaxed text-slate-600">У вас пока нет оформленных заказов</p>
+      <p class="text-sm dark:text-slate-400 font-medium leading-relaxed text-slate-600">{{ t('orders.empty') }}</p>
       <router-link to="/" class="inline-block mt-5 px-6 py-2.5 bg-orange-500 text-white text-xs font-bold rounded-xl hover:bg-orange-600 active:scale-95 transition-all shadow-lg shadow-orange-500/10">
-        Перейти к покупкам
+        {{ t('orders.go_shopping') }}
       </router-link>
     </div>
 
@@ -41,7 +41,7 @@
         <!-- Order status & details header -->
         <div class="flex justify-between items-start mb-4">
           <div>
-            <span class="text-xs dark:text-slate-400 font-semibold uppercase tracking-wider block text-slate-600">Заказ #{{ order.id }}</span>
+            <span class="text-xs dark:text-slate-400 font-semibold uppercase tracking-wider block text-slate-600">{{ t('orders.order_number', { id: order.id }) }}</span>
             <span class="text-xs dark:text-slate-500 font-bold block mt-0.5 text-slate-500">{{ formatDate(order.created_at) }}</span>
           </div>
           <span 
@@ -76,10 +76,10 @@
         <!-- Price & action -->
         <div class="flex justify-between items-center mt-4">
           <span class="text-xs dark:text-slate-400 font-semibold text-slate-600">
-            Сумма: <strong class="dark:text-slate-100 text-sm font-bold ml-1 text-slate-900">{{ order.total }} TMT</strong>
+            {{ t('orders.sum') }} <strong class="dark:text-slate-100 text-sm font-bold ml-1 text-slate-900">{{ t('common.price', { amount: order.total }) }}</strong>
           </span>
           <div class="flex items-center gap-2">
-            <span v-if="order.review" class="text-xs font-bold text-amber-500" :aria-label="`Ваша оценка ${order.review.rating} из 5`">
+            <span v-if="order.review" class="text-xs font-bold text-amber-500" :aria-label="t('orders.your_rating', { rating: order.review.rating })">
               ★ {{ order.review.rating }}
             </span>
             <button
@@ -87,13 +87,13 @@
               @click="openReview(order)"
               class="px-3.5 py-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold rounded-lg border border-amber-500/30 hover:bg-amber-500/20 active:scale-95 transition-colors"
             >
-              Оценить
+              {{ t('orders.rate') }}
             </button>
             <button 
               @click="repeatOrder(order)"
               class="px-3.5 py-1.5 dark:bg-slate-800 dark:hover:bg-slate-700 hover:text-orange-400 text-xs font-bold rounded-lg transition-colors border dark:border-slate-700/30 active:scale-95 bg-white hover:bg-slate-100 border-slate-300"
             >
-              Повторить
+              {{ t('orders.repeat') }}
             </button>
           </div>
         </div>
@@ -112,17 +112,17 @@
         role="dialog"
         aria-labelledby="review-title"
       >
-        <h3 id="review-title" class="text-base font-black dark:text-slate-100 text-slate-900">Оцените заказ</h3>
+        <h3 id="review-title" class="text-base font-black dark:text-slate-100 text-slate-900">{{ t('orders.review.title') }}</h3>
         <p class="text-xs mt-1 dark:text-slate-400 text-slate-600">{{ getRestaurantName(reviewTarget.vendor_id) }}</p>
 
-        <div class="flex justify-center gap-2 my-5" role="radiogroup" aria-label="Оценка">
+        <div class="flex justify-center gap-2 my-5" role="radiogroup" :aria-label="t('orders.review.rating')">
           <button
             v-for="n in 5"
             :key="n"
             type="button"
             role="radio"
             :aria-checked="reviewRating === n"
-            :aria-label="`${n} из 5`"
+            :aria-label="t('orders.review.star_label', { n })"
             @click="reviewRating = n"
             class="text-3xl leading-none transition-transform active:scale-90"
             :class="n <= reviewRating ? 'text-amber-400' : 'dark:text-slate-700 text-slate-300'"
@@ -133,7 +133,7 @@
           v-model="reviewComment"
           maxlength="1000"
           rows="3"
-          placeholder="Что понравилось или что можно улучшить? (необязательно)"
+          :placeholder="t('orders.review.placeholder')"
           class="w-full rounded-xl px-3 py-2 text-xs dark:bg-slate-950/50 bg-slate-50 border dark:border-slate-700/50 border-slate-300 dark:text-slate-100 text-slate-900 focus:outline-none focus:border-orange-500/80"
         ></textarea>
 
@@ -141,14 +141,14 @@
 
         <div class="mt-4 flex gap-2">
           <button type="button" @click="closeReview" class="flex-1 py-2.5 text-xs font-bold rounded-xl border dark:border-slate-700 border-slate-300 dark:text-slate-300 text-slate-700">
-            Отмена
+            {{ t('common.cancel') }}
           </button>
           <button
             type="submit"
             :disabled="reviewRating === 0 || reviewSending"
             class="flex-1 py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white disabled:opacity-50"
           >
-            {{ reviewSending ? 'Отправка...' : 'Отправить' }}
+            {{ reviewSending ? t('orders.review.sending') : t('orders.review.send') }}
           </button>
         </div>
       </form>
@@ -158,6 +158,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ordersApi from '../api/orders';
 import { useRouter } from 'vue-router';
 import { useOrdersStore } from '../stores/orders';
@@ -168,6 +169,7 @@ const router = useRouter();
 const ordersStore = useOrdersStore();
 const restaurantsStore = useRestaurantsStore();
 const cartStore = useCartStore();
+const { t, te, locale } = useI18n();
 
 onMounted(async () => {
   // Ensure restaurants list is loaded for mapping IDs to names/images
@@ -182,7 +184,7 @@ onMounted(async () => {
 const formatDate = (isoStr) => {
   if (!isoStr) return '';
   const date = new Date(isoStr);
-  return date.toLocaleString('ru-RU', {
+  return date.toLocaleString(locale.value === 'tk' ? 'tk-TM' : 'ru-RU', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -193,21 +195,14 @@ const formatDate = (isoStr) => {
 
 // Status mapper
 const getStatusLabel = (status) => {
-  const labels = {
-    pending: 'Новый',
-    accepted: 'Принят',
-    preparing: 'Готовится',
-    delivered: 'Доставлен',
-    cancelled: 'Отменен',
-    canceled: 'Отменен'
-  };
-  return labels[status] || status;
+  const key = `common.order_status.${status}`;
+  return te(key) ? t(key) : status;
 };
 
 // Helper to match restaurant details
 const getRestaurantName = (vendorId) => {
   const r = restaurantsStore.restaurants.find(x => x.id === vendorId);
-  return r ? r.name : 'Ресторан';
+  return r ? r.name : t('common.restaurant');
 };
 
 const getRestaurantImage = (vendorId) => {
@@ -258,9 +253,9 @@ const submitReview = async () => {
     const status = err.response?.status;
     if (status === 409) {
       reviewTarget.value.can_review = false;
-      reviewError.value = 'Вы уже оценили этот заказ.';
+      reviewError.value = t('orders.review.already_reviewed');
     } else {
-      reviewError.value = err.response?.data?.message || 'Не удалось отправить отзыв. Попробуйте ещё раз.';
+      reviewError.value = err.response?.data?.message || t('orders.review.send_error');
     }
   } finally {
     reviewSending.value = false;
@@ -272,12 +267,12 @@ const repeatOrder = (order) => {
   
   if (window.Swal) {
     window.Swal.fire({
-      title: 'Повторить заказ?',
-      text: 'Текущая корзина будет очищена, и все блюда из этого заказа будут добавлены.',
+      title: t('orders.repeat_dialog.title'),
+      text: t('orders.repeat_dialog.text'),
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Повторить',
-      cancelButtonText: 'Отмена',
+      confirmButtonText: t('orders.repeat_dialog.confirm'),
+      cancelButtonText: t('common.cancel'),
       confirmButtonColor: '#f97316',
       cancelButtonColor: '#334155',
       background: '#0f172a',
@@ -303,7 +298,7 @@ const repeatOrder = (order) => {
       }
     });
   } else {
-    if (confirm(`Добавить все блюда из этого заказа в корзину?`)) {
+    if (confirm(t('orders.repeat_dialog.fallback_confirm'))) {
       cartStore.clear();
       cartStore.setVendorId(order.vendor_id);
       

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import ordersApi from '../api/orders';
+import { t } from '../i18n';
 
 export const useOrdersStore = defineStore('orders', {
     state: () => ({
@@ -18,7 +19,7 @@ export const useOrdersStore = defineStore('orders', {
                 const result = await ordersApi.createOrder(payload, idempotencyKey);
                 return result;
             } catch (error) {
-                this.error = error.response?.data?.message || 'Ошибка оформления заказа';
+                this.error = error.response?.data?.message || t('orders.errors.submit');
                 throw error;
             } finally {
                 this.isLoading = false;
@@ -30,7 +31,7 @@ export const useOrdersStore = defineStore('orders', {
                 const response = await ordersApi.getOrders(params);
                 this.orders = response.data || [];
             } catch (error) {
-                this.error = 'Ошибка загрузки заказов';
+                this.error = t('orders.errors.load_list');
             } finally {
                 this.isLoading = false;
             }
@@ -41,7 +42,7 @@ export const useOrdersStore = defineStore('orders', {
                 const response = await ordersApi.getOrderById(id);
                 this.currentOrder = response.data;
             } catch (error) {
-                this.error = 'Ошибка загрузки заказа';
+                this.error = t('orders.errors.load_one');
             } finally {
                 this.isLoading = false;
             }
