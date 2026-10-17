@@ -49,6 +49,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'terms_accepted_at' => 'datetime',
+            'deleted_at' => 'datetime',
             'role' => UserRole::class,
         ];
     }

@@ -69,7 +69,7 @@ class ReviewController extends Controller
     {
         $reviews = Review::visible()
             ->where('restaurant_id', $vendor->id)
-            ->with('user:id,name')
+            ->with('user:id,name,deleted_at')
             ->latest()
             ->paginate(10);
 
@@ -90,13 +90,16 @@ class ReviewController extends Controller
      */
     public static function present(Review $review): array
     {
-        $firstName = Str::of((string) $review->user?->name)->trim()->explode(' ')->first();
+        // Deleted accounts stay anonymous; the app shows "Customer" in the user's language
+        $firstName = $review->user?->deleted_at
+            ? ''
+            : Str::of((string) $review->user?->name)->trim()->explode(' ')->first();
 
         return [
             'id' => $review->id,
             'rating' => $review->rating,
             'comment' => $review->comment,
-            'author' => $firstName !== '' ? $firstName : 'Покупатель',
+            'author' => $firstName !== '' ? $firstName : null,
             'vendor_reply' => $review->vendor_reply,
             'replied_at' => $review->replied_at?->toIso8601String(),
             'created_at' => $review->created_at?->toIso8601String(),
