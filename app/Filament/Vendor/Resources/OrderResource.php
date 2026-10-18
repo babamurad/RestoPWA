@@ -74,9 +74,9 @@ class OrderResource extends Resource
             ->components([
                 Section::make('Основная информация')
                     ->schema([
-                        TextEntry::make('id')
-                            ->label('ID заказа')
-                            ->formatStateUsing(fn (string $state): string => '#'.substr($state, 0, 8)),
+                        TextEntry::make('order_number')
+                            ->label('Заказ')
+                            ->prefix('#'),
                         TextEntry::make('status')
                             ->label('Статус')
                             ->badge()
@@ -137,9 +137,10 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('id')
-                    ->label('ID')
-                    ->formatStateUsing(fn (string $state): string => '#'.substr($state, 0, 8))
+                Tables\Columns\TextColumn::make('number')
+                    ->label('№')
+                    ->prefix('#')
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Клиент')

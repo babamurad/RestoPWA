@@ -211,7 +211,7 @@ class RestaurantAnalyticsTest extends TestCase
         $this->assertStringStartsWith("\xEF\xBB\xBF", $csv);
         $lines = array_values(array_filter(explode("\n", trim(substr($csv, 3)))));
         $this->assertCount(3, $lines);
-        $this->assertStringContainsString('Дата;"ID заказа";Статус', $lines[0]);
+        $this->assertStringContainsString('Дата;Заказ;Статус', $lines[0]);
         $this->assertStringContainsString('14.10.2026 09:00', $lines[1]);
         $this->assertStringContainsString('Отменён', $lines[1]);
         $this->assertStringContainsString('15.10.2026 10:00', $lines[2]);

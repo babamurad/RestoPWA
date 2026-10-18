@@ -12,6 +12,7 @@ use App\Domains\Vendor\Models\Restaurant;
 use App\Enums\PaymentStatus;
 use App\Models\User;
 use App\Models\VendorSettlement;
+use App\Support\Sequence;
 use Carbon\Carbon;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -258,7 +259,8 @@ class Order extends Model
 
     public function getOrderNumberAttribute(): string
     {
-        return '#'.strtoupper(substr($this->id, 0, 8));
+        // UUIDv7 starts with a timestamp, so its prefix is not unique: use the sequential number
+        return (string) ($this->number ?? strtoupper(substr((string) $this->id, -6)));
     }
 
     public function getClientNameAttribute(): ?string
@@ -281,6 +283,11 @@ class Order extends Model
      */
     protected static function booted(): void
     {
+        // Human-facing sequential number (№1042) shown to customers, kitchen and couriers
+        static::creating(static function (self $order): void {
+            $order->number ??= Sequence::next('orders');
+        });
+
         static::updated(static function (self $order): void {
             if ($order->isDirty('status')) {
                 $order->statusHistory()->create([

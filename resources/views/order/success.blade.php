@@ -27,7 +27,7 @@
                 <div class="space-y-4 md:space-y-6">
                     <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
                         <span class="font-medium">{{ __('pages.success.order_number') }}</span>
-                        <span class="font-bold text-slate-900 dark:text-slate-100 md:text-lg">#{{ substr($order->id, 0, 8) }}</span>
+                        <span class="font-bold text-slate-900 dark:text-slate-100 md:text-lg">#{{ $order->order_number }}</span>
                     </div>
                     <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
                         <span class="font-medium">{{ __('pages.success.eta') }}</span>
@@ -56,9 +56,8 @@
     </div>
 
     <style>
-        /* Target the parent container of the layout components to make them seamless */
+        /* Make the layout's card container seamless in dark mode */
         .dark .max-w-lg.mx-auto.bg-white {
-            background-color: #020617 !important;
             box-shadow: none !important;
             border: none !important;
         }

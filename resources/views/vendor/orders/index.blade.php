@@ -39,7 +39,7 @@
         <tbody class="divide-y divide-gray-200">
             @foreach($orders as $order)
             <tr>
-                <td class="px-6 py-4">{{ substr($order->id, 0, 8) }}</td>
+                <td class="px-6 py-4">#{{ $order->order_number }}</td>
                 <td class="px-6 py-4">{{ $order->user->name ?? 'Гость' }}</td>
                 <td class="px-6 py-4">{{ number_format($order->total, 2) }} ₽</td>
                 <td class="px-6 py-4">

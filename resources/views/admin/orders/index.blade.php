@@ -100,7 +100,7 @@
             @forelse($orders as $order)
             <tr class="hover:bg-gray-50 {{ $order->status === 'pending' ? 'bg-yellow-50' : '' }}">
                 <td class="px-6 py-4">
-                    <span class="font-mono font-medium text-sm">{{ substr($order->id, 0, 8) }}...</span>
+                    <span class="font-mono font-medium text-sm">#{{ $order->order_number }}</span>
                 </td>
                 <td class="px-6 py-4">
                     <div class="font-medium">{{ $order->customer_name ?? $order->user?->name ?? 'Гость' }}</div>

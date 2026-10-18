@@ -283,6 +283,7 @@ class OrderController
 
             return $this->success([
                 'order_id' => $order->id,
+                'number' => $order->order_number,
                 'status' => $order->status,
                 'redirect_url' => url('/order/success/'.$order->id),
                 'trace_id' => $traceId,

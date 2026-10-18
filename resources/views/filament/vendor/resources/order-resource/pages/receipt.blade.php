@@ -98,7 +98,7 @@
     </div>
     
     <div class="order-info">
-        <p><strong>Заказ #:</strong> {{ substr($order->id, 0, 8) }}</p>
+        <p><strong>Заказ #:</strong> {{ $order->order_number }}</p>
         <p><strong>Дата:</strong> {{ $order->created_at->format('d.m.Y H:i') }}</p>
         <p><strong>Клиент:</strong> {{ $order->user->name ?? 'Гость' }}</p>
     </div>
