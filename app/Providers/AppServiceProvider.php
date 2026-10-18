@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Domains\Analytics\Services\RestaurantAnalytics;
 use App\Domains\Geo\Services\GeoService;
 use App\Domains\Order\Models\Order;
 use App\Domains\Review\Models\Review;
@@ -31,6 +32,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // One report per request: the analytics widgets share the loaded orders
+        $this->app->scoped(RestaurantAnalytics::class);
+
         if (class_exists(ViewAction::class) && ! class_exists('Filament\Tables\Actions\ViewAction')) {
             class_alias(ViewAction::class, 'Filament\Tables\Actions\ViewAction');
         }
