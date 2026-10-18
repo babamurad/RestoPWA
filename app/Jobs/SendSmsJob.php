@@ -24,6 +24,13 @@ class SendSmsJob implements ShouldQueue
      */
     public $deleteWhenMissingModels = true;
 
+    /** The SMS gateway may be briefly down: retry after 1 and 5 minutes */
+    public int $tries = 3;
+
+    public array $backoff = [60, 300];
+
+    public int $timeout = 30;
+
     public function __construct(
         private string $phone,
         private string $message
@@ -50,8 +57,8 @@ class SendSmsJob implements ShouldQueue
                 'status' => 'failed',
                 'error_message' => substr($e->getMessage(), 0, 500),
             ]);
-            Log::error('SendSmsJob failed: ' . $e->getMessage());
-            
+            Log::error('SendSmsJob failed: '.$e->getMessage());
+
             // Re-throw so Laravel queue can attempt retries
             throw $e;
         }

@@ -16,7 +16,14 @@ class ExpireCourierOffer implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
-    public function __construct(public string $offerId) {}
+    public function __construct(public string $offerId)
+    {
+        // Offers live 30 seconds: never wait behind SMS and push jobs
+        $this->onQueue(self::QUEUE);
+    }
+
+    /** Time-critical jobs; workers take it before "default" */
+    public const QUEUE = 'high';
 
     public function handle(CourierDispatcher $dispatcher): void
     {

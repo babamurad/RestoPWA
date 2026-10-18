@@ -16,7 +16,8 @@ class SmsIntegrationTest extends TestCase
 
     public function test_dispatches_sms_job_when_order_is_delivering(): void
     {
-        Queue::fake();
+        // The status notification job runs (sync queue in tests); only the SMS is faked
+        Queue::fake([SendSmsJob::class]);
 
         $user = User::factory()->create(['phone' => '+99312345678']);
         $order = Order::factory()->create([
@@ -27,7 +28,7 @@ class SmsIntegrationTest extends TestCase
         $order->update(['status' => Order::STATUS_DELIVERING]);
 
         Queue::assertPushed(SendSmsJob::class, function ($job) {
-            // Need to use reflection to inspect private properties if needed, 
+            // Need to use reflection to inspect private properties if needed,
             // but simply checking the class was pushed is enough for the unit test context.
             return true;
         });

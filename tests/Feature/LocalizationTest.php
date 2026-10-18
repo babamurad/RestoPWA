@@ -96,7 +96,8 @@ class LocalizationTest extends TestCase
 
     public function test_push_and_sms_are_sent_in_the_customers_language(): void
     {
-        Queue::fake();
+        // The status notification job runs (sync queue in tests); only the SMS is faked
+        Queue::fake([SendSmsJob::class]);
         $push = Mockery::mock(PushNotificationService::class);
         $push->shouldReceive('sendToUser')->once()
             ->with(Mockery::any(), 'Sargydyňyz ýolda', 'Kurýer size tarap ýola çykdy', Mockery::any())
