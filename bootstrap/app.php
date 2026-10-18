@@ -15,6 +15,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Validation\ValidationException;
+use Sentry\Laravel\Integration;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -59,6 +60,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Report unhandled errors to Sentry (does nothing until SENTRY_LARAVEL_DSN is set)
+        Integration::handles($exceptions);
+
         $exceptions->render(function (Throwable $e, Request $request) {
             if ($request->is('api/*')) {
                 $code = 500;

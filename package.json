@@ -23,6 +23,7 @@
         "vitest": "^3.2.4"
     },
     "dependencies": {
+        "@sentry/vue": "^10.76.2",
         "dexie": "^4.4.2",
         "pinia": "^3.0.4",
         "sweetalert2": "^11.26.24",
