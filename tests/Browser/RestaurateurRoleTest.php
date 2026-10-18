@@ -68,9 +68,9 @@ class RestaurateurRoleTest extends DuskTestCase
 
         $this->browse(function (Browser $browser) use ($order) {
             $browser->loginAs($this->vendorUser)
-                    ->visit('/vendor/orders/kanban')
+                    ->visit('/vendor/' . $this->restaurant->id . '/kanban-orders')
                     // Wait for kanban to load
-                    ->waitForText('#' . substr($order->id, -6), 10);
+                    ->waitForText('#' . $order->number, 10);
         });
     }
 }

@@ -200,7 +200,7 @@ final readonly class OrderPreconditionValidator
         // Normalize phone using shared policy
         $phone = PhoneNormalizer::normalize((string) $data['customer_phone']);
 
-        // Validate phone using shared policy (same as CheckoutWizard)
+        // Validate phone using the shared PhoneNormalizer policy
         $result = PhoneNormalizer::validate($phone);
 
         if (! $result['valid']) {

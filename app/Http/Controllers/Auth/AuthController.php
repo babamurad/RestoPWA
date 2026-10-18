@@ -13,20 +13,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
-use Illuminate\View\View;
 
 class AuthController extends Controller
 {
-    public function showLoginForm(): View
-    {
-        return view('auth.login');
-    }
-
-    public function showRegisterForm(): View
-    {
-        return view('auth.register');
-    }
-
     public function login(Request $request): JsonResponse|RedirectResponse
     {
         $credentials = $request->validate([

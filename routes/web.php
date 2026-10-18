@@ -5,7 +5,6 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\OrderSuccessController;
-use App\Http\Controllers\Vendor\KanbanController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('app'))->name('home');
@@ -58,10 +57,6 @@ Route::match(['get', 'head'], '/api/ping', function () {
         ],
     ]);
 })->name('api.ping');
-
-// Vendor orders kanban board
-Route::get('/vendor/orders/kanban', [KanbanController::class, 'index'])
-    ->name('vendor.orders.kanban')->middleware('auth');
 
 // Vendor panel is now handled by Filament at /vendor
 
