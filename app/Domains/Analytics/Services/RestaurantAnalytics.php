@@ -20,7 +20,7 @@ use Illuminate\Support\Collection;
  */
 class RestaurantAnalytics
 {
-    public const COMPLETED_STATUSES = [Order::STATUS_DELIVERED, 'completed'];
+    public const COMPLETED_STATUSES = Order::FINISHED_STATUSES;
 
     public const CANCELLED_STATUSES = [Order::STATUS_CANCELLED, 'canceled'];
 

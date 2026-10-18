@@ -17,7 +17,7 @@ class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static string | BackedEnum | null $navigationIcon = null;
+    protected static string|BackedEnum|null $navigationIcon = null;
 
     protected static ?string $navigationLabel = 'Товары';
 
@@ -57,7 +57,7 @@ class ProductResource extends Resource
                             ->label('Цена')
                             ->required()
                             ->numeric()
-                            ->prefix('₽'),
+                            ->suffix('TMT'),
                         Forms\Components\Toggle::make('is_available')
                             ->label('Доступен')
                             ->default(true),
@@ -90,7 +90,7 @@ class ProductResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('price')
                     ->label('Цена')
-                    ->money('RUB')
+                    ->money('TMT')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_available')
                     ->label('Доступен')

@@ -67,6 +67,12 @@ class Order extends Model
 
     public const STATUS_CANCELLED = 'cancelled';
 
+    /** Pickup order handed over to the customer (set on the kanban) */
+    public const STATUS_COMPLETED = 'completed';
+
+    /** The customer got the order: delivered by a courier or picked up */
+    public const FINISHED_STATUSES = [self::STATUS_DELIVERED, self::STATUS_COMPLETED];
+
     public const STATUSES = [
         self::STATUS_PENDING => ['label' => 'Новый', 'color' => 'yellow', 'icon' => 'clock'],
         self::STATUS_CONFIRMED => ['label' => 'Подтверждён', 'color' => 'blue', 'icon' => 'check'],
@@ -134,6 +140,15 @@ class Order extends Model
             'is_offline' => 'boolean',
             'metadata' => 'array',
         ];
+    }
+
+    /**
+     * What the restaurant earns on the order: the total without the delivery fee,
+     * which goes to the courier. Base for the platform commission and payouts.
+     */
+    public function foodTotal(): float
+    {
+        return max(0.0, round((float) $this->total - (float) $this->delivery_fee, 2));
     }
 
     public function isPickup(): bool

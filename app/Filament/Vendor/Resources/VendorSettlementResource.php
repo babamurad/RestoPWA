@@ -4,8 +4,8 @@ namespace App\Filament\Vendor\Resources;
 
 use App\Filament\Vendor\Resources\VendorSettlementResource\Pages;
 use App\Models\VendorSettlement;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,9 +15,12 @@ class VendorSettlementResource extends Resource
 {
     protected static ?string $model = VendorSettlement::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-currency-dollar';
-    protected static string | \UnitEnum | null $navigationGroup = 'Финансы';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-currency-dollar';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Финансы';
+
     protected static ?string $modelLabel = 'Выплата';
+
     protected static ?string $pluralModelLabel = 'История выплат';
 
     public static function form(Schema $schema): Schema
@@ -38,16 +41,16 @@ class VendorSettlementResource extends Resource
                     ->date('d.m.Y')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('gross_amount')
-                    ->label('Сумма заказов')
-                    ->money('RUB')
+                    ->label('Выручка за блюда')
+                    ->money('TMT')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('commission_amount')
                     ->label('Комиссия')
-                    ->money('RUB')
+                    ->money('TMT')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('net_payable')
                     ->label('К выплате')
-                    ->money('RUB')
+                    ->money('TMT')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Статус')
@@ -86,7 +89,7 @@ class VendorSettlementResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
-        
+
         if (Auth::user()->isRestaurateur()) {
             return $query->where('restaurant_id', Auth::user()->restaurant->id);
         }

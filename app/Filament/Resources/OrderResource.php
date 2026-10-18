@@ -84,7 +84,7 @@ class OrderResource extends Resource
                     ->formatStateUsing(fn (string $state): string => $state === 'pickup' ? 'Самовывоз' : 'Доставка'),
                 Tables\Columns\TextColumn::make('total')
                     ->label('Сумма')
-                    ->money('RUB')
+                    ->money('TMT')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('payment_status')
                     ->label('Оплата')

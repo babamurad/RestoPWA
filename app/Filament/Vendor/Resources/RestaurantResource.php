@@ -95,7 +95,7 @@ class RestaurantResource extends Resource
                                 Forms\Components\TextInput::make('min_order')
                                     ->label('Минимальная сумма заказа')
                                     ->numeric()
-                                    ->prefix('₽'),
+                                    ->suffix('TMT'),
                             ])->columns(1),
                     ])->columnSpan(['lg' => 1]),
 
@@ -298,7 +298,7 @@ class RestaurantResource extends Resource
                     ->label('Время'),
                 Tables\Columns\TextColumn::make('delivery_fee')
                     ->label('Доставка')
-                    ->money('RUB'),
+                    ->money('TMT'),
                 Tables\Columns\TextColumn::make('delivery_zones_summary')
                     ->label('Зона')
                     ->getStateUsing(function ($record) {

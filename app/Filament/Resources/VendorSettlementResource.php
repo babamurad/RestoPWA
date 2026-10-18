@@ -3,22 +3,25 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\VendorSettlementResource\Pages;
-use UnitEnum;
-use BackedEnum;
 use App\Models\VendorSettlement;
+use BackedEnum;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class VendorSettlementResource extends Resource
 {
     protected static ?string $model = VendorSettlement::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-currency-dollar';
+
     protected static string|UnitEnum|null $navigationGroup = 'Финансы';
+
     protected static ?string $modelLabel = 'Выплата ресторану';
+
     protected static ?string $pluralModelLabel = 'Выплаты ресторанам';
 
     public static function form(Schema $schema): Schema
@@ -37,17 +40,17 @@ class VendorSettlementResource extends Resource
                     ->label('Период ПО')
                     ->disabled(),
                 Forms\Components\TextInput::make('gross_amount')
-                    ->label('Сумма заказов')
+                    ->label('Выручка за блюда')
                     ->disabled()
-                    ->prefix('₽'),
+                    ->suffix('TMT'),
                 Forms\Components\TextInput::make('commission_amount')
                     ->label('Комиссия маркетплейса')
                     ->disabled()
-                    ->prefix('₽'),
+                    ->suffix('TMT'),
                 Forms\Components\TextInput::make('net_payable')
                     ->label('К выплате')
                     ->disabled()
-                    ->prefix('₽'),
+                    ->suffix('TMT'),
                 Forms\Components\Select::make('status')
                     ->label('Статус')
                     ->options([
@@ -79,7 +82,7 @@ class VendorSettlementResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('net_payable')
                     ->label('К выплате')
-                    ->money('RUB')
+                    ->money('TMT')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Статус')

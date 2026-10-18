@@ -39,7 +39,7 @@ class EarningsRelationManager extends RelationManager
                     ->searchable(),
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Сумма')
-                    ->money('RUB')
+                    ->money('TMT')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Статус')
