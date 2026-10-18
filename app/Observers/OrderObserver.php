@@ -10,9 +10,7 @@ use App\Domains\Order\Models\Order;
 use App\Domains\Payment\Services\CommissionCalculator;
 use App\Domains\Payment\Services\PaymentService;
 use App\Events\OrderStatusUpdated;
-use App\Jobs\SendSmsJob;
-use App\Models\User;
-use App\Services\PushNotificationService;
+use App\Jobs\SendOrderStatusNotification;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -56,8 +54,8 @@ class OrderObserver
 
         $newStatus = $order->status;
 
-        if (in_array($newStatus, ['cooking', 'delivering', 'delivered'])) {
-            $this->sendPushNotification($order, $newStatus);
+        if (in_array($newStatus, SendOrderStatusNotification::NOTIFIED_STATUSES, true)) {
+            SendOrderStatusNotification::dispatch($order->id, $newStatus);
         }
 
         if ($newStatus === 'delivered' && $order->courier_id) {
@@ -121,42 +119,6 @@ class OrderObserver
                 'amount' => $amount,
                 'status' => 'pending',
             ]);
-        }
-    }
-
-    private function sendPushNotification(Order $order, string $status): void
-    {
-        if (! $order->user_id) {
-            return;
-        }
-
-        try {
-            $pushService = app(PushNotificationService::class);
-
-            // Push and SMS go out in the customer's language
-            $user = User::find($order->user_id);
-            $locale = $user?->locale ?? config('app.locale');
-            $key = in_array($status, ['cooking', 'delivering', 'delivered'], true) ? $status : 'default';
-
-            $title = __("notifications.order.{$key}.title", [], $locale);
-            $body = __("notifications.order.{$key}.body", [], $locale);
-
-            $pushService->sendToUser(
-                $order->user_id,
-                $title,
-                $body,
-                [
-                    'order_id' => $order->id,
-                    'status' => $status,
-                ]
-            );
-
-            // Only send SMS for important updates like delivering or delivered to save money
-            if ($user && $user->phone && in_array($status, ['delivering', 'delivered'])) {
-                SendSmsJob::dispatch($user->phone, 'RestoPWA: '.$body);
-            }
-        } catch (\Throwable $e) {
-            Log::warning('Notification failed: '.$e->getMessage());
         }
     }
 }

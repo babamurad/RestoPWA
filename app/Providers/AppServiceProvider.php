@@ -21,10 +21,13 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Illuminate\Queue\Events\QueueBusy;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Minishlink\WebPush\WebPush;
+use Sentry\Severity;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -103,6 +106,16 @@ class AppServiceProvider extends ServiceProvider
             OrderStatusUpdated::class,
             LogOrderStatusUpdate::class
         );
+
+        // `queue:monitor` (every 5 minutes) found a queue piling up: most likely the worker is down
+        Event::listen(QueueBusy::class, function (QueueBusy $event) {
+            $message = "Queue {$event->connectionName}:{$event->queue} has {$event->size} waiting jobs — is the queue worker running?";
+            Log::error('[Queue] '.$message);
+
+            if (app()->bound('sentry')) {
+                \Sentry\captureMessage($message, Severity::error());
+            }
+        });
 
         Order::observe(OrderObserver::class);
         Review::observe(ReviewObserver::class);

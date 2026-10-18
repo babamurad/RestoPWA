@@ -127,7 +127,7 @@ Docker не нужен, чтобы прогонять тесты на пуш —
 
 ### 5.4 Production-инфраструктура (без Docker-требования, но нужна отдельно от локалки)
 - [x] Мониторинг ошибок: Sentry для сервера и PWA (включается DSN в `.env`), см. `OPERATIONS_MONITORING_BACKUPS.md`.
-- [ ] Очереди на проде — `QUEUE_CONNECTION=redis`/`database` + supervisor-воркеры (SMS/уведомления не должны блокировать HTTP-ответ).
+- [x] Очереди на проде: `database`, очереди `high` (предложения курьерам) и `default` (push/SMS), push и SMS вынесены из HTTP-запроса, `after_commit`, повторы SMS, мониторинг очереди; конфиги supervisor/cron в `deploy/`, инструкция `OPERATIONS_QUEUES.md`.
 - [x] Автоматический бэкап БД и загрузок (spatie/laravel-backup, ежедневно 02:00, шифрование, мониторинг свежести), порядок восстановления описан в `OPERATIONS_MONITORING_BACKUPS.md`.
 - [ ] Провести первое тестовое восстановление на сервере и записать результат в таблицу в `OPERATIONS_MONITORING_BACKUPS.md`.
 - [ ] Where/how прод хостится — открытый вопрос (см. 8.4), от этого зависит, нужен ли там Docker или обычный VPS-деплой скриптом/Envoyer-подобным способом.
