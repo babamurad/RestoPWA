@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 use ZipArchive;
@@ -39,6 +40,18 @@ class BackupTest extends TestCase
         } finally {
             File::deleteDirectory(dirname($upload));
         }
+    }
+
+    public function test_app_boots_with_empty_backup_settings_in_env(): void
+    {
+        // .env.example ships them empty; spatie validates the mail address while
+        // booting, so "" instead of a fallback used to take the whole app down
+        $result = Process::path(base_path())
+            ->env(['BACKUP_NOTIFICATION_EMAIL' => '', 'BACKUP_DISKS' => '', 'BACKUP_ARCHIVE_PASSWORD' => ''])
+            ->run([PHP_BINARY, 'artisan', 'config:show', 'backup.notifications.mail.to']);
+
+        $this->assertTrue($result->successful(), $result->errorOutput().$result->output());
+        $this->assertStringNotContainsString('not a valid email', $result->output());
     }
 
     public function test_backups_are_scheduled_nightly(): void

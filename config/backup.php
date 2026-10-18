@@ -166,7 +166,7 @@ return [
              * The disk names on which the backups will be stored.
              */
             // Comma-separated, e.g. "backups,s3": keep at least one copy off this server
-            'disks' => array_filter(explode(',', env('BACKUP_DISKS', 'backups'))),
+            'disks' => array_filter(explode(',', env('BACKUP_DISKS') ?: 'backups')),
 
             /*
              * Determines whether to allow backups to continue when some targets fail instead of failing completely.
@@ -184,7 +184,7 @@ return [
          * Set to `null` or leave it empty to disable encryption.
          */
         // Archives contain customers' personal data: always set a password in production
-        'password' => env('BACKUP_ARCHIVE_PASSWORD'),
+        'password' => env('BACKUP_ARCHIVE_PASSWORD') ?: null,
 
         /*
          * The encryption algorithm to be used for archive encryption.
@@ -239,7 +239,8 @@ return [
         'notifiable' => Notifiable::class,
 
         'mail' => [
-            'to' => env('BACKUP_NOTIFICATION_EMAIL', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
+            // `?:` because an empty value in .env must fall back too (spatie rejects "" at boot)
+            'to' => env('BACKUP_NOTIFICATION_EMAIL') ?: (env('MAIL_FROM_ADDRESS') ?: 'hello@example.com'),
 
             'from' => [
                 'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
@@ -300,7 +301,7 @@ return [
     'monitor_backups' => [
         [
             'name' => env('APP_NAME', 'laravel-backup'),
-            'disks' => array_filter(explode(',', env('BACKUP_DISKS', 'backups'))),
+            'disks' => array_filter(explode(',', env('BACKUP_DISKS') ?: 'backups')),
             'health_checks' => [
                 MaximumAgeInDays::class => 1,
                 MaximumStorageInMegabytes::class => 5000,
