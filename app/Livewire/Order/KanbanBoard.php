@@ -8,6 +8,7 @@ use App\Domains\Order\Models\Order;
 use App\Domains\Order\Services\OrderService;
 use App\Domains\Vendor\Models\Restaurant;
 use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
@@ -128,6 +129,13 @@ class KanbanBoard extends Component
             return;
         }
 
+        if ($reason = $this->forbiddenMove($order, $newColumnId)) {
+            Notification::make()->title('Нельзя переместить заказ')->body($reason)->warning()->send();
+            $this->loadOrders();
+
+            return;
+        }
+
         $oldStatus = $order->status;
 
         $this->orderService->updateStatus($orderId, $newStatus, [
@@ -146,6 +154,24 @@ class KanbanBoard extends Component
         ]);
 
         $this->loadOrders();
+    }
+
+    /**
+     * Columns an order may not be dragged to. A delivery order is finished by the
+     * courier ("delivered"), which pays the courier and counts for payouts; closing
+     * it here would skip both. A pickup order is never out for delivery.
+     */
+    private function forbiddenMove(Order $order, string $column): ?string
+    {
+        if ($column === 'completed' && ! $order->isPickup()) {
+            return 'Заказ с доставкой завершает курьер, когда доставит его клиенту.';
+        }
+
+        if ($column === 'delivering' && $order->isPickup()) {
+            return 'Это самовывоз: клиент заберёт заказ сам. Когда выдадите — переместите в «Завершены».';
+        }
+
+        return null;
     }
 
     private function findColumnByStatus(string $status): ?string
