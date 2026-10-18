@@ -31,7 +31,6 @@ enum OrderRejectReason: string
     case INVALID_GEOMETRY = 'invalid_geometry';
     case RESTAURANT_CLOSED = 'restaurant_closed';
 
-
     public function userMessage(): string
     {
         return match ($this) {
@@ -59,6 +58,37 @@ enum OrderRejectReason: string
             self::ZONE_NOT_CONFIGURED => 'Зона доставки ресторана не настроена.',
             self::INVALID_GEOMETRY => 'Некорректная геометрия зоны доставки.',
             self::RESTAURANT_CLOSED => 'Ресторан сейчас закрыт или временно не принимает заказы.',
+        };
+    }
+
+    /** Short name for the admin's rejection statistics */
+    public function label(): string
+    {
+        return match ($this) {
+            self::EMPTY_CART => 'Пустая корзина',
+            self::NO_VENDOR => 'Не выбран ресторан',
+            self::MULTI_VENDOR => 'Товары разных ресторанов',
+            self::INVALID_VENDOR => 'Ресторан недоступен',
+            self::VENDOR_NOT_FOUND => 'Ресторан не найден',
+            self::INVALID_ITEMS => 'Некорректный состав',
+            self::ITEM_NOT_FOUND => 'Товар не найден',
+            self::ITEM_UNAVAILABLE => 'Товар недоступен',
+            self::INVALID_PRICE => 'Неверная цена',
+            self::INVALID_TOTAL => 'Неверная сумма',
+            self::MISSING_ADDRESS => 'Нет адреса',
+            self::INVALID_COORDINATES => 'Неверные координаты',
+            self::OUTSIDE_DELIVERY_ZONE => 'Вне зоны доставки',
+            self::INVALID_PHONE => 'Неверный телефон',
+            self::MISSING_NAME => 'Нет имени',
+            self::INVALID_PAYMENT_METHOD => 'Нет способа оплаты',
+            self::UNAUTHORIZED => 'Не вошёл в профиль',
+            self::NETWORK => 'Проблема сети',
+            self::VALIDATION => 'Ошибка в данных',
+            self::SERVER_ERROR => 'Ошибка сервера',
+            self::BELOW_MIN_ORDER => 'Ниже минимальной суммы',
+            self::ZONE_NOT_CONFIGURED => 'Зона не настроена',
+            self::INVALID_GEOMETRY => 'Ошибка геометрии зоны',
+            self::RESTAURANT_CLOSED => 'Ресторан закрыт',
         };
     }
 
