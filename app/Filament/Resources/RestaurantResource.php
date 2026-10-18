@@ -101,11 +101,11 @@ class RestaurantResource extends Resource
                         Forms\Components\TextInput::make('delivery_fee')
                             ->label('Стоимость доставки')
                             ->numeric()
-                            ->prefix('₽'),
+                            ->suffix('TMT'),
                         Forms\Components\TextInput::make('min_order')
                             ->label('Минимальный заказ')
                             ->numeric()
-                            ->prefix('₽'),
+                            ->suffix('TMT'),
                         Forms\Components\TextInput::make('commission_percent')
                             ->label('Комиссия маркетплейса')
                             ->numeric()

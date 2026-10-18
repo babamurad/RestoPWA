@@ -3,23 +3,25 @@
 namespace App\Filament\Vendor\Resources;
 
 use App\Domains\Menu\Models\Product;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 
 class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-shopping-bag';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shopping-bag';
 
     protected static ?string $modelLabel = 'Товар';
+
     protected static ?string $pluralModelLabel = 'Товары';
-    protected static string | \UnitEnum | null $navigationGroup = 'Меню';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Меню';
 
     public static function form(Schema $schema): Schema
     {
@@ -44,7 +46,7 @@ class ProductResource extends Resource
                         Forms\Components\TextInput::make('price')
                             ->label('Цена')
                             ->numeric()
-                            ->prefix('₽')
+                            ->suffix('TMT')
                             ->required(),
                         Forms\Components\TextInput::make('weight_g')
                             ->label('Вес (г)')
@@ -84,7 +86,7 @@ class ProductResource extends Resource
                                         Forms\Components\TextInput::make('price')
                                             ->label('Доп. цена')
                                             ->numeric()
-                                            ->prefix('₽')
+                                            ->suffix('TMT')
                                             ->default(0),
                                         Forms\Components\Toggle::make('is_default')
                                             ->label('По умолчанию'),

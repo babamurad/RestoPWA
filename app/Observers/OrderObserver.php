@@ -7,6 +7,7 @@ namespace App\Observers;
 use App\Domains\Logistics\Models\CourierEarning;
 use App\Domains\Logistics\Services\CourierDispatcher;
 use App\Domains\Order\Models\Order;
+use App\Domains\Payment\Services\CommissionCalculator;
 use App\Domains\Payment\Services\PaymentService;
 use App\Events\OrderStatusUpdated;
 use App\Jobs\SendSmsJob;
@@ -59,11 +60,13 @@ class OrderObserver
             $this->sendPushNotification($order, $newStatus);
         }
 
-        if ($newStatus === 'delivered') {
-            if ($order->courier_id) {
-                $this->calculateCourierEarning($order);
-            }
-            $this->calculateMarketplaceCommission($order);
+        if ($newStatus === 'delivered' && $order->courier_id) {
+            $this->calculateCourierEarning($order);
+        }
+
+        // Courier delivery or pickup handed over: the platform earns its commission
+        if ($order->isFinished()) {
+            app(CommissionCalculator::class)->apply($order);
         }
 
         // Customer got the order (courier delivery or pickup closed on the kanban)
@@ -102,23 +105,6 @@ class OrderObserver
                 ]);
             }
         });
-    }
-
-    private function calculateMarketplaceCommission(Order $order): void
-    {
-        $restaurant = $order->restaurant;
-        if (! $restaurant) {
-            return;
-        }
-
-        $percent = (float) $restaurant->commission_percent;
-        if ($percent > 0 && $order->total > 0) {
-            $commission = round(($order->total * $percent) / 100);
-            $order->commission_amount = $commission;
-            // Need to save without triggering events to prevent infinite loops,
-            // but since we're in observer and just updating a specific field, we can use saveQuietly
-            $order->saveQuietly();
-        }
     }
 
     private function calculateCourierEarning(Order $order): void

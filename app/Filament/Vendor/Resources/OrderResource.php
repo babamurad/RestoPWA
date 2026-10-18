@@ -59,7 +59,7 @@ class OrderResource extends Resource
                         Forms\Components\TextInput::make('total')
                             ->label('Сумма')
                             ->numeric()
-                            ->prefix('₽')
+                            ->suffix('TMT')
                             ->disabled(),
                         Forms\Components\Textarea::make('comment')
                             ->label('Комментарий')
@@ -91,7 +91,7 @@ class OrderResource extends Resource
                             }),
                         TextEntry::make('total')
                             ->label('Сумма')
-                            ->money('RUB'),
+                            ->money('TMT'),
                         TextEntry::make('created_at')
                             ->label('Дата создания')
                             ->dateTime(),
@@ -127,7 +127,7 @@ class OrderResource extends Resource
                                     ->label('Кол-во'),
                                 TextEntry::make('price')
                                     ->label('Цена')
-                                    ->money('RUB'),
+                                    ->money('TMT'),
                             ])->columns(3),
                     ]),
             ]);

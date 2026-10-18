@@ -20,8 +20,6 @@ use Illuminate\Support\Collection;
  */
 class RestaurantAnalytics
 {
-    public const COMPLETED_STATUSES = [Order::STATUS_DELIVERED, 'completed'];
-
     public const CANCELLED_STATUSES = [Order::STATUS_CANCELLED, 'canceled'];
 
     /** Statuses missing from Order::STATUSES (pickup handed over, legacy spelling) */
@@ -179,7 +177,7 @@ class RestaurantAnalytics
 
     private function isCompleted(Order $order): bool
     {
-        return in_array($order->status, self::COMPLETED_STATUSES, true);
+        return $order->isFinished();
     }
 
     private function localTime(Order $order, AnalyticsPeriod $period): CarbonImmutable

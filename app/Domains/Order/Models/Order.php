@@ -15,6 +15,7 @@ use App\Models\VendorSettlement;
 use App\Support\Sequence;
 use Carbon\Carbon;
 use Database\Factories\OrderFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -66,6 +67,9 @@ class Order extends Model
     public const DELIVERY_TYPE_PICKUP = 'pickup';
 
     public const STATUS_CANCELLED = 'cancelled';
+
+    /** Pickup order handed over to the customer (set on the kanban) */
+    public const STATUS_COMPLETED = 'completed';
 
     public const STATUSES = [
         self::STATUS_PENDING => ['label' => 'Новый', 'color' => 'yellow', 'icon' => 'clock'],
@@ -134,6 +138,36 @@ class Order extends Model
             'is_offline' => 'boolean',
             'metadata' => 'array',
         ];
+    }
+
+    /**
+     * The customer got the order: a delivery order once the courier delivered it,
+     * a pickup order once it was handed over. "completed" on a delivery order
+     * (dragged on the kanban past the courier) does not count: no courier was paid.
+     */
+    public function isFinished(): bool
+    {
+        return $this->isPickup()
+            ? $this->status === self::STATUS_COMPLETED
+            : $this->status === self::STATUS_DELIVERED;
+    }
+
+    /** Query counterpart of isFinished() */
+    public function scopeFinished(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            $q->where(fn (Builder $q) => $q->where('delivery_type', self::DELIVERY_TYPE_PICKUP)->where('status', self::STATUS_COMPLETED))
+                ->orWhere(fn (Builder $q) => $q->where('delivery_type', '!=', self::DELIVERY_TYPE_PICKUP)->where('status', self::STATUS_DELIVERED));
+        });
+    }
+
+    /**
+     * What the restaurant earns on the order: the total without the delivery fee,
+     * which goes to the courier. Base for the platform commission and payouts.
+     */
+    public function foodTotal(): float
+    {
+        return max(0.0, round((float) $this->total - (float) $this->delivery_fee, 2));
     }
 
     public function isPickup(): bool
