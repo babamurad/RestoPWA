@@ -7,7 +7,6 @@ namespace App\Console\Commands;
 use App\Domains\Logistics\Models\CourierEarning;
 use App\Domains\Order\Models\Order;
 use App\Domains\Payment\Models\PaymentTransaction;
-use App\Domains\Payment\Services\CommissionCalculator;
 use App\Enums\PaymentStatus;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -17,9 +16,10 @@ use Illuminate\Support\Facades\DB;
  * used DELIVERY_FEE_DEFAULT=500 instead of the restaurant's tariff, so each
  * delivery order got 500 TMT of delivery.
  *
- * Orders where no money has moved yet are corrected (fee = restaurant's flat
- * tariff the cart showed, total reduced accordingly). Paid, paid-out or
- * courier-credited orders are only reported: refunds are a business decision.
+ * Orders where no money has moved yet (not finished, not paid) are corrected:
+ * fee = restaurant's flat tariff the cart showed, total reduced accordingly.
+ * Finished, paid, paid-out or courier-credited orders are only reported:
+ * refunds are a business decision.
  */
 class FixLegacyDeliveryFee extends Command
 {
@@ -30,7 +30,7 @@ class FixLegacyDeliveryFee extends Command
 
     protected $description = 'Correct the 500 TMT delivery fee of orders created before the delivery fee fix';
 
-    public function handle(CommissionCalculator $commission): int
+    public function handle(): int
     {
         $wrongFee = (float) $this->option('amount');
         $dryRun = (bool) $this->option('dry-run');
@@ -66,7 +66,7 @@ class FixLegacyDeliveryFee extends Command
             }
 
             if (! $dryRun) {
-                DB::transaction(function () use ($order, $correctFee, $newTotal, $commission) {
+                DB::transaction(function () use ($order, $correctFee, $newTotal) {
                     $order->forceFill(['delivery_fee' => $correctFee, 'total' => $newTotal]);
                     // A data correction, not a change of the order: keep its dates and skip observers
                     Order::withoutTimestamps(fn () => $order->saveQuietly());
@@ -74,8 +74,6 @@ class FixLegacyDeliveryFee extends Command
                     PaymentTransaction::where('order_id', $order->id)
                         ->where('status', PaymentTransaction::STATUS_PENDING)
                         ->update(['amount' => (int) round($newTotal * 100)]);
-
-                    $commission->apply($order);
                 });
             }
 
@@ -102,6 +100,12 @@ class FixLegacyDeliveryFee extends Command
     {
         if ($order->vendor_settlement_id !== null) {
             return 'вошёл в выплату ресторану';
+        }
+
+        // Legacy orders finished before payment records existed may show "unpaid"
+        // although the courier collected the cash: never rewrite them automatically
+        if (in_array($order->status, [Order::STATUS_DELIVERED, Order::STATUS_COMPLETED], true)) {
+            return 'заказ завершён — клиент, скорее всего, уже заплатил';
         }
 
         if ($order->payment_status === PaymentStatus::PAID

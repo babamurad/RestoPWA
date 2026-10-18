@@ -66,13 +66,28 @@ class FixLegacyDeliveryFeeTest extends TestCase
         $this->assertSame('2026-10-15 10:00:00', $order->updated_at->format('Y-m-d H:i:s'));
     }
 
-    public function test_finished_unpaid_order_gets_commission_from_food_only(): void
+    public function test_finished_order_without_payment_records_is_only_reported(): void
     {
-        $order = $this->legacyOrder(['status' => Order::STATUS_DELIVERED, 'commission_amount' => 60.00]);
+        // Delivered before payment_transactions existed: shows "unpaid", but the cash was collected
+        $delivered = $this->legacyOrder(['status' => Order::STATUS_DELIVERED, 'payment_status' => PaymentStatus::UNPAID]);
+        $pickedUp = $this->legacyOrder(['status' => Order::STATUS_COMPLETED, 'payment_status' => PaymentStatus::UNPAID]);
+
+        $this->artisan('orders:fix-legacy-delivery-fee')
+            ->expectsOutputToContain('Исправлены: 0')
+            ->expectsOutputToContain('Требуют решения вручную (деньги уже прошли): 2')
+            ->assertSuccessful();
+
+        $this->assertEquals(500.00, $delivered->fresh()->delivery_fee);
+        $this->assertEquals(500.00, $pickedUp->fresh()->delivery_fee);
+    }
+
+    public function test_cancelled_order_is_corrected(): void
+    {
+        $order = $this->legacyOrder(['status' => Order::STATUS_CANCELLED]);
 
         $this->artisan('orders:fix-legacy-delivery-fee')->assertSuccessful();
 
-        $this->assertEquals(10.00, $order->fresh()->commission_amount);
+        $this->assertEquals(115.00, $order->fresh()->total);
     }
 
     public function test_dry_run_changes_nothing(): void
@@ -93,7 +108,7 @@ class FixLegacyDeliveryFeeTest extends TestCase
             'restaurant_id' => $this->restaurant->id, 'period_from' => now()->subWeek(), 'period_to' => now(),
             'gross_amount' => 100.0, 'commission_amount' => 10.0, 'net_payable' => 90.0, 'status' => 'paid',
         ])->id]);
-        $credited = $this->legacyOrder(['status' => Order::STATUS_DELIVERED]);
+        $credited = $this->legacyOrder(['status' => Order::STATUS_DELIVERING]);
         $courier = Courier::create(['user_id' => User::factory()->create(['role' => UserRole::COURIER])->id]);
         CourierEarning::create(['order_id' => $credited->id, 'courier_id' => $courier->id, 'amount' => 500, 'status' => 'pending']);
 
