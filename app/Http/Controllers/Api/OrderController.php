@@ -41,6 +41,7 @@ class OrderController extends Controller
             ->map(function (Order $order) {
                 return [
                     'id' => $order->id,
+                    'number' => $order->order_number,
                     'vendor_id' => $order->vendor_id,
                     'status' => $order->status,
                     'payment_status' => $order->payment_status,
@@ -84,6 +85,7 @@ class OrderController extends Controller
 
         return $this->success([
             'id' => $order->id,
+            'number' => $order->order_number,
             'vendor_id' => $order->vendor_id,
             'status' => $order->status,
             'payment_status' => $order->payment_status,

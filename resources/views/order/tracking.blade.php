@@ -27,7 +27,7 @@
                     <a href="{{ route('orders.index') }}" class="flex items-center justify-center w-10 h-10 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800/40 transition-all">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-600 dark:text-slate-300"><path d="m15 18-6-6 6-6"/></svg>
                     </a>
-                    <h1 class="text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100 truncate mt-0.5">{{ __('pages.tracking.order_number', ['number' => substr($orderId, 0, 8)]) }}</h1>
+                    <h1 class="text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100 truncate mt-0.5">{{ __('pages.tracking.order_number', ['number' => $order->order_number]) }}</h1>
                 </div>
                 <span 
                     class="px-3 py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider"

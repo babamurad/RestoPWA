@@ -83,7 +83,7 @@
                         <div class="flex items-start justify-between">
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 mb-1">
-                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">№{{ substr($order->id, 0, 8) }}</span>
+                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">№{{ $order->order_number }}</span>
                                     <span class="text-[10px] text-gray-300">•</span>
                                     <span class="text-[10px] font-bold text-gray-400">{{ $order->created_at->format('d.m.Y H:i') }}</span>
                                 </div>

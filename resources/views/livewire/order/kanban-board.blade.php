@@ -15,14 +15,14 @@
                     <div class="rounded-lg bg-gray-50 p-3 ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700 cursor-move hover:shadow-md transition-shadow" draggable="true" data-order-id="{{ $order['id'] }}">
                         <div class="flex items-center justify-between mb-1.5">
                             <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                                #{{ substr($order['id'], -6) }}
+                                #{{ $order['number'] ?? strtoupper(substr($order['id'], -6)) }}
                             </span>
                             <span class="text-[11px] text-gray-400">
                                 {{ \Carbon\Carbon::parse($order['created_at'])->format('H:i') }}
                             </span>
                         </div>
                         <div class="text-base font-bold text-gray-900 dark:text-white mb-1">
-                            {{ number_format($order['total'], 0, ',', ' ') }} ₽
+                            {{ number_format($order['total'], 0, ',', ' ') }} TMT
                         </div>
                         @if(($order['delivery_type'] ?? 'delivery') === 'pickup')
                             <div class="mb-2">

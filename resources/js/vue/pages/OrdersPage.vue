@@ -41,7 +41,7 @@
         <!-- Order status & details header -->
         <div class="flex justify-between items-start mb-4">
           <div>
-            <span class="text-xs dark:text-slate-400 font-semibold uppercase tracking-wider block text-slate-600">{{ t('orders.order_number', { id: order.id }) }}</span>
+            <span class="text-xs dark:text-slate-400 font-semibold uppercase tracking-wider block text-slate-600">{{ t('orders.order_number', { id: order.number || order.id }) }}</span>
             <span class="text-xs dark:text-slate-500 font-bold block mt-0.5 text-slate-500">{{ formatDate(order.created_at) }}</span>
           </div>
           <span 

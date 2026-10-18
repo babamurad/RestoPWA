@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Чек заказа #{{ substr($order->id, 0, 8) }}</title>
+    <title>Чек заказа #{{ $order->order_number }}</title>
     <style>
         @media print {
             body { margin: 0; padding: 20px; }
@@ -98,7 +98,7 @@
     </div>
     
     <div class="order-info">
-        <p><strong>Заказ #:</strong> {{ substr($order->id, 0, 8) }}</p>
+        <p><strong>Заказ #:</strong> {{ $order->order_number }}</p>
         <p><strong>Дата:</strong> {{ $order->created_at->format('d.m.Y H:i') }}</p>
         <p><strong>Клиент:</strong> {{ $order->user->name ?? 'Гость' }}</p>
     </div>

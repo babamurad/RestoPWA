@@ -1,10 +1,10 @@
 @extends('vendor.layout.app')
 
-@section('title', 'Заказ #' . substr($order->id, 0, 8))
+@section('title', 'Заказ #' . $order->order_number)
 
 @section('content')
 <div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold">Заказ #{{ substr($order->id, 0, 8) }}</h2>
+    <h2 class="text-2xl font-bold">Заказ #{{ $order->order_number }}</h2>
     <div class="flex gap-2">
         <a href="{{ route('vendor.orders.receipt', $order) }}" target="_blank" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded inline-flex items-center">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

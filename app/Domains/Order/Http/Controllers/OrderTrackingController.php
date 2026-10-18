@@ -48,6 +48,7 @@ class OrderTrackingController
 
         return response()->json([
             'order_id' => $order->id,
+            'number' => $order->order_number,
             'status' => $order->status,
             'address' => $order->address,
             'items' => $order->items,

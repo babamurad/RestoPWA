@@ -63,11 +63,11 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('id')
-                    ->label('ID')
+                Tables\Columns\TextColumn::make('number')
+                    ->label('№')
+                    ->prefix('#')
                     ->searchable()
-                    ->sortable()
-                    ->limit(8),
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('restaurant.name')
                     ->label('Ресторан')
                     ->sortable(),

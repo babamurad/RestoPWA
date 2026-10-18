@@ -15,6 +15,16 @@
 
     <x-pwa.meta />
 
+    {{-- Same theme choice as the Vue app (profile toggle → localStorage), applied before paint --}}
+    <script>
+        (function () {
+            let theme = null;
+            try { theme = localStorage.getItem('theme'); } catch (e) {}
+            const dark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.classList.toggle('dark', dark);
+        })();
+    </script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     {{-- Yandex Maps JS API v3 --}}
@@ -31,7 +41,7 @@
     @livewireStyles
 </head>
 
-<body class="bg-gray-50 overflow-x-hidden" x-data="cartManager">
+<body class="bg-gray-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden" x-data="cartManager">
     <script>
 
         
@@ -39,7 +49,7 @@
         window.apiPingUrl = '{{ route('api.ping') }}';
     </script>
 
-    <div class="max-w-lg mx-auto bg-white min-h-screen shadow-xl relative md:max-w-4xl lg:max-w-6xl xl:max-w-7xl lg:bg-transparent lg:shadow-none transition-all duration-300">
+    <div class="max-w-lg mx-auto bg-white dark:bg-slate-950 min-h-screen shadow-xl relative md:max-w-4xl lg:max-w-6xl xl:max-w-7xl lg:bg-transparent lg:shadow-none transition-all duration-300">
         <x-offline-indicator />
 
         <div class="flex flex-col min-h-screen">

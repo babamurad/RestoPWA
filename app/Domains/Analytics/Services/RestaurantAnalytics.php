@@ -153,8 +153,7 @@ class RestaurantAnalytics
 
                 return [
                     'Дата' => $this->localTime($o, $period)->format('d.m.Y H:i'),
-                    // Full id: the short "#XXXXXXXX" number is not unique for time-ordered UUIDs
-                    'ID заказа' => $o->id,
+                    'Заказ' => '#'.$o->order_number,
                     'Статус' => self::STATUS_LABELS[$o->status] ?? Order::STATUSES[$o->status]['label'] ?? $o->status,
                     'Получение' => $o->isPickup() ? 'Самовывоз' : 'Доставка',
                     'Сумма заказа' => $o->total,
@@ -196,6 +195,6 @@ class RestaurantAnalytics
         return $this->cache[$key] ??= Order::query()
             ->where('vendor_id', $restaurantId)
             ->whereBetween('created_at', $period->utcBounds())
-            ->get(['id', 'status', 'delivery_type', 'total', 'delivery_fee', 'commission_amount', 'items', 'created_at']);
+            ->get(['id', 'number', 'status', 'delivery_type', 'total', 'delivery_fee', 'commission_amount', 'items', 'created_at']);
     }
 }

@@ -1,7 +1,7 @@
 @extends('layouts.admin.app')
 
-@section('title', "Заказ #" . substr($order->id, 0, 8))
-@section('header', "Заказ #" . substr($order->id, 0, 8))
+@section('title', "Заказ #" . $order->order_number)
+@section('header', "Заказ #" . $order->order_number)
 
 @section('content')
 @if(session('success'))

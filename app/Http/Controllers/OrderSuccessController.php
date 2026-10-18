@@ -14,7 +14,7 @@ use Illuminate\View\View;
 class OrderSuccessController extends Controller
 {
     use ApiResponses;
-    
+
     public function show(string $id): View
     {
         $order = Order::with(['statusHistory', 'restaurant'])->findOrFail($id);
@@ -51,6 +51,7 @@ class OrderSuccessController extends Controller
 
         return $this->success([
             'order_id' => $order->id,
+            'number' => $order->order_number,
             'status' => $order->status,
             'total' => $order->total,
             'items' => $order->items,
