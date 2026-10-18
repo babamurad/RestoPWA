@@ -86,15 +86,24 @@ class Analytics extends Dashboard
                 ->label('С')
                 ->native(false)
                 ->displayFormat('d.m.Y')
-                ->maxDate(now())
+                ->maxDate(fn () => $this->restaurantToday())
                 ->visible(fn (Get $get) => $get('period') === 'custom'),
             DatePicker::make('to')
                 ->label('По')
                 ->native(false)
                 ->displayFormat('d.m.Y')
-                ->maxDate(now())
+                ->maxDate(fn () => $this->restaurantToday())
                 ->visible(fn (Get $get) => $get('period') === 'custom'),
         ]);
+    }
+
+    /** "Today" for the date pickers in the restaurant's timezone, as the period is */
+    public function restaurantToday(): string
+    {
+        /** @var Restaurant $restaurant */
+        $restaurant = Filament::getTenant();
+
+        return now($restaurant->timezone ?: 'Asia/Ashgabat')->toDateString();
     }
 
     public function getWidgets(): array

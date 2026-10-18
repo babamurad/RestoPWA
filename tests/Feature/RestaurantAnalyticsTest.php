@@ -219,6 +219,21 @@ class RestaurantAnalyticsTest extends TestCase
         $this->assertStringContainsString('orders_2026-10-09_2026-10-15.csv', $response->headers->get('Content-Disposition'));
     }
 
+    public function test_custom_dates_are_limited_by_the_restaurant_today(): void
+    {
+        // 01:00 on Oct 16 in Ashgabat, still Oct 15 in UTC
+        $this->travelTo(CarbonImmutable::parse('2026-10-15 20:00:00', 'UTC'));
+        $owner = User::factory()->create(['role' => UserRole::RESTAURATEUR]);
+        $this->restaurant->update(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner);
+        Filament::setCurrentPanel(Filament::getPanel('vendor'));
+        Filament::setTenant($this->restaurant);
+        Filament::bootCurrentPanel();
+
+        $this->assertSame('2026-10-16', Livewire::test(Analytics::class)->instance()->restaurantToday());
+    }
+
     public function test_page_is_not_available_for_a_foreign_restaurant(): void
     {
         $owner = User::factory()->create(['role' => UserRole::RESTAURATEUR]);
