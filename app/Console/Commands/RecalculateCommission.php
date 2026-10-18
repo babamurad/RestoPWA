@@ -25,7 +25,7 @@ class RecalculateCommission extends Command
         $after = 0.0;
 
         Order::with('restaurant')
-            ->whereIn('status', Order::FINISHED_STATUSES)
+            ->finished()
             ->whereNull('vendor_settlement_id')
             ->chunkById(200, function ($orders) use ($calculator, &$changed, &$before, &$after) {
                 foreach ($orders as $order) {

@@ -34,7 +34,7 @@ class GenerateSettlements extends Command
             DB::transaction(function () use ($restaurant, $from, $to) {
                 // Finished orders (delivered or picked up) of this vendor in the range without a settlement
                 $orders = Order::where('vendor_id', $restaurant->id)
-                    ->whereIn('status', Order::FINISHED_STATUSES)
+                    ->finished()
                     ->whereNull('vendor_settlement_id')
                     ->whereBetween('updated_at', [$from, $to])
                     ->get();

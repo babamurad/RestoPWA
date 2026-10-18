@@ -65,7 +65,7 @@ class OrderObserver
         }
 
         // Courier delivery or pickup handed over: the platform earns its commission
-        if (in_array($newStatus, Order::FINISHED_STATUSES, true)) {
+        if ($order->isFinished()) {
             app(CommissionCalculator::class)->apply($order);
         }
 

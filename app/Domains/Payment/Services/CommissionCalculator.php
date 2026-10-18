@@ -29,7 +29,7 @@ class CommissionCalculator
      */
     public function apply(Order $order): void
     {
-        if ($order->vendor_settlement_id !== null) {
+        if ($order->vendor_settlement_id !== null || ! $order->isFinished()) {
             return;
         }
 
@@ -37,7 +37,9 @@ class CommissionCalculator
 
         if ((float) $order->commission_amount !== $amount) {
             $order->commission_amount = $amount;
-            $order->saveQuietly();
+            // Keep updated_at: payouts pick orders by it, a recalculated old
+            // order must not move into the current payout period
+            Order::withoutTimestamps(fn () => $order->saveQuietly());
         }
     }
 }
