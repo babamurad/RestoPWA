@@ -3,6 +3,7 @@ import { createPinia } from 'pinia';
 import router from './vue/router';
 import App from './vue/App.vue';
 import { i18n, t } from './vue/i18n';
+import { initSentry } from './vue/sentry';
 import './bootstrap';
 import './services/CartService';
 import './services/CartAlpine';
@@ -212,5 +213,6 @@ if (appElement) {
     app.use(pinia);
     app.use(router);
     app.use(i18n);
+    initSentry(app, router);
     app.mount('#app');
 }
