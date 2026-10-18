@@ -144,6 +144,13 @@
         </div>
       </div>
 
+      <!-- Account deletion (customers only; staff accounts are managed by the admin) -->
+      <div v-if="authStore.user?.role === 'client'" class="mt-6 text-center">
+        <button type="button" @click="handleDeleteAccount" class="text-[11px] font-bold text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 underline underline-offset-2 transition-colors">
+          {{ t('profile.delete_account.link') }}
+        </button>
+      </div>
+
       <!-- Legal documents -->
       <nav class="mt-6 flex flex-wrap justify-center gap-x-4 gap-y-2 text-[11px] font-semibold text-slate-500 dark:text-slate-500" :aria-label="t('profile.documents')">
         <a href="/legal/terms" target="_blank" rel="noopener" class="hover:text-orange-500">{{ t('profile.legal.terms') }}</a>
@@ -242,6 +249,80 @@ const handleLogout = async () => {
       await authStore.logout();
       router.push('/login');
     }
+  }
+};
+
+// Account deletion: personal data is wiped, past orders stay with the restaurant anonymously
+const deleteErrorMessage = (error) => {
+  const data = error?.response?.data;
+  return data?.errors?.password?.[0] || data?.message || t('common.unknown_error');
+};
+
+const afterAccountDeleted = () => {
+  // Full reload: the server rotated the session and the CSRF token
+  window.location.href = '/';
+};
+
+const handleDeleteAccount = async () => {
+  const needsPassword = authStore.user?.has_password !== false;
+  const isDarkMode = document.documentElement.classList.contains('dark');
+
+  if (!window.Swal) {
+    if (!confirm(t('profile.delete_account.text'))) return;
+    const password = needsPassword ? prompt(t('profile.delete_account.password_label')) : null;
+    if (needsPassword && !password) return;
+    try {
+      await authStore.deleteAccount(password);
+      afterAccountDeleted();
+    } catch (error) {
+      alert(deleteErrorMessage(error));
+    }
+    return;
+  }
+
+  const result = await window.Swal.fire({
+    title: t('profile.delete_account.title'),
+    text: t('profile.delete_account.text'),
+    icon: 'warning',
+    input: needsPassword ? 'password' : undefined,
+    inputPlaceholder: needsPassword ? t('profile.delete_account.password_label') : undefined,
+    inputAttributes: needsPassword ? { autocomplete: 'current-password' } : undefined,
+    showCancelButton: true,
+    confirmButtonText: t('profile.delete_account.confirm'),
+    cancelButtonText: t('common.cancel'),
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: isDarkMode ? '#334155' : '#e2e8f0',
+    background: isDarkMode ? '#0f172a' : '#ffffff',
+    color: isDarkMode ? '#f8fafc' : '#0f172a',
+    reverseButtons: true,
+    showLoaderOnConfirm: true,
+    allowOutsideClick: () => !window.Swal.isLoading(),
+    customClass: { popup: isDarkMode ? 'rounded-3xl border border-slate-850 shadow-2xl' : 'rounded-3xl border border-slate-200 shadow-xl' },
+    preConfirm: async (password) => {
+      if (needsPassword && !password) {
+        window.Swal.showValidationMessage(t('profile.delete_account.password_required'));
+        return false;
+      }
+      try {
+        await authStore.deleteAccount(password);
+        return true;
+      } catch (error) {
+        window.Swal.showValidationMessage(deleteErrorMessage(error));
+        return false;
+      }
+    },
+  });
+
+  if (result.isConfirmed) {
+    await window.Swal.fire({
+      title: t('profile.delete_account.done'),
+      icon: 'success',
+      timer: 1800,
+      showConfirmButton: false,
+      background: isDarkMode ? '#0f172a' : '#ffffff',
+      color: isDarkMode ? '#f8fafc' : '#0f172a',
+    });
+    afterAccountDeleted();
   }
 };
 

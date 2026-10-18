@@ -10,6 +10,7 @@ use App\Domains\Vendor\Models\Restaurant;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\GeoController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\Profile\AccountController;
 use App\Http\Controllers\Api\Profile\AddressController;
 use App\Http\Controllers\Api\Profile\PaymentMethodController;
 use App\Http\Controllers\Api\Profile\SupportController;
@@ -72,6 +73,9 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->gro
         // Profile features
         Route::prefix('profile')->group(function () {
             Route::put('locale', [AuthController::class, 'updateLocale'])->name('api.profile.locale');
+            Route::delete('/', [AccountController::class, 'destroy'])
+                ->middleware('throttle:5,1')
+                ->name('api.profile.destroy');
             Route::apiResource('addresses', AddressController::class)->except(['show']);
             Route::apiResource('payments', PaymentMethodController::class)->only(['index', 'store', 'destroy']);
             Route::apiResource('support', SupportController::class)->only(['index', 'store']);

@@ -7,6 +7,7 @@ namespace App\Http\Middleware;
 use App\Domains\Vendor\Services\TenantContext;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class SetTenantContext
@@ -44,7 +45,7 @@ class SetTenantContext
                 $vendorId = is_object($vendorParam) ? ($vendorParam->id ?? $vendorParam->vendor_id) : $vendorParam;
             } elseif ($request->is('api/v1/menu/product/*')) {
                 $productId = $request->segment(5);
-                $vendorId = \Illuminate\Support\Facades\DB::table('products')
+                $vendorId = DB::table('products')
                     ->where('id', $productId)
                     ->value('vendor_id');
             } elseif ($request->is('api/v1/menu/*')) {
@@ -62,7 +63,7 @@ class SetTenantContext
         if ($vendorId) {
             // Resolve raw slug or subdomain string to vendor UUID if it is not already a valid UUID
             if (! preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', (string) $vendorId)) {
-                $resolved = \Illuminate\Support\Facades\DB::table('restaurants')
+                $resolved = DB::table('restaurants')
                     ->where('slug', $vendorId)
                     ->orWhere('id', $vendorId)
                     ->first();
@@ -88,6 +89,7 @@ class SetTenantContext
             $request->is('api/v1/orders*') ||
             $request->is('api/v1/telemetry') ||
             $request->is('api/v1/geo/*') ||
+            $request->is('api/v1/profile') ||
             $request->is('api/v1/profile/*') ||
             $request->is('api/v1/courier*')
         ) {

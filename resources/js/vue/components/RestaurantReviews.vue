@@ -18,7 +18,7 @@
         class="p-4 rounded-2xl border dark:border-slate-800/80 dark:bg-slate-800/30 bg-white border-slate-200"
       >
         <div class="flex items-center justify-between">
-          <span class="text-xs font-bold dark:text-slate-200 text-slate-800">{{ review.author }}</span>
+          <span class="text-xs font-bold dark:text-slate-200 text-slate-800">{{ review.author || t('reviews.anonymous') }}</span>
           <span class="text-xs text-amber-500" :aria-label="t('reviews.rating_label', { rating: review.rating })">
             {{ '★'.repeat(review.rating) }}<span class="dark:text-slate-700 text-slate-300">{{ '★'.repeat(5 - review.rating) }}</span>
           </span>
