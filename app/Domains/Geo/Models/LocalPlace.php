@@ -35,6 +35,19 @@ class LocalPlace extends Model
         ];
     }
 
+    /** Place type => label shown in the admin */
+    public const TYPE_LABELS = [
+        'district' => 'Район',
+        'street' => 'Улица',
+        'landmark' => 'Ориентир',
+        'market' => 'Рынок',
+        'school' => 'Школа',
+        'hospital' => 'Больница',
+        'restaurant' => 'Ресторан',
+        'building' => 'Здание',
+        'other' => 'Другое',
+    ];
+
     public const TYPES = [
         'district',
         'street',
@@ -49,16 +62,6 @@ class LocalPlace extends Model
 
     public function getTypeLabelAttribute(): string
     {
-        return match ($this->type) {
-            'district' => 'Район',
-            'street' => 'Улица',
-            'landmark' => 'Ориентир',
-            'market' => 'Рынок',
-            'school' => 'Школа',
-            'hospital' => 'Больница',
-            'restaurant' => 'Ресторан',
-            'building' => 'Здание',
-            default => 'Другое',
-        };
+        return self::TYPE_LABELS[$this->type] ?? self::TYPE_LABELS['other'];
     }
 }

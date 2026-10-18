@@ -2,40 +2,39 @@
 
 namespace Tests\Browser;
 
-use App\Models\User;
 use App\Domains\Order\Models\Order;
+use App\Enums\UserRole;
+use App\Models\User;
 use Database\Factories\RestaurantFactory;
-use Database\Factories\ProductFactory;
-use Database\Factories\CategoryFactory;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
 use PHPUnit\Framework\Attributes\Group;
-use App\Enums\UserRole;
+use Tests\DuskTestCase;
 
 class RestaurateurRoleTest extends DuskTestCase
 {
     use DatabaseTruncation;
 
     protected $restaurant;
+
     protected $vendorUser;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->vendorUser = User::factory()->create([
             'role' => UserRole::RESTAURATEUR,
             'name' => 'Test Vendor',
             'email' => 'vendor@test.com',
-            'password' => bcrypt('password')
+            'password' => bcrypt('password'),
         ]);
 
         $this->restaurant = RestaurantFactory::new()->create([
-            'slug' => 'test-vendor', 
+            'slug' => 'test-vendor',
             'is_active' => true,
             'owner_id' => $this->vendorUser->id,
-            'vendor_id' => $this->vendorUser->id
+            'vendor_id' => $this->vendorUser->id,
         ]);
     }
 
@@ -47,9 +46,9 @@ class RestaurateurRoleTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->vendorUser)
-                    ->visit('/vendor')
-                    ->waitForText($this->restaurant->name, 15)
-                    ->assertSee($this->restaurant->name);
+                ->visit('/vendor')
+                ->waitForText($this->restaurant->name, 15)
+                ->assertSee($this->restaurant->name);
         });
     }
 
@@ -63,14 +62,14 @@ class RestaurateurRoleTest extends DuskTestCase
             'vendor_id' => $this->restaurant->id,
             'status' => 'pending',
             'address' => ['address' => 'Test Address'],
-            'total' => 1000
+            'total' => 1000,
         ]);
 
         $this->browse(function (Browser $browser) use ($order) {
             $browser->loginAs($this->vendorUser)
-                    ->visit('/vendor/orders/kanban')
+                ->visit('/vendor/'.$this->restaurant->id.'/kanban-orders')
                     // Wait for kanban to load
-                    ->waitForText('#' . substr($order->id, -6), 10);
+                ->waitForText('#'.$order->number, 10);
         });
     }
 }
