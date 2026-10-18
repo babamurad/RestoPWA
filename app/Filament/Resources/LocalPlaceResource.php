@@ -7,18 +7,19 @@ namespace App\Filament\Resources;
 use App\Domains\Geo\Models\LocalPlace;
 use App\Filament\Resources\LocalPlaceResource\Pages;
 use BackedEnum;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 
 class LocalPlaceResource extends Resource
 {
     protected static ?string $model = LocalPlace::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-map-pin';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-map-pin';
 
     protected static ?string $navigationLabel = 'Локальные адреса';
 
@@ -30,7 +31,7 @@ class LocalPlaceResource extends Resource
     {
         return $schema
             ->components([
-                Forms\Components\Section::make('Основная информация')
+                Section::make('Основная информация')
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->label('Название')
@@ -42,24 +43,14 @@ class LocalPlaceResource extends Resource
                             ->maxLength(100),
                         Forms\Components\Select::make('type')
                             ->label('Тип')
-                            ->options([
-                                'district' => 'Район',
-                                'street' => 'Улица',
-                                'landmark' => 'Ориентир',
-                                'market' => 'Рынок',
-                                'school' => 'Школа',
-                                'hospital' => 'Больница',
-                                'restaurant' => 'Ресторан',
-                                'building' => 'Здание',
-                                'other' => 'Другое',
-                            ])
+                            ->options(LocalPlace::TYPE_LABELS)
                             ->default('other')
                             ->required(),
                         Forms\Components\TagsInput::make('aliases')
                             ->label('Алиасы (синонимы)')
                             ->placeholder('Добавить синоним'),
                     ])->columns(2),
-                Forms\Components\Section::make('Координаты')
+                Section::make('Координаты')
                     ->schema([
                         Forms\Components\TextInput::make('lat')
                             ->label('Широта')
@@ -72,7 +63,7 @@ class LocalPlaceResource extends Resource
                             ->step(0.0000001)
                             ->required(),
                     ])->columns(2),
-                Forms\Components\Section::make('Модерация')
+                Section::make('Модерация')
                     ->schema([
                         Forms\Components\Toggle::make('is_verified')
                             ->label('Верифицировано')
@@ -98,8 +89,9 @@ class LocalPlaceResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('type_label')
+                Tables\Columns\TextColumn::make('type')
                     ->label('Тип')
+                    ->formatStateUsing(fn (string $state): string => LocalPlace::TYPE_LABELS[$state] ?? $state)
                     ->badge()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('lat')
@@ -127,17 +119,7 @@ class LocalPlaceResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('type')
                     ->label('Тип')
-                    ->options([
-                        'district' => 'Район',
-                        'street' => 'Улица',
-                        'landmark' => 'Ориентир',
-                        'market' => 'Рынок',
-                        'school' => 'Школа',
-                        'hospital' => 'Больница',
-                        'restaurant' => 'Ресторан',
-                        'building' => 'Здание',
-                        'other' => 'Другое',
-                    ]),
+                    ->options(LocalPlace::TYPE_LABELS),
                 Tables\Filters\Filter::make('is_verified')
                     ->label('Только верифицированные')
                     ->query(fn ($query) => $query->where('is_verified', true)),
