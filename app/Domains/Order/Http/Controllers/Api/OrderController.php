@@ -8,6 +8,7 @@ use App\Domains\Geo\Services\GeoService;
 use App\Domains\Menu\Models\Product;
 use App\Domains\Order\DTO\OrderSubmitDTO;
 use App\Domains\Order\Models\Order;
+use App\Domains\Order\Models\OrderRejection;
 use App\Domains\Order\Services\OrderService;
 use App\Domains\Order\Validators\OrderPreconditionValidator;
 use App\Enums\OrderRejectReason;
@@ -359,6 +360,8 @@ class OrderController
         array $details = [],
         string $traceId = '',
     ): JsonResponse {
+        OrderRejection::record($reason, request()->input('vendor_id'), request()->user()?->id);
+
         return response()->json([
             'success' => false,
             'message' => $reason->userMessage(),
