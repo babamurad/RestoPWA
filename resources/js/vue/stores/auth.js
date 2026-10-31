@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import apiClient from '../api/client';
+import apiClient, { isNativeApp, MOBILE_AUTH_TOKEN_KEY } from '../api/client';
 import { currentLocale, setLocale, t } from '../i18n';
 
 export const useAuthStore = defineStore('auth', {
@@ -33,8 +33,11 @@ export const useAuthStore = defineStore('auth', {
         async login(credentials) {
             this.isLoading = true;
             try {
-                const response = await apiClient.post('/login', credentials);
+                const response = await apiClient.post(isNativeApp ? '/mobile/login' : '/login', credentials);
                 if (response.data && response.data.success) {
+                    if (isNativeApp) {
+                        localStorage.setItem(MOBILE_AUTH_TOKEN_KEY, response.data.token);
+                    }
                     this.user = response.data.user;
                     this.isAuthenticated = true;
                     this.hasChecked = true;
@@ -71,8 +74,11 @@ export const useAuthStore = defineStore('auth', {
         async logout() {
             this.isLoading = true;
             try {
-                await apiClient.post('/logout');
+                await apiClient.post(isNativeApp ? '/mobile/logout' : '/logout');
             } finally {
+                if (isNativeApp) {
+                    localStorage.removeItem(MOBILE_AUTH_TOKEN_KEY);
+                }
                 this.user = null;
                 this.isAuthenticated = false;
                 this.isLoading = false;

@@ -1,15 +1,13 @@
-import { createApp } from 'vue';
-import { createPinia } from 'pinia';
-import router from './vue/router';
-import App from './vue/App.vue';
-import { i18n, t } from './vue/i18n';
-import { initSentry } from './vue/sentry';
+import { mountApp } from './vue/bootstrapApp';
+import { startConnectivityMonitor } from './vue/connectivity';
+import { setupOfflineAuthPrompt } from './vue/offlineOrders';
 import './bootstrap';
 import './services/CartService';
 import './services/CartAlpine';
 import Swal from 'sweetalert2'
 
 window.Swal = Swal
+setupOfflineAuthPrompt();
 
 let swRegistration = null;
 
@@ -45,92 +43,12 @@ function setupOrderSubmission(registration) {
                 window.dispatchEvent(new CustomEvent('auth-required-from-offline', {
                     detail: event.data,
                 }));
-                window.Swal.fire({
-                    title: t('app.auth_required.title'),
-                    text: t('app.auth_required.text'),
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: t('common.login'),
-                    cancelButtonText: t('common.later'),
-                    confirmButtonColor: '#f97316',
-                    reverseButtons: true,
-                    customClass: { popup: 'rounded-2xl' },
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
-                    }
-                });
             }
         });
     }
 }
 
-async function checkConnectivity() {
-    const wasOffline = !navigator.onLine || document.body.classList.contains('is-server-offline');
-
-    if (!navigator.onLine) {
-        setOfflineState(true, 'network');
-        return;
-    }
-
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
-
-        const response = await fetch(window.apiPingUrl || '/api/ping', {
-            method: 'GET',
-            cache: 'no-store',
-            signal: controller.signal,
-            headers: {
-                'Cache-Control': 'no-cache',
-                'Accept': 'application/json'
-            }
-        });
-
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-            setOfflineState(false);
-        } else {
-            setOfflineState(true, 'server');
-        }
-    } catch (e) {
-        setOfflineState(true, 'server');
-    }
-}
-
-function setOfflineState(isOffline, type = 'network') {
-    const indicator = document.getElementById('offline-indicator');
-    if (isOffline) {
-        document.body.classList.add('is-offline');
-        if (type === 'server') {
-            document.body.classList.add('is-server-offline');
-        }
-        if (window.Livewire) window.Livewire.dispatch('browser-offline');
-    } else {
-        document.body.classList.remove('is-offline', 'is-server-offline');
-        if (window.Livewire) window.Livewire.dispatch('browser-online');
-    }
-
-    // Dispatch custom event for Alpine components
-    window.dispatchEvent(new CustomEvent('connectivity-changed', {
-        detail: { isOffline, type }
-    }));
-}
-
-// Check every 30 seconds
-setInterval(checkConnectivity, 30000);
-
-window.addEventListener('online', () => {
-    checkConnectivity();
-});
-
-window.addEventListener('offline', () => {
-    setOfflineState(true, 'network');
-});
-
-// Initial check
-checkConnectivity();
+startConnectivityMonitor();
 
 const vapidPublicKey = window.vapidPublicKey || null;
 
@@ -205,14 +123,4 @@ window.askPushPermission = askPushPermission;
 window.subscribeToPush = subscribeToPush;
 window.unsubscribeFromPush = unsubscribeFromPush;
 
-// Mount Vue SPA conditionally
-const appElement = document.getElementById('app');
-if (appElement) {
-    const app = createApp(App);
-    const pinia = createPinia();
-    app.use(pinia);
-    app.use(router);
-    app.use(i18n);
-    initSentry(app, router);
-    app.mount('#app');
-}
+mountApp();

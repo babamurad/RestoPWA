@@ -59,9 +59,19 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->gro
     Route::post('logout', [AuthController::class, 'logout'])->name('api.logout');
     Route::get('user', [AuthController::class, 'user'])->name('api.user');
 
+    Route::get('config', fn () => response()->json([
+        'geolocate_enabled' => config('checkout.default_geolocate_enabled'),
+    ]))->name('api.config');
+
+    // Mobile app (Capacitor) — Bearer-token auth instead of the web session/CSRF flow
+    Route::post('mobile/login', [AuthController::class, 'loginMobile'])->name('api.mobile.login');
+    Route::post('mobile/register', [AuthController::class, 'registerMobile'])->name('api.mobile.register');
+    Route::post('mobile/logout', [AuthController::class, 'logoutMobile'])->middleware('auth:sanctum')->name('api.mobile.logout');
+
     Route::post('orders', [DomainOrderController::class, 'store'])->name('api.orders.store');
 
-    Route::middleware('auth')->group(function () {
+    // Accepts either the web session (cookie) or a mobile Sanctum Bearer token
+    Route::middleware('auth:web,sanctum')->group(function () {
         Route::get('orders', [OrderController::class, 'index'])->name('api.v1.orders.index');
         Route::get('orders/{id}', [OrderController::class, 'show'])->name('api.v1.orders.show');
         Route::post('orders/{id}/review', [ReviewController::class, 'store'])

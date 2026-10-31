@@ -156,7 +156,7 @@ import { ref, reactive } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
-import apiClient from '../api/client';
+import apiClient, { isNativeApp, MOBILE_AUTH_TOKEN_KEY } from '../api/client';
 import { currentLocale } from '../i18n';
 import LanguageSwitcher from '../components/LanguageSwitcher.vue';
 
@@ -200,8 +200,11 @@ const handleRegister = async () => {
   form.phone = phoneInput.value; // backend AuthController will prepend '+993'
 
   try {
-    const response = await apiClient.post('/register', { ...form, locale: currentLocale() });
+    const response = await apiClient.post(isNativeApp ? '/mobile/register' : '/register', { ...form, locale: currentLocale() });
     if (response.data && response.data.success) {
+      if (isNativeApp) {
+        localStorage.setItem(MOBILE_AUTH_TOKEN_KEY, response.data.token);
+      }
       // Re-fetch user in store
       await authStore.fetchUser();
       const redirectPath = route.query.redirect || '/profile';

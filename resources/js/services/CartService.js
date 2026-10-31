@@ -1,4 +1,5 @@
 import Dexie from 'dexie';
+import apiClient from '../vue/api/client';
 
 /**
  * @typedef {Object} CartItem
@@ -255,6 +256,55 @@ const CartService = {
      */
     async updatePendingOrderStatus(id, status) {
         await db.pendingOrders.update(id, { status });
+    },
+
+    /**
+     * Retries queued offline orders directly from the app (no Service Worker
+     * background sync inside the Capacitor WebView). Mirrors public/sw.js'
+     * syncOrders(), minus the push notifications.
+     * @returns {Promise<void>}
+     */
+    async flushPendingOrders() {
+        const orders = await db.pendingOrders.toArray();
+
+        for (const order of orders) {
+            if (order.retries >= 5) {
+                continue;
+            }
+
+            try {
+                const response = await apiClient.post('/orders', {
+                    ...order.payload,
+                    is_offline: true,
+                }, {
+                    headers: {
+                        'X-Vendor-ID': order.payload.vendor_id,
+                        'X-Idempotency-Key': order.payload.idempotency_key,
+                        ...(order.payload.trace_id ? { 'X-Trace-Id': order.payload.trace_id } : {}),
+                    },
+                });
+
+                await db.pendingOrders.delete(order.id);
+                window.dispatchEvent(new CustomEvent('order-synced-from-offline', {
+                    detail: { orderId: response.data?.data?.order_id, localId: order.id },
+                }));
+            } catch (error) {
+                const status = error.response?.status;
+
+                if (status === 409 && error.response?.data?.data?.is_duplicate) {
+                    await db.pendingOrders.delete(order.id);
+                    continue;
+                }
+
+                if (status === 401 || status === 403) {
+                    window.dispatchEvent(new CustomEvent('auth-required-from-offline', {
+                        detail: { localId: order.id },
+                    }));
+                }
+
+                await this.incrementRetry(order.id);
+            }
+        }
     },
 
     /**

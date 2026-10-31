@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">RestoPWA</string>
+    <string name="title_activity_main">RestoPWA</string>
+    <string name="package_name">com.restopwa.app</string>
+    <string name="custom_url_scheme">com.restopwa.app</string>
+</resources>

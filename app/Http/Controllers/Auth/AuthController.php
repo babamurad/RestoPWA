@@ -51,6 +51,66 @@ class AuthController extends Controller
 
     public function register(Request $request): JsonResponse|RedirectResponse
     {
+        $user = $this->createUserFromRequest($request);
+
+        Auth::login($user);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'user' => $user,
+                'redirect_url' => route('home'),
+            ], 201);
+        }
+
+        return redirect(route('home'));
+    }
+
+    /** Mobile (Capacitor) login — issues a Sanctum Bearer token instead of a session cookie. */
+    public function loginMobile(Request $request): JsonResponse
+    {
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        $user = User::where('email', $credentials['email'])->first();
+
+        if (! $user || ! Hash::check($credentials['password'], (string) $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('api.invalid_credentials'),
+            ], 401);
+        }
+
+        return response()->json([
+            'success' => true,
+            'user' => $user,
+            'token' => $user->createToken('mobile')->plainTextToken,
+        ]);
+    }
+
+    /** Mobile (Capacitor) registration — issues a Sanctum Bearer token instead of a session cookie. */
+    public function registerMobile(Request $request): JsonResponse
+    {
+        $user = $this->createUserFromRequest($request);
+
+        return response()->json([
+            'success' => true,
+            'user' => $user,
+            'token' => $user->createToken('mobile')->plainTextToken,
+        ], 201);
+    }
+
+    public function logoutMobile(Request $request): JsonResponse
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    private function createUserFromRequest(Request $request): User
+    {
         if ($request->filled('phone')) {
             $phone = preg_replace('/\D/', '', (string) $request->phone);
             if (strlen($phone) === 8) {
@@ -69,7 +129,7 @@ class AuthController extends Controller
             'terms_accepted.accepted' => __('api.terms_required'),
         ]);
 
-        $user = User::create([
+        return User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
@@ -78,18 +138,6 @@ class AuthController extends Controller
             'terms_accepted_at' => now(),
             'terms_version' => config('legal.version'),
         ]);
-
-        Auth::login($user);
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'user' => $user,
-                'redirect_url' => route('home'),
-            ], 201);
-        }
-
-        return redirect(route('home'));
     }
 
     public function logout(Request $request): JsonResponse|RedirectResponse
@@ -110,7 +158,9 @@ class AuthController extends Controller
 
     public function user(Request $request): JsonResponse
     {
-        $user = $request->user();
+        // This route carries no auth middleware (guests must get a 200, not a 401),
+        // so the mobile Bearer-token guard needs to be checked explicitly here.
+        $user = $request->user() ?? Auth::guard('sanctum')->user();
 
         if (! $user) {
             return response()->json([

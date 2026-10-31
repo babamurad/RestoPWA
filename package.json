@@ -5,9 +5,13 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "test": "vitest run"
+        "test": "vitest run",
+        "build:mobile": "vite build --config vite.mobile.config.js",
+        "cap:sync": "npm run build:mobile && npx cap sync android",
+        "cap:open:android": "npx cap open android"
     },
     "devDependencies": {
+        "@capacitor/cli": "^8.6.0",
         "@laravel/echo-vue": "^2.4.0",
         "@tailwindcss/vite": "^4.0.0",
         "@vitejs/plugin-vue": "^6.0.7",
@@ -19,10 +23,13 @@
         "laravel-vite-plugin": "^3.0.0",
         "pusher-js": "^8.5.0",
         "tailwindcss": "^4.0.0",
+        "typescript": "^7.0.2",
         "vite": "^8.0.0",
         "vitest": "^3.2.4"
     },
     "dependencies": {
+        "@capacitor/android": "^8.6.0",
+        "@capacitor/core": "^8.6.0",
         "@sentry/vue": "^10.76.2",
         "dexie": "^4.4.2",
         "pinia": "^3.0.4",
