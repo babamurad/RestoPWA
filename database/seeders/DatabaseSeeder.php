@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            RestaurantSeeder::class,
+            DemoDataSeeder::class,
         ]);
 
         if (!User::where('email', 'admin@restopwa.local')->exists()) {
