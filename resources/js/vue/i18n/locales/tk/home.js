@@ -1,7 +1,7 @@
 // Home page (restaurant catalog)
 export default {
     delivery_to: 'Eltip bermek salgysy',
-    demo_address: 'Türkmenbaşy köçesi, 45-nji jaý',
+    choose_address: 'Salgyny görkeziň',
     promo: {
         badge: '20% arzanladyş',
         title: 'Ilkinji sargyt has tagamly!',

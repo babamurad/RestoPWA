@@ -1,7 +1,7 @@
 // Home page (restaurant catalog)
 export default {
     delivery_to: 'Доставка по адресу',
-    demo_address: 'ул. Туркменбаши, д. 45',
+    choose_address: 'Указать адрес',
     promo: {
         badge: 'Скидка 20%',
         title: 'Первый заказ вкуснее!',

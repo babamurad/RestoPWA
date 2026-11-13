@@ -1,6 +1,6 @@
 {
-  "_orders-DNgHSMeh.js": {
-    "file": "assets/orders-DNgHSMeh.js",
+  "_orders-Cc2UtP-S.js": {
+    "file": "assets/orders-Cc2UtP-S.js",
     "name": "orders",
     "imports": [
       "resources/js/app.js"
@@ -11,7 +11,7 @@
     "name": "runtime-dom.esm-bundler"
   },
   "resources/css/app.css": {
-    "file": "assets/app-BfkWk8_a.css",
+    "file": "assets/app-DTSqPdfJ.css",
     "name": "app",
     "names": [
       "app.css"
@@ -20,7 +20,7 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-kqhy50At.js",
+    "file": "assets/app-DpbtcVHf.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -37,7 +37,7 @@
       "resources/js/vue/pages/OrdersPage.vue"
     ],
     "css": [
-      "assets/app-DoTldj2z.css"
+      "assets/app-Ds1veJc1.css"
     ]
   },
   "resources/js/filament-vue.js": {
@@ -50,21 +50,21 @@
     ]
   },
   "resources/js/vue/pages/CheckoutPage.vue": {
-    "file": "assets/CheckoutPage-D3SaX_2Q.js",
+    "file": "assets/CheckoutPage-CT_gceb1.js",
     "name": "CheckoutPage",
     "src": "resources/js/vue/pages/CheckoutPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
       "_runtime-dom.esm-bundler-CLeXgAct.js",
-      "_orders-DNgHSMeh.js"
+      "_orders-Cc2UtP-S.js"
     ],
     "css": [
       "assets/CheckoutPage-De30qs6-.css"
     ]
   },
   "resources/js/vue/pages/LoginPage.vue": {
-    "file": "assets/LoginPage-Bv2WMsS_.js",
+    "file": "assets/LoginPage-CLNGfI68.js",
     "name": "LoginPage",
     "src": "resources/js/vue/pages/LoginPage.vue",
     "isDynamicEntry": true,
@@ -74,18 +74,18 @@
     ]
   },
   "resources/js/vue/pages/OrdersPage.vue": {
-    "file": "assets/OrdersPage-DnrUncJZ.js",
+    "file": "assets/OrdersPage-DKmj2IBn.js",
     "name": "OrdersPage",
     "src": "resources/js/vue/pages/OrdersPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
       "_runtime-dom.esm-bundler-CLeXgAct.js",
-      "_orders-DNgHSMeh.js"
+      "_orders-Cc2UtP-S.js"
     ]
   },
   "resources/js/vue/pages/RegisterPage.vue": {
-    "file": "assets/RegisterPage-DRyQZcxa.js",
+    "file": "assets/RegisterPage-CqMFM7Cs.js",
     "name": "RegisterPage",
     "src": "resources/js/vue/pages/RegisterPage.vue",
     "isDynamicEntry": true,
@@ -95,7 +95,7 @@
     ]
   },
   "resources/js/vue/pages/profile/AddressesPage.vue": {
-    "file": "assets/AddressesPage-97uQTWy9.js",
+    "file": "assets/AddressesPage-EWNox4TB.js",
     "name": "AddressesPage",
     "src": "resources/js/vue/pages/profile/AddressesPage.vue",
     "isDynamicEntry": true,
@@ -105,7 +105,7 @@
     ]
   },
   "resources/js/vue/pages/profile/PaymentsPage.vue": {
-    "file": "assets/PaymentsPage-RNgIVEsR.js",
+    "file": "assets/PaymentsPage-B7OPRejR.js",
     "name": "PaymentsPage",
     "src": "resources/js/vue/pages/profile/PaymentsPage.vue",
     "isDynamicEntry": true,
@@ -115,7 +115,7 @@
     ]
   },
   "resources/js/vue/pages/profile/SupportPage.vue": {
-    "file": "assets/SupportPage-B5_PDvxP.js",
+    "file": "assets/SupportPage-Vw9os1xx.js",
     "name": "SupportPage",
     "src": "resources/js/vue/pages/profile/SupportPage.vue",
     "isDynamicEntry": true,

@@ -1,8 +1,8 @@
 <template>
   <div class="px-4 py-6 max-w-lg mx-auto md:max-w-4xl lg:max-w-6xl pb-24">
-    <!-- Header address bar mockup with glassmorphism -->
+    <!-- Header address bar with glassmorphism -->
     <div class="flex items-center justify-between mb-8 dark:bg-slate-800/60 backdrop-blur-md border dark:border-slate-700/50 p-4 rounded-2xl shadow-lg bg-white border-slate-300">
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 cursor-pointer" @click="goToAddress">
         <div class="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-orange-500">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -11,8 +11,8 @@
         </div>
         <div>
           <span class="text-xs dark:text-slate-400 block font-medium uppercase tracking-wider text-slate-600">{{ t('home.delivery_to') }}</span>
-          <span class="text-sm dark:text-slate-100 font-bold hover:text-orange-400 cursor-pointer transition-colors flex items-center gap-1 text-slate-900">
-            {{ t('home.demo_address') }}
+          <span class="text-sm dark:text-slate-100 font-bold hover:text-orange-400 transition-colors flex items-center gap-1 text-slate-900">
+            {{ currentAddress }}
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3 h-3 text-orange-500">
               <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
             </svg>
@@ -188,13 +188,37 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useRestaurantsStore } from '../stores/restaurants';
+import { useAuthStore } from '../stores/auth';
+import apiClient from '../api/client';
 
 const { t } = useI18n();
 const router = useRouter();
 const store = useRestaurantsStore();
+const authStore = useAuthStore();
 
 const activeCategory = ref('all');
 const sortBy = ref('rating');
+const savedAddress = ref(null);
+
+const currentAddress = computed(() => savedAddress.value?.full_address || t('home.choose_address'));
+
+const goToAddress = () => {
+  router.push({ name: 'profile-addresses' });
+};
+
+const fetchDefaultAddress = async () => {
+  if (!authStore.isAuthenticated) {
+    savedAddress.value = null;
+    return;
+  }
+  try {
+    const { data } = await apiClient.get('/profile/addresses');
+    const addresses = data.data || [];
+    savedAddress.value = addresses.find(a => a.is_default) || addresses[0] || null;
+  } catch (error) {
+    savedAddress.value = null;
+  }
+};
 
 const categories = ref([
   { id: 'all', icon: '🍽️' },
@@ -237,6 +261,7 @@ const filteredRestaurants = computed(() => {
 
 onMounted(() => {
   store.fetchRestaurants();
+  fetchDefaultAddress();
 });
 </script>
 
