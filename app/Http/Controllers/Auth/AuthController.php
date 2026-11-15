@@ -54,6 +54,7 @@ class AuthController extends Controller
         $user = $this->createUserFromRequest($request);
 
         Auth::login($user);
+        $request->session()->regenerate();
 
         if ($request->wantsJson()) {
             return response()->json([

@@ -15,16 +15,14 @@ class SocialAuthController extends Controller
 {
     public function redirectToGoogle(Request $request): RedirectResponse
     {
-        $redirect = $request->query('redirect', '/profile');
-
-        session()->put('google_login_redirect', $redirect);
+        session()->put('google_login_redirect', self::safeRedirect($request->query('redirect')));
 
         return Socialite::driver('google')->redirect();
     }
 
     public function handleGoogleCallback(): RedirectResponse
     {
-        $redirect = session()->pull('google_login_redirect', '/profile');
+        $redirect = self::safeRedirect(session()->pull('google_login_redirect'));
 
         try {
             $googleUser = Socialite::driver('google')->user();
@@ -58,7 +56,25 @@ class SocialAuthController extends Controller
         }
 
         Auth::login($user);
+        request()->session()->regenerate();
 
         return redirect()->to($redirect);
+    }
+
+    /**
+     * Only paths inside this site: "?redirect=https://evil.example" (or "//evil.example",
+     * "/\\evil.example") must not turn the login into a redirect to someone else's page.
+     */
+    private static function safeRedirect(mixed $target): string
+    {
+        if (! is_string($target)
+            || ! str_starts_with($target, '/')
+            || str_starts_with($target, '//')
+            || str_contains($target, '\\')
+            || preg_match('/[\x00-\x1F]/', $target) === 1) {
+            return '/profile';
+        }
+
+        return $target;
     }
 }

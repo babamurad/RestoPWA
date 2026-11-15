@@ -25,6 +25,11 @@ class OrderController
 {
     use ApiResponses;
 
+    /** Stand-in coordinates for pickup orders, which carry no delivery point */
+    private const PLACEHOLDER_LAT = 39.0886;
+
+    private const PLACEHOLDER_LON = 63.5593;
+
     public function __construct(
         private readonly OrderService $orderService,
         private readonly OrderPreconditionValidator $preconditionValidator,
@@ -57,14 +62,18 @@ class OrderController
             'customer_phone' => $customerPhone,
         ]);
 
-        // 2. Fallback coordinates & geocoding if missing lat/lon
+        // 2. No coordinates from the client: geocode the address text. A failed lookup is not
+        // replaced by a default point — the courier would be sent to the wrong place — so the
+        // order is rejected below (INVALID_COORDINATES). Pickup needs no delivery point.
+        $isPickupOrder = $request->input('delivery_type') === Order::DELIVERY_TYPE_PICKUP;
+        $coordinatesMissing = false;
         if (is_array($addressInput)) {
             if (empty($addressInput['lat']) || empty($addressInput['lon'])) {
-                $lat = 39.0886; // Default latitude for Turkmenabat
-                $lon = 63.5593; // Default longitude for Turkmenabat
+                $lat = null;
+                $lon = null;
 
                 $addressString = $addressInput['address'] ?? $addressInput['manual_address'] ?? '';
-                if (! empty($addressString)) {
+                if (! $isPickupOrder && ! empty($addressString)) {
                     try {
                         $geoService = app(GeoService::class);
                         $geoResult = $geoService->geocodeWithFallback($addressString);
@@ -79,6 +88,13 @@ class OrderController
                     }
                 }
 
+                if ($lat === null || $lon === null) {
+                    $coordinatesMissing = ! $isPickupOrder;
+                    // Placeholder so the payload shape stays valid; never used for a delivery
+                    $lat = self::PLACEHOLDER_LAT;
+                    $lon = self::PLACEHOLDER_LON;
+                }
+
                 $addressInput['lat'] = $lat;
                 $addressInput['lon'] = $lon;
             }
@@ -86,36 +102,45 @@ class OrderController
             $request->merge(['address' => $addressInput]);
         }
 
-        // 3. Structure items — always recalculate prices from DB, never trust client
+        // 3. Structure items — name, price and modifiers always come from the DB, never from
+        // the client: the kitchen must see what is really being sold at the real price.
         $itemsInput = $request->input('items');
+        $itemReject = null;
         if (is_array($itemsInput)) {
+            $orderVendorId = (string) $request->input('vendor_id');
             $updatedItems = [];
             foreach ($itemsInput as $item) {
                 if (is_array($item) && isset($item['product_id'])) {
-                    $productId = $item['product_id'];
-                    $product = Product::find($productId);
+                    $product = Product::find($item['product_id']);
 
-                    $productName = $item['product_name'] ?? $item['name'] ?? ($product ? $product->name : 'Блюдо');
+                    // Unknown product, or one from another restaurant's menu
+                    if ($product && $orderVendorId !== '' && (string) $product->vendor_id !== $orderVendorId) {
+                        $product = null;
+                    }
+
+                    if (! $product) {
+                        $itemReject ??= OrderRejectReason::ITEM_NOT_FOUND;
+                    } elseif (! $product->is_available) {
+                        $itemReject ??= OrderRejectReason::ITEM_UNAVAILABLE;
+                    }
+
                     $quantity = (int) ($item['quantity'] ?? 1);
-                    $clientModifiers = $item['modifiers'] ?? [];
 
                     // Server-side price: base product price from DB (MoneyCast → float currency units → cents)
                     $basePriceCents = $product ? (int) round($product->price * 100) : 0;
 
-                    // Recalculate modifier surcharge from DB, ignoring client-sent prices
-                    $modifierPriceCents = 0;
-                    if (! empty($clientModifiers) && $product) {
-                        $modifierPriceCents = self::calculateModifierPriceFromDb($product, $clientModifiers);
-                    }
+                    // Keep only modifiers that exist on the product, with their DB name and price
+                    [$modifierPriceCents, $modifiers] = $product
+                        ? self::resolveModifiersFromDb($product, (array) ($item['modifiers'] ?? []))
+                        : [0, []];
 
                     $unitPrice = $basePriceCents + $modifierPriceCents;
-                    $totalPrice = $unitPrice * $quantity;
 
-                    $item['product_name'] = $productName;
+                    $item['product_name'] = $product ? $product->name : 'Блюдо';
                     $item['unit_price'] = $unitPrice;
-                    $item['total_price'] = $totalPrice;
-                    $item['modifiers'] = $clientModifiers;
-                    $item['image'] = $item['image'] ?? ($product?->image);
+                    $item['total_price'] = $unitPrice * $quantity;
+                    $item['modifiers'] = $modifiers;
+                    $item['image'] = $product?->image;
                 }
                 $updatedItems[] = $item;
             }
@@ -207,12 +232,11 @@ class OrderController
         $user = $request->user();
 
         if (! $user) {
-            Log::error('Order Auth Failed', [
+            // No cookies, session contents or headers here: they hold session ids and tokens
+            Log::warning('[API Order] Unauthenticated order attempt', [
+                'trace_id' => $traceId,
                 'has_session' => $request->hasSession(),
-                'session_id' => $request->hasSession() ? $request->session()->getId() : 'none',
-                'cookies' => $request->cookies->all(),
-                'session_all' => $request->hasSession() ? $request->session()->all() : [],
-                'headers' => $request->headers->all(),
+                'has_bearer' => $request->bearerToken() !== null,
             ]);
 
             return $this->errorResponse(
@@ -222,7 +246,7 @@ class OrderController
         }
 
         // Precondition checks
-        $preconditionReason = $this->preconditionValidator->validate($validated);
+        $preconditionReason = $this->preconditionValidator->validate($validated, $itemReject, $coordinatesMissing);
         if ($preconditionReason !== null) {
             Log::warning('[API Order] Precondition check failed', [
                 'trace_id' => $traceId,
@@ -310,14 +334,17 @@ class OrderController
     }
 
     /**
-     * Calculate the modifier price surcharge in cents from the DB product modifiers,
-     * matching client-selected modifiers by id or name. Never trusts client-sent prices.
+     * Match client-selected modifiers (by id or name) against the product's DB modifiers.
+     * Returns the surcharge in cents and the matched modifiers with their DB name and price;
+     * anything the product does not offer is dropped, client-sent names and prices are ignored.
+     *
+     * @return array{0: int, 1: list<array{id: mixed, name: mixed, price: float}>}
      */
-    private static function calculateModifierPriceFromDb(Product $product, array $clientModifiers): int
+    private static function resolveModifiersFromDb(Product $product, array $clientModifiers): array
     {
         $dbModifiers = $product->modifiers;
         if (! $dbModifiers instanceof Collection || $dbModifiers->isEmpty() || empty($clientModifiers)) {
-            return 0;
+            return [0, []];
         }
 
         // Flatten DB modifiers: groups with options → extract options; flat → keep as-is
@@ -333,6 +360,7 @@ class OrderController
         }
 
         $surchargeCents = 0;
+        $matched = [];
         foreach ($clientModifiers as $clientMod) {
             $clientModId = is_array($clientMod) ? ($clientMod['id'] ?? null) : (is_string($clientMod) ? $clientMod : null);
             $clientModName = is_array($clientMod) ? ($clientMod['name'] ?? null) : null;
@@ -346,13 +374,19 @@ class OrderController
                 $dbMatch = $flatDb->firstWhere('name', $clientModName);
             }
 
-            if ($dbMatch !== null) {
+            if (is_array($dbMatch)) {
                 // Modifier prices in JSON are in currency units → convert to cents
-                $surchargeCents += (int) round(((float) ($dbMatch['price'] ?? 0)) * 100);
+                $price = (float) ($dbMatch['price'] ?? 0);
+                $surchargeCents += (int) round($price * 100);
+                $matched[] = [
+                    'id' => $dbMatch['id'] ?? null,
+                    'name' => $dbMatch['name'] ?? null,
+                    'price' => $price,
+                ];
             }
         }
 
-        return $surchargeCents;
+        return [$surchargeCents, $matched];
     }
 
     private function errorResponse(

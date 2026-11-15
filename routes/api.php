@@ -54,8 +54,8 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->gro
     Route::post('geo/reverse', [GeoController::class, 'reverse'])->name('api.geo.reverse');
     Route::post('telemetry', [GeoController::class, 'telemetry'])->name('api.telemetry');
 
-    Route::post('login', [AuthController::class, 'login'])->name('api.login');
-    Route::post('register', [AuthController::class, 'register'])->name('api.register');
+    Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login')->name('api.login');
+    Route::post('register', [AuthController::class, 'register'])->middleware('throttle:register')->name('api.register');
     Route::post('logout', [AuthController::class, 'logout'])->name('api.logout');
     Route::get('user', [AuthController::class, 'user'])->name('api.user');
 
@@ -64,11 +64,11 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->gro
     ]))->name('api.config');
 
     // Mobile app (Capacitor) — Bearer-token auth instead of the web session/CSRF flow
-    Route::post('mobile/login', [AuthController::class, 'loginMobile'])->name('api.mobile.login');
-    Route::post('mobile/register', [AuthController::class, 'registerMobile'])->name('api.mobile.register');
+    Route::post('mobile/login', [AuthController::class, 'loginMobile'])->middleware('throttle:login')->name('api.mobile.login');
+    Route::post('mobile/register', [AuthController::class, 'registerMobile'])->middleware('throttle:register')->name('api.mobile.register');
     Route::post('mobile/logout', [AuthController::class, 'logoutMobile'])->middleware('auth:sanctum')->name('api.mobile.logout');
 
-    Route::post('orders', [DomainOrderController::class, 'store'])->name('api.orders.store');
+    Route::post('orders', [DomainOrderController::class, 'store'])->middleware('throttle:orders')->name('api.orders.store');
 
     // Accepts either the web session (cookie) or a mobile Sanctum Bearer token
     Route::middleware('auth:web,sanctum')->group(function () {

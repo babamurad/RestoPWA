@@ -162,8 +162,9 @@ const submitOrder = async () => {
     vendorId: cartStore.vendorId,
     deliveryType: orderData.value.delivery_type,
     address: {
-      lat: orderData.value.lat || 39.0886,
-      lon: orderData.value.lon || 63.5593,
+      // No point chosen: send none, the server geocodes the address or rejects the order
+      lat: orderData.value.lat || null,
+      lon: orderData.value.lon || null,
       address: orderData.value.address ? orderData.value.address : (orderData.value.delivery_type === 'delivery' ? t('checkout.fallback.map_point') : t('checkout.fallback.pickup')),
       entrance: orderData.value.entrance || null,
       floor: orderData.value.floor || null,

@@ -20,12 +20,20 @@ final readonly class OrderPreconditionValidator
     /**
      * Validate all preconditions before order creation.
      * Returns null on success, or OrderRejectReason on failure.
+     *
+     * $itemReject: a product of the order is unknown, from another restaurant or unavailable
+     * (found while the controller re-read the items from the DB).
+     * $coordinatesMissing: the client sent no delivery point and the address could not be geocoded.
      */
-    public function validate(array $data): ?OrderRejectReason
+    public function validate(array $data, ?OrderRejectReason $itemReject = null, bool $coordinatesMissing = false): ?OrderRejectReason
     {
         $reason = $this->validateVendor($data);
         if ($reason !== null) {
             return $reason;
+        }
+
+        if ($itemReject !== null) {
+            return $itemReject;
         }
 
         $reason = $this->validateItems($data);
@@ -33,7 +41,7 @@ final readonly class OrderPreconditionValidator
             return $reason;
         }
 
-        $reason = $this->validateAddress($data);
+        $reason = $this->validateAddress($data, $coordinatesMissing);
         if ($reason !== null) {
             return $reason;
         }
@@ -110,7 +118,7 @@ final readonly class OrderPreconditionValidator
         return null;
     }
 
-    private function validateAddress(array $data): ?OrderRejectReason
+    private function validateAddress(array $data, bool $coordinatesMissing = false): ?OrderRejectReason
     {
         // Pickup: the customer comes to the restaurant, no address or zone needed.
         if (($data['delivery_type'] ?? null) === Order::DELIVERY_TYPE_PICKUP) {
@@ -135,6 +143,11 @@ final readonly class OrderPreconditionValidator
 
         if (! $hasText) {
             return OrderRejectReason::MISSING_ADDRESS;
+        }
+
+        // The point in $address is only a placeholder: never deliver to it
+        if ($coordinatesMissing) {
+            return OrderRejectReason::INVALID_COORDINATES;
         }
 
         $restaurant = Restaurant::find($data['vendor_id']);

@@ -21,9 +21,12 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Queue\Events\QueueBusy;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Minishlink\WebPush\WebPush;
@@ -119,5 +122,35 @@ class AppServiceProvider extends ServiceProvider
 
         Order::observe(OrderObserver::class);
         Review::observe(ReviewObserver::class);
+
+        $this->configureRateLimiting();
+    }
+
+    /**
+     * Separate limits for the sensitive routes, so that password guessing or mass sign-ups
+     * are stopped early and one route cannot use up the shared API limit of the others.
+     */
+    private function configureRateLimiting(): void
+    {
+        $tooMany = function (Request $request, array $headers) {
+            $message = __('api.too_many_requests');
+
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['success' => false, 'message' => $message, 'code' => 429], 429, $headers);
+            }
+
+            return back()->withErrors(['email' => $message])->onlyInput('email')->withHeaders($headers);
+        };
+
+        // Password guessing: 5 attempts a minute per account from one address,
+        // and a wider cap per address against trying many accounts
+        RateLimiter::for('login', fn (Request $request) => [
+            Limit::perMinute(5)->by('login:'.mb_strtolower((string) $request->input('email')).'|'.$request->ip())->response($tooMany),
+            Limit::perMinute(20)->by('login-ip:'.$request->ip())->response($tooMany),
+        ]);
+
+        RateLimiter::for('register', fn (Request $request) => Limit::perMinute(5)->by('register:'.$request->ip())->response($tooMany));
+
+        RateLimiter::for('orders', fn (Request $request) => Limit::perMinute(10)->by('orders:'.($request->user()?->id ?? $request->ip()))->response($tooMany));
     }
 }

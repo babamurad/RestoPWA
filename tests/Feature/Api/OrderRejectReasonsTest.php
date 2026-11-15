@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
+use App\Domains\Geo\Services\DeliveryZoneCheckResult;
 use App\Domains\Geo\Services\GeoService;
 use App\Domains\Menu\Models\Product;
+use App\Domains\Order\Models\Order;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class OrderRejectReasonsTest extends TestCase
@@ -16,7 +20,9 @@ class OrderRejectReasonsTest extends TestCase
     use RefreshDatabase;
 
     private Restaurant $restaurant;
+
     private Product $product;
+
     private User $user;
 
     protected function setUp(): void
@@ -38,8 +44,8 @@ class OrderRejectReasonsTest extends TestCase
         $this->user = User::factory()->create();
 
         // Default mock for geo service
-        $this->instance(\App\Domains\Geo\Services\GeoService::class, \Mockery::mock(\App\Domains\Geo\Services\GeoService::class, function ($mock) {
-            $mock->shouldReceive('checkDeliveryZone')->andReturn(new \App\Domains\Geo\Services\DeliveryZoneCheckResult('inside', true, 'Allowed'));
+        $this->instance(GeoService::class, \Mockery::mock(GeoService::class, function ($mock) {
+            $mock->shouldReceive('checkDeliveryZone')->andReturn(new DeliveryZoneCheckResult('inside', true, 'Allowed'));
             $mock->shouldReceive('geocodeWithFallback')->andReturn(null);
         }));
     }
@@ -286,5 +292,90 @@ class OrderRejectReasonsTest extends TestCase
 
         $response->assertStatus(400);
         $this->assertNotEmpty($response->json('message'));
+    }
+
+    public function test_product_name_comes_from_db_not_from_client(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->postJson('/api/v1/orders', $this->validOrderPayload([
+                'items' => [
+                    [
+                        'product_id' => $this->product->id,
+                        'product_name' => 'Чёрная икра 1 кг',
+                        'quantity' => 2,
+                        'modifiers' => [['id' => 'made-up', 'name' => 'Бесплатный стейк', 'price' => 0]],
+                    ],
+                ],
+            ]));
+
+        $response->assertStatus(201);
+
+        $item = Order::findOrFail($response->json('data.order_id'))->items[0];
+        $this->assertSame($this->product->name, $item['name']);
+        $this->assertSame([], $item['modifiers']);
+    }
+
+    public function test_rejects_unavailable_product_with_422(): void
+    {
+        $this->product->update(['is_available' => false]);
+
+        $this->actingAs($this->user)
+            ->postJson('/api/v1/orders', $this->validOrderPayload())
+            ->assertStatus(422)
+            ->assertJsonPath('reason', 'item_unavailable');
+    }
+
+    public function test_rejects_unknown_product_with_422(): void
+    {
+        $payload = $this->validOrderPayload();
+        $payload['items'][0]['product_id'] = (string) Str::uuid();
+
+        $this->actingAs($this->user)
+            ->postJson('/api/v1/orders', $payload)
+            ->assertStatus(422)
+            ->assertJsonPath('reason', 'item_not_found');
+    }
+
+    public function test_rejects_product_of_another_restaurant_with_422(): void
+    {
+        $other = Restaurant::factory()->create(['is_active' => true]);
+        $foreign = Product::factory()->create(['vendor_id' => $other->id, 'price' => 1000, 'is_available' => true]);
+
+        $payload = $this->validOrderPayload();
+        $payload['items'][0]['product_id'] = $foreign->id;
+
+        $this->actingAs($this->user)
+            ->postJson('/api/v1/orders', $payload)
+            ->assertStatus(422)
+            ->assertJsonPath('reason', 'item_not_found');
+    }
+
+    public function test_rejects_delivery_when_address_cannot_be_geocoded(): void
+    {
+        // No coordinates from the client and the geocoder (mocked in setUp) finds nothing:
+        // the order must not be created at a default point
+        $this->actingAs($this->user)
+            ->postJson('/api/v1/orders', $this->validOrderPayload([
+                'address' => ['address' => 'Несуществующая улица 999'],
+            ]))
+            ->assertStatus(422)
+            ->assertJsonPath('reason', 'invalid_coordinates');
+
+        $this->assertDatabaseCount('orders', 0);
+    }
+
+    public function test_unauthenticated_attempt_does_not_log_cookies_or_headers(): void
+    {
+        Log::spy();
+
+        $this->withHeader('Authorization', 'Bearer secret-token-value')
+            ->postJson('/api/v1/orders', $this->validOrderPayload())
+            ->assertStatus(401);
+
+        Log::shouldNotHaveReceived('error');
+        Log::shouldHaveReceived('warning')
+            ->withArgs(fn ($message, $context = []) => ! str_contains(json_encode($context), 'secret-token-value')
+                && ! array_key_exists('cookies', $context)
+                && ! array_key_exists('headers', $context));
     }
 }

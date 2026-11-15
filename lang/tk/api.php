@@ -5,6 +5,7 @@ return [
     'not_found' => 'Tapylmady',
     'unauthenticated' => 'Ulgama girilmedik',
     'invalid_credentials' => 'Email ýa-da parol nädogry',
+    'too_many_requests' => 'Synanyşyk gaty köp. Bir minut garaşyň we täzeden synanyşyň.',
     'terms_required' => 'Ulanyjy ylalaşygyny we gizlinlik syýasatyny kabul etmeli.',
     'account' => [
         'deleted' => 'Hasap pozuldy',
