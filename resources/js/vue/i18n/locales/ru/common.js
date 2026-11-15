@@ -38,6 +38,7 @@ export default {
         cart: 'Корзина',
         orders: 'Заказы',
         profile: 'Профиль',
+        courier: 'Доставка',
     },
     language: 'Язык',
 };

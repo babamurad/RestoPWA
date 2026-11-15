@@ -45,15 +45,24 @@ class CourierOrderController extends Controller
         }
 
         // Not his order yet: the courier sees where to go and what he earns, but not who ordered
-        $availableOrders = $availableQuery->get()->map(fn (Order $order) => self::orderPreview($order));
+        $availableOrders = $availableQuery->with('restaurant:id,name')->latest()->limit(50)->get()->map(fn (Order $order) => self::orderPreview($order));
 
+        // His own deliveries: the full order, with the customer's contacts
         $activeOrders = Order::where('courier_id', $courierId)
             ->where('delivery_type', Order::DELIVERY_TYPE_DELIVERY)
             ->whereIn('status', [Order::STATUS_READY_FOR_PICKUP, Order::STATUS_DELIVERING])
-            ->get();
+            ->with('restaurant:id,name')
+            ->get()
+            ->map(fn (Order $order) => array_merge($order->attributesToArray(), [
+                'number' => $order->order_number,
+                'restaurant' => ['name' => $order->restaurant?->name],
+                'customer_name' => $order->user?->name,
+                'customer_phone' => $order->address['phone'] ?? $order->user?->phone,
+            ]));
 
         return response()->json([
             'data' => [
+                'courier' => ['id' => $courierId, 'status' => $user->courierProfile->status],
                 'available' => $availableOrders,
                 'active' => $activeOrders,
             ],
@@ -194,9 +203,16 @@ class CourierOrderController extends Controller
         }
 
         $courier = $user->courierProfile;
-        if ($courier) {
-            $courier->update(['status' => $request->input('status')]);
+        if (! $courier) {
+            return response()->json(['message' => 'Courier profile not found'], 404);
         }
+
+        // An order on the way must be delivered before the shift can end
+        if ($request->input('status') === Courier::STATUS_OFFLINE && $this->hasDeliveryOnTheWay($courier)) {
+            return response()->json(['message' => __('api.courier.finish_delivery_first')], 422);
+        }
+
+        $courier->update(['status' => $request->input('status')]);
 
         return response()->json(['success' => true, 'status' => $request->input('status')]);
     }
@@ -216,9 +232,28 @@ class CourierOrderController extends Controller
             return response()->json(['data' => []]);
         }
 
-        $earnings = $courier->earnings()->with('order')->latest()->get();
+        // Only the order number: the customer's data of past orders is no longer the courier's business
+        $earnings = $courier->earnings()->with('order:id,number')->latest()->limit(100)->get()
+            ->map(fn ($earning) => [
+                'id' => $earning->id,
+                'order_id' => $earning->order_id,
+                'order_number' => $earning->order?->order_number,
+                'amount' => $earning->amount,
+                'status' => $earning->status,
+                'created_at' => $earning->created_at?->toIso8601String(),
+            ]);
 
-        return response()->json(['data' => $earnings]);
+        $sumSince = fn ($since) => round((float) $courier->earnings()->where('created_at', '>=', $since)->sum('amount'), 2);
+
+        return response()->json([
+            'data' => $earnings,
+            'summary' => [
+                'today' => $sumSince(now()->startOfDay()),
+                'week' => $sumSince(now()->startOfWeek()),
+                'month' => $sumSince(now()->startOfMonth()),
+                'unpaid' => round((float) $courier->earnings()->where('status', 'pending')->sum('amount'), 2),
+            ],
+        ]);
     }
 
     /**
@@ -231,7 +266,7 @@ class CourierOrderController extends Controller
             return $courier;
         }
 
-        $offers = CourierOffer::with('order')
+        $offers = CourierOffer::with('order.restaurant:id,name')
             ->where('courier_id', $courier->id)
             ->where('status', CourierOffer::STATUS_PENDING)
             ->where('expires_at', '>', now())
@@ -289,6 +324,13 @@ class CourierOrderController extends Controller
         return response()->json(['message' => 'Offer declined']);
     }
 
+    private function hasDeliveryOnTheWay(Courier $courier): bool
+    {
+        return Order::where('courier_id', $courier->id)
+            ->where('status', Order::STATUS_DELIVERING)
+            ->exists();
+    }
+
     /**
      * What a courier may know about an order before accepting it: enough to decide
      * (restaurant, street, sums), without the customer's name, phone, flat or comments.
@@ -304,6 +346,7 @@ class CourierOrderController extends Controller
             'id' => $order->id,
             'number' => $order->order_number,
             'vendor_id' => $order->vendor_id,
+            'restaurant' => ['name' => $order->restaurant?->name],
             'status' => $order->status,
             'delivery_type' => $order->delivery_type,
             'total' => $order->total,

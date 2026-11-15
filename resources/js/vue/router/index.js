@@ -74,6 +74,12 @@ const routes = [
         component: () => import('../pages/OrdersPage.vue'),
         meta: { titleKey: 'app.titles.orders', requiresAuth: true }
     },
+    {
+        path: '/courier',
+        name: 'courier',
+        component: () => import('../pages/courier/CourierPage.vue'),
+        meta: { titleKey: 'app.titles.courier', requiresAuth: true, role: 'courier' }
+    },
     // Redirect all other unmatched routes to home
     {
         path: '/:pathMatch(.*)*',
@@ -108,7 +114,10 @@ router.beforeEach(async (to, from, next) => {
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
         next({ name: 'login', query: { redirect: to.fullPath } });
     } else if (to.meta.guestOnly && authStore.isAuthenticated) {
-        next({ name: 'profile' });
+        next({ name: authStore.isCourier ? 'courier' : 'profile' });
+    } else if (to.meta.role && authStore.user?.role !== to.meta.role) {
+        // A section of another role (the server refuses its API anyway)
+        next({ name: 'home' });
     } else {
         next();
     }

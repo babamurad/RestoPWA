@@ -60,7 +60,7 @@ class OrderController extends Controller
                     'updated_at' => $order->updated_at->toIso8601String(),
                     'review' => $order->review ? ['rating' => $order->review->rating] : null,
                     'can_cancel' => $order->canBeCancelledByCustomer(),
-                    'cancel_reason' => $order->cancelReasonText(),
+                    'cancel_reason' => $this->cancelReasonForCustomer($order),
                     'can_review' => ! $order->review
                         && in_array($order->status, ReviewController::REVIEWABLE_STATUSES, true),
                     'status_history' => $order->statusHistory->map(function ($history) {
@@ -105,7 +105,7 @@ class OrderController extends Controller
             'created_at' => $order->created_at->toIso8601String(),
             'updated_at' => $order->updated_at->toIso8601String(),
             'can_cancel' => $order->canBeCancelledByCustomer(),
-            'cancel_reason' => $order->cancelReasonText(),
+            'cancel_reason' => $this->cancelReasonForCustomer($order),
             'status_history' => $order->statusHistory->map(function ($history) {
                 return [
                     'from_status' => $history->from_status,
@@ -139,6 +139,12 @@ class OrderController extends Controller
             'status' => $order->status,
             'can_cancel' => false,
         ]);
+    }
+
+    /** The customer who cancelled the order himself needs no explanation of why */
+    private function cancelReasonForCustomer(Order $order): ?string
+    {
+        return $order->cancelled_by === Order::CANCELLED_BY_CUSTOMER ? null : $order->cancelReasonText();
     }
 
     public function assignCourier(Request $request, string $id): JsonResponse

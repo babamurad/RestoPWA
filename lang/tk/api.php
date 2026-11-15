@@ -11,6 +11,9 @@ return [
         'not_yours' => 'Bu siziň sargydyňyz däl.',
         'cannot_cancel' => 'Sargyt eýýäm taýýarlanýar, ony ýatyryp bolmaýar. Restoran ýa-da goldaw gullugy bilen habarlaşyň.',
     ],
+    'courier' => [
+        'finish_delivery_first' => 'Ilki ýoldaky sargydy eltip beriň.',
+    ],
     'account' => [
         'deleted' => 'Hasap pozuldy',
         'wrong_password' => 'Parol nädogry',

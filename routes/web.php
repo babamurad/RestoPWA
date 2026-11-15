@@ -23,7 +23,7 @@ Route::get('/restaurants', fn () => view('app'))->name('restaurants.index');
 Route::get('/restaurants/{slug}', fn () => view('app'))->name('restaurants.show');
 Route::get('/cart', fn () => view('app'))->name('cart');
 Route::get('/checkout', fn () => view('app'))->name('checkout');
-Route::get('/orders', fn () => redirect('/profile'))->name('orders.index');
+Route::get('/orders', fn () => view('app'))->name('orders.index');
 Route::get('/profile', fn () => view('app'))->name('profile.edit');
 
 Route::view('/offline', 'offline');

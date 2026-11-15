@@ -126,6 +126,11 @@ class OrderCancellationTest extends TestCase
 
         $orders = collect($this->actingAs($this->customer)->getJson('/api/v1/orders')->assertOk()->json('data'))->keyBy('id');
 
+        $own = $this->order(Order::STATUS_PENDING);
+        app(OrderService::class)->cancel($own, Order::CANCELLED_BY_CUSTOMER, OrderCancelReason::CHANGED_MIND);
+        $orders = collect($this->actingAs($this->customer)->getJson('/api/v1/orders')->json('data'))->keyBy('id');
+        $this->assertNull($orders[$own->id]['cancel_reason'], 'no explanation for an order the customer cancelled himself');
+
         $this->assertTrue($orders[$open->id]['can_cancel']);
         $this->assertFalse($orders[$cooking->id]['can_cancel']);
         $this->assertNull($orders[$cooking->id]['cancel_reason']);

@@ -38,6 +38,7 @@ export default {
         cart: 'Sebet',
         orders: 'Sargytlar',
         profile: 'Profil',
+        courier: 'Eltmek',
     },
     language: 'Dil',
 };
