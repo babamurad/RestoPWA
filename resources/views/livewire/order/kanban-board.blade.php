@@ -36,6 +36,26 @@
                         <a href="{{ route('filament.vendor.resources.orders.view', ['record' => $order['id'], 'tenant' => $vendorId]) }}" class="text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                             Подробнее &rarr;
                         </a>
+                        @if(in_array($order['status'], ['pending', 'confirmed', 'preparing', 'ready_for_pickup'], true))
+                            {{-- Decline with a reason: the customer is told why the order will not come --}}
+                            <details class="mt-2" draggable="false">
+                                <summary class="cursor-pointer text-xs text-red-600 hover:text-red-700 dark:text-red-400">Отклонить</summary>
+                                <div class="mt-2 space-y-2" x-data="{ reason: '' }">
+                                    <select x-model="reason" class="w-full rounded-md border-gray-300 text-xs dark:border-gray-600 dark:bg-gray-900 dark:text-white" aria-label="Причина отказа">
+                                        <option value="">Причина…</option>
+                                        @foreach(\App\Enums\OrderCancelReason::restaurantOptions() as $value => $label)
+                                            <option value="{{ $value }}">{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                    <button type="button"
+                                            class="w-full rounded-md bg-red-600 px-2 py-1 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                                            :disabled="!reason"
+                                            @click="$wire.declineOrder('{{ $order['id'] }}', reason)">
+                                        Отклонить заказ
+                                    </button>
+                                </div>
+                            </details>
+                        @endif
                     </div>
                 @endforeach
 

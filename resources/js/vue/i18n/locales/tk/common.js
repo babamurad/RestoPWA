@@ -21,6 +21,7 @@ export default {
     order_status: {
         new: 'Täze',
         pending: 'Täze',
+        confirmed: 'Kabul edildi',
         accepted: 'Kabul edildi',
         cooking: 'Taýýarlanýar',
         preparing: 'Taýýarlanýar',

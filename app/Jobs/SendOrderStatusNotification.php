@@ -23,10 +23,16 @@ class SendOrderStatusNotification implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable;
 
     /** Statuses the customer hears about */
-    public const NOTIFIED_STATUSES = [Order::STATUS_PREPARING, Order::STATUS_DELIVERING, Order::STATUS_DELIVERED];
+    public const NOTIFIED_STATUSES = [
+        Order::STATUS_CONFIRMED,
+        Order::STATUS_PREPARING,
+        Order::STATUS_DELIVERING,
+        Order::STATUS_DELIVERED,
+        Order::STATUS_CANCELLED,
+    ];
 
-    /** SMS costs money: only when the food is on its way and when it arrived */
-    public const SMS_STATUSES = [Order::STATUS_DELIVERING, Order::STATUS_DELIVERED];
+    /** SMS costs money: only when the food is on its way, when it arrived, and when it will not come */
+    public const SMS_STATUSES = [Order::STATUS_DELIVERING, Order::STATUS_DELIVERED, Order::STATUS_CANCELLED];
 
     /** A repeated push is worse than a lost one: no retries (SMS retries in its own job) */
     public int $tries = 1;
@@ -50,6 +56,17 @@ class SendOrderStatusNotification implements ShouldQueue
         $key = in_array($this->status, self::NOTIFIED_STATUSES, true) ? $this->status : 'default';
         $title = __("notifications.order.{$key}.title", [], $locale);
         $body = __("notifications.order.{$key}.body", [], $locale);
+
+        if ($this->status === Order::STATUS_CANCELLED) {
+            // The customer who cancelled the order himself needs no message about it
+            if ($order->cancelled_by === Order::CANCELLED_BY_CUSTOMER) {
+                return;
+            }
+
+            if ($reason = $order->cancelReasonText($locale)) {
+                $body .= ' '.__('notifications.order.cancelled.reason', ['reason' => $reason], $locale);
+            }
+        }
 
         // Independent channels: a push failure (e.g. VAPID keys not configured) must not cost the SMS
         try {

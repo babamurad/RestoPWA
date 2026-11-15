@@ -36,8 +36,13 @@ class OrderResource extends Resource
                             ->label('Статус')
                             // Only the current status and the allowed next steps: an order
                             // cannot go back or skip a step (admins fix mistakes in the admin panel)
+                            // "Cancelled" is set by the "Decline" action, which asks for the reason
                             ->options(fn (?Order $record): array => $record
-                                ? $record->selectableStatusLabels()
+                                ? array_filter(
+                                    $record->selectableStatusLabels(),
+                                    fn (string $status): bool => $status !== Order::STATUS_CANCELLED || $record->status === Order::STATUS_CANCELLED,
+                                    ARRAY_FILTER_USE_KEY,
+                                )
                                 : Order::statusLabels())
                             ->required(),
                         Forms\Components\Select::make('payment_status')

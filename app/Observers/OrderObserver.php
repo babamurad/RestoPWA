@@ -74,6 +74,8 @@ class OrderObserver
 
         if ($newStatus === Order::STATUS_CANCELLED) {
             app(PaymentService::class)->cancelPending($order);
+            // No courier should accept an order that no longer exists
+            $dispatcher->cancelPendingOffers($order);
         }
     }
 

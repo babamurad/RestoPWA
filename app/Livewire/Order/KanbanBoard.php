@@ -8,6 +8,7 @@ use App\Domains\Order\Exceptions\InvalidStatusTransition;
 use App\Domains\Order\Models\Order;
 use App\Domains\Order\Services\OrderService;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Enums\OrderCancelReason;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
@@ -172,6 +173,26 @@ class KanbanBoard extends Component
             'vendor_id' => $this->vendorId,
             'user_id' => auth()->id(),
         ]);
+
+        $this->loadOrders();
+    }
+
+    /** Decline an order from its card: the customer is told the reason. */
+    public function declineOrder(string $orderId, string $reason): void
+    {
+        $order = Order::where('id', $orderId)->where('vendor_id', $this->vendorId)->first();
+        $cancelReason = OrderCancelReason::tryFrom($reason);
+
+        if (! $order || ! $cancelReason || ! array_key_exists($reason, OrderCancelReason::restaurantOptions())) {
+            return;
+        }
+
+        try {
+            $this->orderService->cancel($order, Order::CANCELLED_BY_RESTAURANT, $cancelReason);
+            Notification::make()->title('Заказ отклонён, клиент уведомлён')->success()->send();
+        } catch (InvalidStatusTransition) {
+            Notification::make()->title('Этот заказ уже нельзя отклонить')->warning()->send();
+        }
 
         $this->loadOrders();
     }

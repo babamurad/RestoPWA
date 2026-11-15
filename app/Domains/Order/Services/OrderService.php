@@ -8,6 +8,7 @@ use App\Domains\Order\Exceptions\InvalidStatusTransition;
 use App\Domains\Order\Models\Order;
 use App\Domains\Payment\Services\PaymentService;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Enums\OrderCancelReason;
 use App\Enums\PaymentStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -85,6 +86,45 @@ class OrderService
         $order->update(['status' => $newStatus]);
 
         return $order->fresh();
+    }
+
+    /**
+     * Cancel an order: by the customer (only until the kitchen has started), by the
+     * restaurant ("decline", with a reason) or by an admin. The observer then closes the
+     * pending payment and the open courier offers, and tells the customer.
+     *
+     * @param  string  $by  one of Order::CANCELLED_BY_*
+     *
+     * @throws InvalidStatusTransition
+     */
+    public function cancel(Order $order, string $by, ?OrderCancelReason $reason = null, ?string $comment = null): Order
+    {
+        return DB::transaction(function () use ($order, $by, $reason, $comment) {
+            // Lock: the restaurant may be moving the order on at the same moment
+            $order = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+
+            $allowed = $order->canTransitionTo(Order::STATUS_CANCELLED)
+                && ($by !== Order::CANCELLED_BY_CUSTOMER || $order->canBeCancelledByCustomer());
+
+            if (! $allowed) {
+                throw new InvalidStatusTransition($order, Order::STATUS_CANCELLED);
+            }
+
+            $order->statusChangeMeta = array_filter([
+                'cancelled_by' => $by,
+                'reason' => $reason?->value,
+            ]);
+
+            $order->update([
+                'status' => Order::STATUS_CANCELLED,
+                'cancelled_by' => $by,
+                'cancel_reason' => $reason,
+                'cancel_comment' => $comment !== null && trim($comment) !== '' ? trim($comment) : null,
+                'cancelled_at' => now(),
+            ]);
+
+            return $order;
+        });
     }
 
     public function getWorkingHours(Restaurant $restaurant): ?array

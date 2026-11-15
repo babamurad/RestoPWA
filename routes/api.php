@@ -74,6 +74,9 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->gro
     Route::middleware('auth:web,sanctum')->group(function () {
         Route::get('orders', [OrderController::class, 'index'])->name('api.v1.orders.index');
         Route::get('orders/{id}', [OrderController::class, 'show'])->name('api.v1.orders.show');
+        Route::post('orders/{id}/cancel', [OrderController::class, 'cancel'])
+            ->middleware('throttle:10,1')
+            ->name('api.v1.orders.cancel');
         Route::post('orders/{id}/review', [ReviewController::class, 'store'])
             ->middleware('throttle:10,1')
             ->name('api.v1.orders.review');

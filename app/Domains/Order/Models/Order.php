@@ -9,6 +9,7 @@ use App\Domains\Logistics\Models\Courier;
 use App\Domains\Payment\Models\PaymentTransaction;
 use App\Domains\Review\Models\Review;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Enums\OrderCancelReason;
 use App\Enums\PaymentStatus;
 use App\Models\User;
 use App\Models\VendorSettlement;
@@ -79,6 +80,17 @@ class Order extends Model
     /** Pickup order handed over to the customer (set on the kanban) */
     public const STATUS_COMPLETED = 'completed';
 
+    public const CANCELLED_BY_CUSTOMER = 'customer';
+
+    public const CANCELLED_BY_RESTAURANT = 'restaurant';
+
+    public const CANCELLED_BY_ADMIN = 'admin';
+
+    public const CANCELLED_BY_SYSTEM = 'system';
+
+    /** The customer may cancel on their own only until the kitchen has started */
+    public const CUSTOMER_CANCELLABLE_STATUSES = [self::STATUS_PENDING, self::STATUS_CONFIRMED];
+
     public const STATUSES = [
         self::STATUS_PENDING => ['label' => 'Новый', 'color' => 'yellow', 'icon' => 'clock'],
         self::STATUS_CONFIRMED => ['label' => 'Подтверждён', 'color' => 'blue', 'icon' => 'check'],
@@ -130,6 +142,10 @@ class Order extends Model
         'comment',
         'is_offline',
         'metadata',
+        'cancelled_by',
+        'cancel_reason',
+        'cancel_comment',
+        'cancelled_at',
     ];
 
     /**
@@ -146,6 +162,8 @@ class Order extends Model
             'commission_amount' => MoneyCast::class,
             'is_offline' => 'boolean',
             'metadata' => 'array',
+            'cancel_reason' => OrderCancelReason::class,
+            'cancelled_at' => 'datetime',
         ];
     }
 
@@ -251,6 +269,28 @@ class Order extends Model
         ];
 
         return $transitions[$this->status] ?? [];
+    }
+
+    public function canBeCancelledByCustomer(): bool
+    {
+        return in_array($this->status, self::CUSTOMER_CANCELLABLE_STATUSES, true);
+    }
+
+    /** Why the order was cancelled, as shown to the customer (null if it was not cancelled) */
+    public function cancelReasonText(?string $locale = null): ?string
+    {
+        if ($this->status !== self::STATUS_CANCELLED) {
+            return null;
+        }
+
+        $text = $this->cancel_reason?->customerText($locale);
+
+        // "Other" says nothing by itself: show what the restaurant wrote
+        if ($this->cancel_comment && ($this->cancel_reason === null || $this->cancel_reason === OrderCancelReason::OTHER)) {
+            return $this->cancel_comment;
+        }
+
+        return $text;
     }
 
     public function canTransitionTo(string $status): bool
