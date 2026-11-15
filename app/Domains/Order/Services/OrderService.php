@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Order\Services;
 
+use App\Domains\Order\Exceptions\InvalidStatusTransition;
 use App\Domains\Order\Models\Order;
 use App\Domains\Payment\Services\PaymentService;
 use App\Domains\Vendor\Models\Restaurant;
@@ -66,18 +67,22 @@ class OrderService
         });
     }
 
+    /**
+     * Move an order to the next status. Only the steps of Order::getNextStatuses() are
+     * allowed; the history record is written by the Order model itself.
+     *
+     * @throws InvalidStatusTransition
+     */
     public function updateStatus(string $orderId, string $newStatus, array $metadata = []): Order
     {
         $order = Order::findOrFail($orderId);
-        $oldStatus = $order->status;
 
+        if (! $order->canTransitionTo($newStatus)) {
+            throw new InvalidStatusTransition($order, $newStatus);
+        }
+
+        $order->statusChangeMeta = $metadata;
         $order->update(['status' => $newStatus]);
-
-        $order->statusHistory()->create([
-            'from_status' => $oldStatus,
-            'to_status' => $newStatus,
-            'metadata' => $metadata,
-        ]);
 
         return $order->fresh();
     }

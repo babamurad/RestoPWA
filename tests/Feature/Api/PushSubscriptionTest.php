@@ -77,6 +77,24 @@ class PushSubscriptionTest extends TestCase
         ]);
     }
 
+    public function test_user_cannot_remove_someone_elses_subscription(): void
+    {
+        $endpoint = 'https://fcm.googleapis.com/fcm/other-user-endpoint';
+
+        PushSubscription::create([
+            'user_id' => User::factory()->create()->id,
+            'endpoint' => $endpoint,
+            'p256dh' => 'test-p256dh',
+            'auth' => 'test-auth',
+        ]);
+
+        $this->actingAs($this->user)
+            ->postJson('/api/v1/push/unsubscribe', ['endpoint' => $endpoint])
+            ->assertStatus(200);
+
+        $this->assertDatabaseHas('push_subscriptions', ['endpoint' => $endpoint]);
+    }
+
     public function test_push_subscription_requires_valid_endpoint(): void
     {
         $response = $this->actingAs($this->user)

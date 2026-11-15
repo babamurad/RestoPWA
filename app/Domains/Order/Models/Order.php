@@ -50,6 +50,14 @@ class Order extends Model
         return OrderFactory::new();
     }
 
+    /**
+     * Extra details for the history record of the next status change
+     * (who or what changed it); not a DB column, cleared once written.
+     *
+     * @var array<string, mixed>
+     */
+    public array $statusChangeMeta = [];
+
     public const STATUS_PENDING = 'pending';
 
     public const STATUS_CONFIRMED = 'confirmed';
@@ -78,6 +86,7 @@ class Order extends Model
         self::STATUS_READY_FOR_PICKUP => ['label' => 'Ожидает курьера', 'color' => 'indigo', 'icon' => 'box'],
         self::STATUS_DELIVERING => ['label' => 'Доставляется', 'color' => 'purple', 'icon' => 'truck'],
         self::STATUS_DELIVERED => ['label' => 'Доставлен', 'color' => 'green', 'icon' => 'check-circle'],
+        self::STATUS_COMPLETED => ['label' => 'Выдан', 'color' => 'green', 'icon' => 'check-circle'],
         self::STATUS_CANCELLED => ['label' => 'Отменён', 'color' => 'red', 'icon' => 'x'],
     ];
 
@@ -223,17 +232,48 @@ class Order extends Model
         return self::STATUSES[$this->status]['color'] ?? 'gray';
     }
 
+    /**
+     * The only allowed steps of an order. The single dictionary of statuses:
+     * pending → confirmed → preparing → ready_for_pickup → delivering → delivered,
+     * a pickup order ends with "completed" instead of the delivery steps.
+     * "confirmed" (accepted by the restaurant) may be skipped: the kitchen starts cooking at once.
+     */
     public function getNextStatuses(): array
     {
         $transitions = [
-            self::STATUS_PENDING => [self::STATUS_CONFIRMED, self::STATUS_CANCELLED],
+            self::STATUS_PENDING => [self::STATUS_CONFIRMED, self::STATUS_PREPARING, self::STATUS_CANCELLED],
             self::STATUS_CONFIRMED => [self::STATUS_PREPARING, self::STATUS_CANCELLED],
             self::STATUS_PREPARING => [self::STATUS_READY_FOR_PICKUP, self::STATUS_CANCELLED],
-            self::STATUS_READY_FOR_PICKUP => [self::STATUS_DELIVERING, self::STATUS_CANCELLED],
+            self::STATUS_READY_FOR_PICKUP => $this->isPickup()
+                ? [self::STATUS_COMPLETED, self::STATUS_CANCELLED]
+                : [self::STATUS_DELIVERING, self::STATUS_CANCELLED],
             self::STATUS_DELIVERING => [self::STATUS_DELIVERED],
         ];
 
         return $transitions[$this->status] ?? [];
+    }
+
+    public function canTransitionTo(string $status): bool
+    {
+        return in_array($status, $this->getNextStatuses(), true);
+    }
+
+    /** Status => label, for selects and badges */
+    public static function statusLabels(): array
+    {
+        return array_map(static fn (array $status): string => $status['label'], self::STATUSES);
+    }
+
+    /** Statuses a form may offer for this order: the current one and the allowed next steps */
+    public function selectableStatusLabels(): array
+    {
+        $allowed = [$this->status, ...$this->getNextStatuses()];
+
+        return array_filter(
+            self::statusLabels() + [$this->status => $this->status],
+            static fn (string $status): bool => in_array($status, $allowed, true),
+            ARRAY_FILTER_USE_KEY,
+        );
     }
 
     public function getCanTransitionToAttribute(): bool
@@ -324,11 +364,13 @@ class Order extends Model
 
         static::updated(static function (self $order): void {
             if ($order->isDirty('status')) {
+                // The one place a status change is written to the history
                 $order->statusHistory()->create([
                     'from_status' => $order->getOriginal('status'),
                     'to_status' => $order->status,
-                    'metadata' => ['changed_by' => Auth::id() ?? 'system'],
+                    'metadata' => ['changed_by' => Auth::id() ?? 'system'] + $order->statusChangeMeta,
                 ]);
+                $order->statusChangeMeta = [];
             }
         });
     }

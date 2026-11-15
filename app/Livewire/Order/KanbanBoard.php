@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Order;
 
+use App\Domains\Order\Exceptions\InvalidStatusTransition;
 use App\Domains\Order\Models\Order;
 use App\Domains\Order\Services\OrderService;
 use App\Domains\Vendor\Models\Restaurant;
@@ -37,13 +38,13 @@ class KanbanBoard extends Component
         'cooking' => [
             'id' => 'cooking',
             'title' => 'Готовятся',
-            'statuses' => ['confirmed', 'cooking', 'preparing'],
+            'statuses' => ['confirmed', 'preparing'],
             'orders' => [],
         ],
         'ready' => [
             'id' => 'ready',
             'title' => 'Готовы',
-            'statuses' => ['ready', 'ready_for_pickup'],
+            'statuses' => ['ready_for_pickup'],
             'orders' => [],
         ],
         'delivering' => [
@@ -94,8 +95,15 @@ class KanbanBoard extends Component
             return;
         }
 
+        // Orders in work, plus the ones finished during the last day: the board is a
+        // working tool, the full history lives in the orders list
+        $finished = [Order::STATUS_DELIVERED, Order::STATUS_COMPLETED];
+
         $orders = Order::where('vendor_id', $this->vendorId)
-            ->whereNotIn('status', [Order::STATUS_CANCELLED])
+            ->where('status', '!=', Order::STATUS_CANCELLED)
+            ->where(fn ($query) => $query
+                ->whereNotIn('status', $finished)
+                ->orWhere('updated_at', '>=', now()->subDay()))
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -118,14 +126,15 @@ class KanbanBoard extends Component
 
         $newStatus = match ($newColumnId) {
             'pending' => OrderService::STATUS_PENDING,
-            'cooking' => OrderService::STATUS_CONFIRMED,
+            'cooking' => OrderService::STATUS_PREPARING,
             'ready' => OrderService::STATUS_READY,
             'delivering' => OrderService::STATUS_DELIVERING,
             'completed' => OrderService::STATUS_COMPLETED,
             default => null,
         };
 
-        if ($newStatus === null || $order->status === $newStatus) {
+        // Already in that column (e.g. "confirmed" shown under "cooking")
+        if ($newStatus === null || $this->findColumnByStatus($order->status) === $newColumnId) {
             return;
         }
 
@@ -138,12 +147,23 @@ class KanbanBoard extends Component
 
         $oldStatus = $order->status;
 
-        $this->orderService->updateStatus($orderId, $newStatus, [
-            'changed_via' => 'kanban',
-            'changed_by' => auth()->id(),
-            'previous_column' => $this->findColumnByStatus($oldStatus),
-            'new_column' => $newColumnId,
-        ]);
+        try {
+            $this->orderService->updateStatus($orderId, $newStatus, [
+                'changed_via' => 'kanban',
+                'changed_by' => auth()->id(),
+                'previous_column' => $this->findColumnByStatus($oldStatus),
+                'new_column' => $newColumnId,
+            ]);
+        } catch (InvalidStatusTransition) {
+            Notification::make()
+                ->title('Нельзя переместить заказ')
+                ->body('Заказ проходит этапы по порядку: «Новые» → «Готовятся» → «Готовы». Вернуть назад или перескочить этап нельзя.')
+                ->warning()
+                ->send();
+            $this->loadOrders();
+
+            return;
+        }
 
         Log::info('Order status changed via kanban', [
             'order_id' => $orderId,

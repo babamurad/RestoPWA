@@ -130,6 +130,8 @@ class OrderResource extends Resource
                             ->required(),
                     ])
                     ->action(function (Order $order, array $data) {
+                        // An admin may set any status to fix a mistake; the history shows it was an override
+                        $order->statusChangeMeta = ['changed_via' => 'admin_override'];
                         $order->update(['status' => $data['new_status']]);
                     })
                     ->icon('heroicon-m-pencil'),

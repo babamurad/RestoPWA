@@ -44,7 +44,8 @@ class CourierOrderController extends Controller
             $availableQuery->whereIn('vendor_id', $restaurantIds);
         }
 
-        $availableOrders = $availableQuery->get();
+        // Not his order yet: the courier sees where to go and what he earns, but not who ordered
+        $availableOrders = $availableQuery->get()->map(fn (Order $order) => self::orderPreview($order));
 
         $activeOrders = Order::where('courier_id', $courierId)
             ->where('delivery_type', Order::DELIVERY_TYPE_DELIVERY)
@@ -239,7 +240,7 @@ class CourierOrderController extends Controller
             ->map(fn (CourierOffer $offer) => [
                 'offer_id' => $offer->id,
                 'expires_at' => $offer->expires_at->toIso8601String(),
-                'order' => $offer->order,
+                'order' => $offer->order ? self::orderPreview($offer->order) : null,
             ]);
 
         return response()->json(['data' => $offers]);
@@ -286,6 +287,37 @@ class CourierOrderController extends Controller
         $dispatcher->decline($offer);
 
         return response()->json(['message' => 'Offer declined']);
+    }
+
+    /**
+     * What a courier may know about an order before accepting it: enough to decide
+     * (restaurant, street, sums), without the customer's name, phone, flat or comments.
+     * The full order is returned once it is assigned to him.
+     *
+     * @return array<string, mixed>
+     */
+    private static function orderPreview(Order $order): array
+    {
+        $address = $order->address ?? [];
+
+        return [
+            'id' => $order->id,
+            'number' => $order->order_number,
+            'vendor_id' => $order->vendor_id,
+            'status' => $order->status,
+            'delivery_type' => $order->delivery_type,
+            'total' => $order->total,
+            'delivery_fee' => $order->delivery_fee,
+            'payment_method' => $order->payment_method,
+            'items_count' => $order->items_count,
+            'address' => array_filter([
+                'address' => $address['address'] ?? $address['manual_address'] ?? null,
+                'landmark' => $address['landmark'] ?? null,
+                'lat' => $address['lat'] ?? null,
+                'lon' => $address['lon'] ?? null,
+            ], static fn ($value) => $value !== null),
+            'created_at' => $order->created_at?->toIso8601String(),
+        ];
     }
 
     private function currentCourier(): Courier|JsonResponse

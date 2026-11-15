@@ -16,6 +16,40 @@ class CourierApiTest extends TestCase
     use RefreshDatabase;
 
     #[Group('courier')]
+    public function test_available_order_hides_the_customer_until_it_is_accepted(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::COURIER]);
+        Courier::create(['user_id' => $user->id]);
+
+        $order = Order::factory()->create([
+            'status' => Order::STATUS_READY_FOR_PICKUP,
+            'comment' => 'Код домофона 4321',
+            'address' => [
+                'address' => 'ул. Битарап 10',
+                'lat' => 39.09,
+                'lon' => 63.56,
+                'name' => 'Айгуль',
+                'phone' => '+99365000000',
+                'apartment' => '17',
+                'courier_comment' => 'Звонить дважды',
+            ],
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/api/v1/courier/orders')->assertOk();
+
+        $response->assertJsonPath('data.available.0.address.address', 'ул. Битарап 10');
+        $body = $response->getContent();
+        foreach (['99365000000', 'Айгуль', '4321', 'Звонить', 'apartment'] as $private) {
+            $this->assertStringNotContainsString($private, json_encode(json_decode($body), JSON_UNESCAPED_UNICODE));
+        }
+
+        // Once accepted, the courier gets the full order
+        $this->actingAs($user)->postJson("/api/v1/courier/orders/{$order->id}/accept")->assertOk();
+        $this->actingAs($user)->getJson('/api/v1/courier/orders')
+            ->assertJsonPath('data.active.0.address.phone', '+99365000000');
+    }
+
+    #[Group('courier')]
     public function test_courier_can_get_available_orders(): void
     {
         $user = User::factory()->create(['role' => UserRole::COURIER]);

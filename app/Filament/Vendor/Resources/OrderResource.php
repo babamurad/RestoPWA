@@ -34,16 +34,11 @@ class OrderResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('status')
                             ->label('Статус')
-                            ->options([
-                                'pending' => 'Новый',
-                                'confirmed' => 'Подтвержден',
-                                'cooking' => 'Готовится',
-                                'ready_for_pickup' => 'Готов',
-                                'delivering' => 'Доставляется',
-                                'delivered' => 'Доставлен',
-                                'completed' => 'Завершен',
-                                'cancelled' => 'Отменен',
-                            ])
+                            // Only the current status and the allowed next steps: an order
+                            // cannot go back or skip a step (admins fix mistakes in the admin panel)
+                            ->options(fn (?Order $record): array => $record
+                                ? $record->selectableStatusLabels()
+                                : Order::statusLabels())
                             ->required(),
                         Forms\Components\Select::make('payment_status')
                             ->label('Статус оплаты')
@@ -82,7 +77,7 @@ class OrderResource extends Resource
                             ->badge()
                             ->color(fn (string $state): string => match ($state) {
                                 'pending' => 'warning',
-                                'confirmed', 'cooking' => 'info',
+                                'confirmed', 'preparing' => 'info',
                                 'ready_for_pickup' => 'primary',
                                 'delivering' => 'warning',
                                 'delivered', 'completed' => 'success',
@@ -169,24 +164,14 @@ class OrderResource extends Resource
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
-                        'confirmed', 'cooking' => 'info',
+                        'confirmed', 'preparing' => 'info',
                         'ready_for_pickup' => 'primary',
                         'delivering' => 'warning',
                         'delivered', 'completed' => 'success',
                         'cancelled' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'pending' => 'Новый',
-                        'confirmed' => 'Подтвержден',
-                        'cooking' => 'Готовится',
-                        'ready_for_pickup' => 'Готов',
-                        'delivering' => 'В доставке',
-                        'delivered' => 'Доставлен',
-                        'completed' => 'Завершен',
-                        'cancelled' => 'Отменен',
-                        default => $state,
-                    }),
+                    ->formatStateUsing(fn (string $state): string => Order::statusLabels()[$state] ?? $state),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Дата')
                     ->dateTime('d.m.Y H:i')
@@ -195,13 +180,7 @@ class OrderResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Статус')
-                    ->options([
-                        'pending' => 'Новые',
-                        'cooking' => 'Готовятся',
-                        'ready_for_pickup' => 'Готовы',
-                        'completed' => 'Завершены',
-                        'cancelled' => 'Отменены',
-                    ]),
+                    ->options(Order::statusLabels()),
             ])
             ->actions([
                 Actions\ViewAction::make(),

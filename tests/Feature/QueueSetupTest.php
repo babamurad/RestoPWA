@@ -55,7 +55,7 @@ class QueueSetupTest extends TestCase
         Queue::assertPushed(SendSmsJob::class);
     }
 
-    public function test_cooking_status_sends_push_but_no_sms(): void
+    public function test_preparing_status_sends_push_but_no_sms(): void
     {
         Queue::fake([SendSmsJob::class]);
         $push = Mockery::mock(PushNotificationService::class);
@@ -64,7 +64,7 @@ class QueueSetupTest extends TestCase
 
         $order = Order::factory()->create(['user_id' => User::factory()->create(['phone' => '+99361234567'])->id]);
 
-        (new SendOrderStatusNotification($order->id, 'cooking'))->handle();
+        (new SendOrderStatusNotification($order->id, 'preparing'))->handle();
 
         Queue::assertNotPushed(SendSmsJob::class);
     }

@@ -23,7 +23,7 @@ class SendOrderStatusNotification implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable;
 
     /** Statuses the customer hears about */
-    public const NOTIFIED_STATUSES = ['cooking', Order::STATUS_DELIVERING, Order::STATUS_DELIVERED];
+    public const NOTIFIED_STATUSES = [Order::STATUS_PREPARING, Order::STATUS_DELIVERING, Order::STATUS_DELIVERED];
 
     /** SMS costs money: only when the food is on its way and when it arrived */
     public const SMS_STATUSES = [Order::STATUS_DELIVERING, Order::STATUS_DELIVERED];

@@ -2,7 +2,7 @@
 
 return [
     'order' => [
-        'cooking' => [
+        'preparing' => [
             'title' => 'Sargydyňyz taýýarlanyp başlandy',
             'body' => 'Restoran sargydyňyzy taýýarlap başlady',
         ],
