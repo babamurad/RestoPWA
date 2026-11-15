@@ -1,4 +1,5 @@
-<div class="flex gap-4 overflow-x-auto pb-4" id="kanban-board" style="min-height: calc(100vh - 300px);">
+{{-- wire:poll: the board refreshes by itself even when websockets (Reverb) are not available --}}
+<div class="flex gap-4 overflow-x-auto pb-4" id="kanban-board" style="min-height: calc(100vh - 300px);" wire:poll.25s="loadOrders">
     @foreach($columns as $columnId => $column)
         <div class="flex-shrink-0 w-72 flex flex-col gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10" data-column="{{ $columnId }}">
             <div class="flex items-center justify-between">
@@ -12,7 +13,7 @@
 
             <div class="flex-1 space-y-2 min-h-[200px]">
                 @foreach($column['orders'] as $order)
-                    <div class="rounded-lg bg-gray-50 p-3 ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700 cursor-move hover:shadow-md transition-shadow" draggable="true" data-order-id="{{ $order['id'] }}">
+                    <div class="rounded-lg p-3 ring-1 cursor-move {{ $order['status'] === 'pending' ? 'bg-amber-50 ring-2 ring-amber-400 dark:bg-amber-900/20 dark:ring-amber-500' : 'bg-gray-50 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700' }} hover:shadow-md transition-shadow" draggable="true" data-order-id="{{ $order['id'] }}">
                         <div class="flex items-center justify-between mb-1.5">
                             <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                                 #{{ $order['number'] ?? strtoupper(substr($order['id'], -6)) }}
@@ -70,6 +71,28 @@
 </div>
 <script>
     document.addEventListener('livewire:initialized', function() {
+        // New order: a short double beep, so it is noticed while the tab is in the background.
+        // Browsers allow sound only after the page was clicked at least once.
+        Livewire.on('kanban-new-order', function() {
+            try {
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                const ctx = new Ctx();
+                [0, 0.25].forEach(function(delay) {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.frequency.value = 880;
+                    gain.gain.value = 0.2;
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + delay);
+                    osc.stop(ctx.currentTime + delay + 0.15);
+                });
+                setTimeout(function() { ctx.close(); }, 1000);
+            } catch (e) {
+                // No audio available: the highlighted card is still there
+            }
+        });
+
         let draggedOrder = null;
         let container = document.querySelector('#kanban-board');
         if (!container) container = document.querySelector('[wire\\:id] [style]');

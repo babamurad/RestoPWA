@@ -4,30 +4,38 @@ declare(strict_types=1);
 
 namespace App\Services\Sms;
 
+use App\Support\PIIMasker;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class TmSmsService implements SmsProviderInterface
 {
     private string $apiUrl;
+
     private string $login;
+
     private string $password;
+
     private string $sender;
 
     public function __construct()
     {
-        $this->apiUrl = config('services.tmsms.url', 'https://api.tmsms.tm/v1');
-        $this->login = config('services.tmsms.login', '');
-        $this->password = config('services.tmsms.password', '');
-        $this->sender = config('services.tmsms.sender', 'RestoPWA');
+        $this->apiUrl = (string) (config('services.tmsms.url') ?: 'https://api.tmsms.tm/v1');
+        $this->login = (string) config('services.tmsms.login', '');
+        $this->password = (string) config('services.tmsms.password', '');
+        $this->sender = (string) (config('services.tmsms.sender') ?: 'RestoPWA');
+    }
+
+    public function isConfigured(): bool
+    {
+        return (bool) config('services.tmsms.enabled') && $this->login !== '' && $this->password !== '';
     }
 
     public function send(string $phone, string $message): bool
     {
-        // For local development or testing without credentials, mock the send.
-        if (empty($this->login) || empty($this->password) || app()->environment('testing')) {
-            Log::info("Mock SMS sent to {$phone}: {$message}");
-            return true;
+        // Never report a message as sent when nothing was sent
+        if (! $this->isConfigured()) {
+            return false;
         }
 
         try {
@@ -43,10 +51,16 @@ class TmSmsService implements SmsProviderInterface
                 return true;
             }
 
-            Log::error('TM SMS API Error: ' . $response->body());
+            Log::error('[SMS] Gateway error', [
+                'phone' => PIIMasker::maskPhone($phone),
+                'status' => $response->status(),
+                'body' => substr($response->body(), 0, 300),
+            ]);
+
             return false;
         } catch (\Throwable $e) {
-            Log::error('TM SMS Exception: ' . $e->getMessage());
+            Log::error('[SMS] Gateway exception: '.$e->getMessage(), ['phone' => PIIMasker::maskPhone($phone)]);
+
             return false;
         }
     }

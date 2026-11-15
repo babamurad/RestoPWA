@@ -62,6 +62,14 @@ class KanbanBoard extends Component
         ],
     ];
 
+    /**
+     * New orders already shown on the board; null until the first load.
+     * A new id appearing later triggers the sound signal.
+     *
+     * @var list<string>|null
+     */
+    public ?array $knownPendingIds = null;
+
     private OrderService $orderService;
 
     public function boot(): void
@@ -113,6 +121,15 @@ class KanbanBoard extends Component
                 return in_array($order->status, $column['statuses']);
             })->values()->toArray();
         }
+        unset($column);
+
+        // Called on websocket events and by polling (the fallback when websockets are down):
+        // signal once for every order that was not on the board before
+        $pendingIds = $orders->where('status', Order::STATUS_PENDING)->pluck('id')->values()->all();
+        if ($this->knownPendingIds !== null && array_diff($pendingIds, $this->knownPendingIds) !== []) {
+            $this->dispatch('kanban-new-order');
+        }
+        $this->knownPendingIds = $pendingIds;
     }
 
     public function moveOrder(string $orderId, string $newColumnId): void

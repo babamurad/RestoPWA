@@ -36,4 +36,14 @@ return [
         'cannot_deliver' => 'siziň salgyňyza häzir eltip bolmaýar',
         'other' => 'restoran sargydy ýerine ýetirip bilmeýär',
     ],
+    'receipt' => [
+        'subject' => '№:number sargydyňyz kabul edildi',
+        'greeting' => 'Sargydyňyz üçin sag boluň!',
+        'intro' => '«:restaurant» restoranynda №:number sargyt resmileşdirildi. Sargydyň düzümi:',
+        'delivery' => 'Eltip bermek: :amount',
+        'total' => 'Jemi: :amount',
+        'payment_cash' => 'Töleg sargyt alnanda nagt görnüşinde.',
+        'action' => 'Sargytlarym',
+        'salutation' => 'Işdäňiz açyk bolsun!',
+    ],
 ];

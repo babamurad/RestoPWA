@@ -155,6 +155,18 @@ class OrderStatusRulesTest extends TestCase
         $this->assertNotContains($old->id, $shown);
     }
 
+    public function test_kanban_signals_a_new_order_once(): void
+    {
+        $this->order(Order::STATUS_PENDING);
+
+        $board = Livewire::test(KanbanBoard::class);
+        $board->call('loadOrders')->assertNotDispatched('kanban-new-order');
+
+        $this->order(Order::STATUS_PENDING);
+        $board->call('loadOrders')->assertDispatched('kanban-new-order');
+        $board->call('loadOrders')->assertNotDispatched('kanban-new-order');
+    }
+
     public function test_migration_renames_cooking_and_removes_duplicate_history(): void
     {
         $order = $this->order(Order::STATUS_PENDING);
