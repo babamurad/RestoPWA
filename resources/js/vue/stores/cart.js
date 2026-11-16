@@ -2,6 +2,22 @@ import { defineStore } from 'pinia';
 import apiClient from '../api/client';
 import { t } from '../i18n';
 
+// One cart line is a dish with one particular choice of modifiers: the same pizza with
+// different toppings is two lines, so a line is told apart by this key.
+// modifiers: [{ option_id, quantity, ... }]
+export function cartLineKey(productId, modifiers = []) {
+  const choice = [...modifiers]
+    .map((m) => `${m.option_id}x${m.quantity || 1}`)
+    .sort()
+    .join(',');
+  return `${productId}|${choice}`;
+}
+
+// Price of the chosen modifiers for one portion of the dish
+export function modifiersPrice(modifiers = []) {
+  return modifiers.reduce((sum, m) => sum + (Number(m.price) || 0) * (m.quantity || 1), 0);
+}
+
 export const useCartStore = defineStore('cart', {
   state: () => ({
     items: [],
@@ -45,9 +61,10 @@ export const useCartStore = defineStore('cart', {
 
   actions: {
     // Add item to cart. Supports same-restaurant verification!
-    addItem(product, quantity, vendor) {
+    // modifiers: the customer's choice, [{ group_id, option_id, group, name, price, quantity }]
+    addItem(product, quantity, vendor, modifiers = []) {
       const activeVendorId = vendor.id || vendor.vendor_id;
-      
+
       // Mismatch protection
       if (this.items.length > 0 && this.vendorId !== activeVendorId) {
         return {
@@ -63,19 +80,22 @@ export const useCartStore = defineStore('cart', {
         this.vendorName = vendor.name;
       }
 
-      // Add or increment item quantity
-      const existingItem = this.items.find(item => item.id === product.id);
+      // Add or increment the line with the same dish and the same choice
+      const key = cartLineKey(product.id, modifiers);
+      const existingItem = this.items.find(item => item.key === key);
       if (existingItem) {
         existingItem.quantity += quantity;
       } else {
         this.items.push({
+          key,
           id: product.id,
           name: product.name,
-          price: product.price,
+          // One portion with the modifiers; the server recalculates it on sync
+          price: Number(product.price) + modifiersPrice(modifiers),
           quantity: quantity,
           image: product.image_url || (product.image && product.image.startsWith('http') ? product.image : '/storage/' + product.image),
           weight: product.weight_g || null,
-          modifiers: [] // Can support chosen modifier IDs
+          modifiers
         });
       }
 
@@ -84,13 +104,38 @@ export const useCartStore = defineStore('cart', {
       return { status: 'success' };
     },
 
-    // Update item quantity
-    updateQuantity(productId, quantity) {
-      const item = this.items.find(i => i.id === productId);
+    // Put a dish of an earlier order back into the cart ("repeat order").
+    // item is an order line as the API returns it: unit_price in minor units, modifiers with option ids.
+    addOrderItem(item, vendor) {
+      const modifiers = (item.modifiers || [])
+        .filter((m) => m && m.id)
+        .map((m) => ({
+          group_id: m.group_id,
+          option_id: m.id,
+          group: m.group,
+          name: m.name,
+          price: Number(m.price) || 0,
+          quantity: m.quantity || 1,
+        }));
+
+      const basePrice = Math.max(0, (Number(item.unit_price) || 0) / 100 - modifiersPrice(modifiers));
+
+      return this.addItem({
+        id: item.product_id || item.id,
+        name: item.name || item.product_name,
+        price: basePrice,
+        image_url: item.image || item.image_url || null,
+        weight_g: item.weight_g || null,
+      }, item.quantity, vendor, modifiers);
+    },
+
+    // Update the quantity of a cart line
+    updateQuantity(key, quantity) {
+      const item = this.items.find(i => i.key === key);
       if (!item) return;
 
       if (quantity <= 0) {
-        this.removeItem(productId);
+        this.removeItem(key);
       } else {
         item.quantity = quantity;
         this.saveToLocalStorage();
@@ -98,10 +143,10 @@ export const useCartStore = defineStore('cart', {
       }
     },
 
-    // Remove item
-    removeItem(productId) {
-      this.items = this.items.filter(item => item.id !== productId);
-      
+    // Remove a cart line
+    removeItem(key) {
+      this.items = this.items.filter(item => item.key !== key);
+
       // If cart becomes empty, clear vendor info
       if (this.items.length === 0) {
         this.vendorId = null;
@@ -115,7 +160,7 @@ export const useCartStore = defineStore('cart', {
         this.minOrder = 0;
         this.isMinOrderMet = true;
       }
-      
+
       this.saveToLocalStorage();
       this.syncCart();
     },
@@ -149,10 +194,11 @@ export const useCartStore = defineStore('cart', {
         const payload = {
           vendor_id: this.vendorId,
           items: this.items.map(item => ({
+            key: item.key,
             product_id: item.id,
             quantity: item.quantity,
             price: Math.round(item.price * 100), // convert unit price to cents
-            modifiers: item.modifiers || []
+            modifiers: (item.modifiers || []).map(m => ({ option_id: m.option_id, quantity: m.quantity || 1 }))
           }))
         };
 
@@ -165,7 +211,7 @@ export const useCartStore = defineStore('cart', {
           // Merge any price changes in local items state
           if (syncData.validated_items) {
             syncData.validated_items.forEach(validated => {
-              const localItem = this.items.find(i => i.id === validated.product_id);
+              const localItem = this.items.find(i => (validated.key ? i.key === validated.key : i.id === validated.product_id));
               if (localItem) {
                 localItem.price = validated.price / 100; // convert cents back to standard TMT
               }
@@ -178,7 +224,7 @@ export const useCartStore = defineStore('cart', {
             
             // Remove unavailable items from cart
             syncData.unavailable_items.forEach(unavailable => {
-              this.items = this.items.filter(i => i.id !== unavailable.product_id);
+              this.items = this.items.filter(i => (unavailable.key ? i.key !== unavailable.key : i.id !== unavailable.product_id));
             });
             this.saveToLocalStorage();
           } else {
@@ -243,7 +289,12 @@ export const useCartStore = defineStore('cart', {
         const stored = localStorage.getItem('resto_pwa_cart');
         if (stored) {
           const cartData = JSON.parse(stored);
-          this.items = cartData.items || [];
+          // Lines saved before the modifiers existed have no key
+          this.items = (cartData.items || []).map(item => ({
+            ...item,
+            modifiers: item.modifiers || [],
+            key: item.key || cartLineKey(item.id, item.modifiers || [])
+          }));
           this.vendorId = cartData.vendorId || null;
           this.vendorSlug = cartData.vendorSlug || null;
           this.vendorName = cartData.vendorName || null;

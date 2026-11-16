@@ -6,6 +6,7 @@ namespace App\Domains\Order\Http\Controllers\Api;
 
 use App\Domains\Geo\Services\GeoService;
 use App\Domains\Menu\Models\Product;
+use App\Domains\Menu\Services\ProductModifiers;
 use App\Domains\Order\DTO\OrderSubmitDTO;
 use App\Domains\Order\Models\Order;
 use App\Domains\Order\Models\OrderRejection;
@@ -16,7 +17,6 @@ use App\Http\Traits\ApiResponses;
 use App\Support\PIIMasker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -130,10 +130,19 @@ class OrderController
                     // Server-side price: base product price from DB (MoneyCast → float currency units → cents)
                     $basePriceCents = $product ? (int) round($product->price * 100) : 0;
 
-                    // Keep only modifiers that exist on the product, with their DB name and price
-                    [$modifierPriceCents, $modifiers] = $product
-                        ? self::resolveModifiersFromDb($product, (array) ($item['modifiers'] ?? []))
-                        : [0, []];
+                    // Price and check the choice against the dish's own modifier groups; what the
+                    // client says about names and prices is ignored
+                    $modifierPriceCents = 0;
+                    $modifiers = [];
+                    if ($product) {
+                        $choice = ProductModifiers::resolve(ProductModifiers::groups($product->modifiers), $item['modifiers'] ?? []);
+                        $modifierPriceCents = (int) round($choice['price'] * 100);
+                        $modifiers = $choice['selected'];
+
+                        if ($choice['violations'] !== []) {
+                            $itemReject ??= OrderRejectReason::INVALID_MODIFIERS;
+                        }
+                    }
 
                     $unitPrice = $basePriceCents + $modifierPriceCents;
 
@@ -332,62 +341,6 @@ class OrderController
                 traceId: $traceId,
             );
         }
-    }
-
-    /**
-     * Match client-selected modifiers (by id or name) against the product's DB modifiers.
-     * Returns the surcharge in cents and the matched modifiers with their DB name and price;
-     * anything the product does not offer is dropped, client-sent names and prices are ignored.
-     *
-     * @return array{0: int, 1: list<array{id: mixed, name: mixed, price: float}>}
-     */
-    private static function resolveModifiersFromDb(Product $product, array $clientModifiers): array
-    {
-        $dbModifiers = $product->modifiers;
-        if (! $dbModifiers instanceof Collection || $dbModifiers->isEmpty() || empty($clientModifiers)) {
-            return [0, []];
-        }
-
-        // Flatten DB modifiers: groups with options → extract options; flat → keep as-is
-        $flatDb = collect();
-        foreach ($dbModifiers as $mod) {
-            if (isset($mod['options']) && is_array($mod['options'])) {
-                foreach ($mod['options'] as $option) {
-                    $flatDb->push($option);
-                }
-            } else {
-                $flatDb->push($mod);
-            }
-        }
-
-        $surchargeCents = 0;
-        $matched = [];
-        foreach ($clientModifiers as $clientMod) {
-            $clientModId = is_array($clientMod) ? ($clientMod['id'] ?? null) : (is_string($clientMod) ? $clientMod : null);
-            $clientModName = is_array($clientMod) ? ($clientMod['name'] ?? null) : null;
-
-            $dbMatch = null;
-
-            if ($clientModId !== null) {
-                $dbMatch = $flatDb->firstWhere('id', $clientModId);
-            }
-            if ($dbMatch === null && $clientModName !== null) {
-                $dbMatch = $flatDb->firstWhere('name', $clientModName);
-            }
-
-            if (is_array($dbMatch)) {
-                // Modifier prices in JSON are in currency units → convert to cents
-                $price = (float) ($dbMatch['price'] ?? 0);
-                $surchargeCents += (int) round($price * 100);
-                $matched[] = [
-                    'id' => $dbMatch['id'] ?? null,
-                    'name' => $dbMatch['name'] ?? null,
-                    'price' => $price,
-                ];
-            }
-        }
-
-        return [$surchargeCents, $matched];
     }
 
     private function errorResponse(

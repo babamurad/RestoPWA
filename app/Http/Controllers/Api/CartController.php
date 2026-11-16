@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Domains\Menu\Models\Product;
+use App\Domains\Menu\Services\ProductModifiers;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ApiResponses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class CartController extends Controller
@@ -31,6 +31,8 @@ class CartController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.price' => 'nullable|numeric',
             'items.*.modifiers' => 'nullable|array',
+            // Echoed back, so the app can tell apart lines of one dish with different choices
+            'items.*.key' => 'nullable|string|max:255',
         ]);
 
         Log::info('[Cart Sync] Started', [
@@ -62,6 +64,7 @@ class CartController extends Controller
             if (! $product) {
                 $unavailableItems[] = [
                     'product_id' => $productId,
+                    'key' => $item['key'] ?? null,
                     'name' => 'Unknown Product',
                     'reason' => 'Товар не найден или не принадлежит данному ресторану.',
                 ];
@@ -72,6 +75,7 @@ class CartController extends Controller
             if (! $product->is_available) {
                 $unavailableItems[] = [
                     'product_id' => $product->id,
+                    'key' => $item['key'] ?? null,
                     'name' => $product->name,
                     'reason' => 'Товар временно недоступен.',
                 ];
@@ -79,19 +83,22 @@ class CartController extends Controller
                 continue;
             }
 
-            $serverItemUnitPrice = $product->price;
-            $selectedModifiers = collect($item['modifiers'] ?? []);
-            $modifiersData = [];
+            // Price and check the choice against the dish's modifier groups
+            $choice = ProductModifiers::resolve(ProductModifiers::groups($product->modifiers), $item['modifiers'] ?? []);
 
-            if ($selectedModifiers->isNotEmpty() && $product->modifiers instanceof Collection) {
-                foreach ($selectedModifiers as $modId) {
-                    $modifier = $product->modifiers->firstWhere('id', $modId);
-                    if ($modifier) {
-                        $serverItemUnitPrice += $modifier['price'] ?? 0;
-                        $modifiersData[] = $modifier;
-                    }
-                }
+            if ($choice['violations'] !== []) {
+                $unavailableItems[] = [
+                    'product_id' => $product->id,
+                    'key' => $item['key'] ?? null,
+                    'name' => $product->name,
+                    'reason' => 'Состав добавок изменился: добавьте блюдо в корзину заново.',
+                ];
+
+                continue;
             }
+
+            $serverItemUnitPrice = $product->price + $choice['price'];
+            $modifiersData = $choice['selected'];
 
             // Check for price changes
             $clientItemUnitPrice = isset($item['price']) ? (float) $item['price'] / 100 : null;
@@ -109,6 +116,7 @@ class CartController extends Controller
 
             $validatedItems[] = [
                 'product_id' => $product->id,
+                'key' => $item['key'] ?? null,
                 'name' => $product->name,
                 'quantity' => $item['quantity'],
                 'price' => (int) round($serverItemUnitPrice * 100),

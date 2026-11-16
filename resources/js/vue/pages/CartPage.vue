@@ -89,7 +89,7 @@
         <div class="space-y-3 select-none">
           <div 
             v-for="item in cartStore.items" 
-            :key="item.id" 
+            :key="item.key" 
             class="dark:bg-slate-800/40 border dark:border-slate-800/50 rounded-2xl p-4 flex gap-4 items-center justify-between shadow-md dark:hover:border-slate-700/40 transition-all duration-300 animate-fade-in bg-white border-slate-200 hover:border-slate-300"
           >
             <div class="flex items-center gap-3 flex-1 min-w-0">
@@ -101,6 +101,9 @@
               />
               <div class="min-w-0 flex-1">
                 <h5 class="text-sm font-bold dark:text-slate-100 truncate text-slate-900">{{ item.name }}</h5>
+                <p v-if="item.modifiers && item.modifiers.length" class="text-[11px] dark:text-slate-400 mt-0.5 text-slate-600 leading-snug">
+                  {{ item.modifiers.map(m => (m.quantity > 1 ? m.name + ' × ' + m.quantity : m.name)).join(', ') }}
+                </p>
                 <p v-if="item.weight" class="text-[10px] dark:text-slate-400 mt-0.5 text-slate-600">{{ t('cart.weight', { weight: item.weight }) }}</p>
                 <p class="text-xs dark:text-slate-400 mt-1 font-semibold text-slate-600">{{ t('common.price', { amount: item.price }) }} x {{ item.quantity }}</p>
                 <div class="text-xs font-black text-orange-400 mt-1.5">{{ t('common.price', { amount: (item.price * item.quantity).toFixed(0) }) }}</div>
@@ -194,11 +197,11 @@ const router = useRouter();
 const cartStore = useCartStore();
 
 const increaseQty = (item) => {
-  cartStore.updateQuantity(item.id, item.quantity + 1);
+  cartStore.updateQuantity(item.key, item.quantity + 1);
 };
 
 const decreaseQty = (item) => {
-  cartStore.updateQuantity(item.id, item.quantity - 1);
+  cartStore.updateQuantity(item.key, item.quantity - 1);
 };
 
 const clearCart = () => {

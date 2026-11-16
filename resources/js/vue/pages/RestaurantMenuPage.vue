@@ -342,7 +342,7 @@ const closeProductModal = () => {
 const handleAddToCart = (data) => {
   if (!store.currentRestaurant) return;
 
-  const result = cartStore.addItem(data.product, data.quantity, store.currentRestaurant);
+  const result = cartStore.addItem(data.product, data.quantity, store.currentRestaurant, data.modifiers || []);
 
   if (result.status === 'mismatch') {
     if (window.Swal) {
@@ -362,7 +362,7 @@ const handleAddToCart = (data) => {
       }).then((swalResult) => {
         if (swalResult.isConfirmed) {
           cartStore.clearCart();
-          cartStore.addItem(data.product, data.quantity, store.currentRestaurant);
+          cartStore.addItem(data.product, data.quantity, store.currentRestaurant, data.modifiers || []);
           triggerToast(t('menu.added_toast', { name: data.product.name, qty: data.quantity }));
         }
       });
@@ -372,7 +372,7 @@ const handleAddToCart = (data) => {
       );
       if (confirmClear) {
         cartStore.clearCart();
-        cartStore.addItem(data.product, data.quantity, store.currentRestaurant);
+        cartStore.addItem(data.product, data.quantity, store.currentRestaurant, data.modifiers || []);
         triggerToast(t('menu.added_toast', { name: data.product.name, qty: data.quantity }));
       }
     }
