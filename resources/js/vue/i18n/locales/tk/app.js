@@ -16,6 +16,7 @@ export default {
         payments: 'Töleg usullary',
         support: 'Goldaw gullugy',
         orders: 'Sargytlar',
+        courier: 'Eltip bermek',
     },
     auth_required: {
         title: 'Ulgama girmeli',

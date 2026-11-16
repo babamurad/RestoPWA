@@ -7,6 +7,7 @@ use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -76,7 +77,22 @@ class ProductResource extends Resource
                                         'checkbox' => 'Чекбокс (множественный выбор)',
                                         'counter' => 'Счетчик (количество)',
                                     ])
+                                    ->live()
                                     ->required(),
+                                Forms\Components\Toggle::make('required')
+                                    ->label('Обязательный выбор')
+                                    ->helperText('Клиент не сможет добавить блюдо, пока не выберет.'),
+                                Forms\Components\TextInput::make('min')
+                                    ->label('Не меньше')
+                                    ->helperText('Сколько вариантов выбрать минимум')
+                                    ->numeric()->integer()->minValue(0)->maxValue(99)
+                                    ->visible(fn (Get $get): bool => $get('type') !== 'radio'),
+                                Forms\Components\TextInput::make('max')
+                                    ->label('Не больше')
+                                    ->helperText('Пусто — без ограничения')
+                                    ->numeric()->integer()->minValue(1)->maxValue(99)
+                                    ->gte('min')
+                                    ->visible(fn (Get $get): bool => $get('type') !== 'radio'),
                                 Forms\Components\Repeater::make('options')
                                     ->label('Опции')
                                     ->schema([

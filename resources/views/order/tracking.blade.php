@@ -42,7 +42,7 @@
                 {{-- Left: Map & Status --}}
                 <div class="md:col-span-2 space-y-6">
                     {{-- Map --}}
-                    <div x-show="currentStatus === 'delivering' || currentStatus === 'ready'" 
+                    <div x-show="currentStatus === 'delivering' || currentStatus === 'ready_for_pickup'" 
                          x-transition
                          x-cloak
                          class="bg-white/60 dark:bg-slate-900/60 rounded-3xl overflow-hidden shadow-xl shadow-black/5 dark:shadow-black/30 border border-slate-200 dark:border-slate-800/40 h-64 md:h-96 relative">
@@ -71,7 +71,7 @@
                     <div class="bg-white/60 dark:bg-slate-900/60 rounded-3xl p-6 shadow-xl shadow-black/5 dark:shadow-black/30 border border-slate-200 dark:border-slate-800/40">
                         <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100 mb-6">{{ __('pages.tracking.order_status') }}</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            @foreach(['pending', 'confirmed', 'preparing', 'ready', 'delivering', 'completed'] as $index => $status)
+                            @foreach(['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'delivering', 'completed'] as $index => $status)
                                 @php
                                     $historyItem = collect($initialHistory)->firstWhere('status', $status);
                                     $statusTime = $historyItem ? $historyItem['time'] : '';
@@ -200,12 +200,12 @@
                 orderId: orderId,
                 signedApiUrl: signedApiUrl,
                 currentStatus: '{{ $order->status }}' === 'delivered' ? 'completed' : '{{ $order->status }}',
-                statusOrder: ['pending', 'confirmed', 'preparing', 'ready', 'delivering', 'completed'],
+                statusOrder: ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'delivering', 'completed'],
                 statusClasses: {
                     'pending': 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
                     'confirmed': 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
                     'preparing': 'bg-orange-500/10 text-orange-400 border border-orange-500/20',
-                    'ready': 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
+                    'ready_for_pickup': 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
                     'delivering': 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20',
                     'completed': 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
                     'delivered': 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',

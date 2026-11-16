@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Domains\Logistics\Models\Courier;
+use App\Domains\Order\Exceptions\InvalidStatusTransition;
 use App\Domains\Order\Models\Order;
+use App\Domains\Order\Services\OrderService;
 use App\Domains\Review\Http\Controllers\ReviewController;
+use App\Enums\OrderCancelReason;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ApiResponses;
 use Illuminate\Http\JsonResponse;
@@ -56,6 +59,8 @@ class OrderController extends Controller
                     'created_at' => $order->created_at->toIso8601String(),
                     'updated_at' => $order->updated_at->toIso8601String(),
                     'review' => $order->review ? ['rating' => $order->review->rating] : null,
+                    'can_cancel' => $order->canBeCancelledByCustomer(),
+                    'cancel_reason' => $this->cancelReasonForCustomer($order),
                     'can_review' => ! $order->review
                         && in_array($order->status, ReviewController::REVIEWABLE_STATUSES, true),
                     'status_history' => $order->statusHistory->map(function ($history) {
@@ -99,6 +104,8 @@ class OrderController extends Controller
             'is_offline' => $order->is_offline ?? false,
             'created_at' => $order->created_at->toIso8601String(),
             'updated_at' => $order->updated_at->toIso8601String(),
+            'can_cancel' => $order->canBeCancelledByCustomer(),
+            'cancel_reason' => $this->cancelReasonForCustomer($order),
             'status_history' => $order->statusHistory->map(function ($history) {
                 return [
                     'from_status' => $history->from_status,
@@ -107,6 +114,37 @@ class OrderController extends Controller
                 ];
             }),
         ]);
+    }
+
+    /**
+     * POST /api/v1/orders/{id}/cancel — the customer cancels their own order,
+     * possible only until the restaurant has started cooking.
+     */
+    public function cancel(Request $request, string $id, OrderService $orders): JsonResponse
+    {
+        $order = Order::findOrFail($id);
+
+        if ($order->user_id !== $request->user()->id) {
+            return $this->error(__('api.orders.not_yours'), 403);
+        }
+
+        try {
+            $order = $orders->cancel($order, Order::CANCELLED_BY_CUSTOMER, OrderCancelReason::CHANGED_MIND);
+        } catch (InvalidStatusTransition) {
+            return $this->error(__('api.orders.cannot_cancel'), 422);
+        }
+
+        return $this->success([
+            'id' => $order->id,
+            'status' => $order->status,
+            'can_cancel' => false,
+        ]);
+    }
+
+    /** The customer who cancelled the order himself needs no explanation of why */
+    private function cancelReasonForCustomer(Order $order): ?string
+    {
+        return $order->cancelled_by === Order::CANCELLED_BY_CUSTOMER ? null : $order->cancelReasonText();
     }
 
     public function assignCourier(Request $request, string $id): JsonResponse

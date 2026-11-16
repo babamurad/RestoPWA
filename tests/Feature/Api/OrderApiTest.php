@@ -4,22 +4,24 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
+use App\Domains\Geo\Services\DeliveryZoneCheckResult;
+use App\Domains\Geo\Services\GeoService;
 use App\Domains\Menu\Models\Product;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Enums\OrderRejectReason;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use Illuminate\Support\Str;
-use App\Enums\OrderRejectReason;
-use App\Domains\Geo\Services\GeoService;
-use App\Domains\Geo\Services\DeliveryZoneCheckResult;
+use Tests\TestCase;
 
 class OrderApiTest extends TestCase
 {
     use RefreshDatabase;
 
     private Restaurant $restaurant;
+
     private Product $product;
+
     private User $user;
 
     protected function setUp(): void
@@ -110,7 +112,7 @@ class OrderApiTest extends TestCase
                     'quantity' => 2,
                     'unit_price' => 1000,
                     'total_price' => 2000,
-                ]
+                ],
             ],
             'total' => 2000,
             'payment_method' => 'cash',
@@ -161,7 +163,7 @@ class OrderApiTest extends TestCase
                     'quantity' => 1,
                     'unit_price' => 1000,
                     'total_price' => 1000,
-                ]
+                ],
             ],
             'total' => 1000,
             'payment_method' => 'cash',
@@ -236,7 +238,7 @@ class OrderApiTest extends TestCase
                     'quantity' => 1,
                     'unit_price' => 1000,
                     'total_price' => 1000,
-                ]
+                ],
             ],
             'total' => 1000,
             'payment_method' => 'cash',
@@ -340,7 +342,7 @@ class OrderApiTest extends TestCase
         $geoServiceMock = $this->mock(GeoService::class, function ($mock) {
             // Needed because calculateDeliveryFee is also called in the controller
             $mock->shouldReceive('calculateDeliveryFee')->andReturn(0);
-            
+
             $mock->shouldReceive('checkDeliveryZone')->andReturn(
                 new DeliveryZoneCheckResult(
                     status: 'out_of_zone',
@@ -380,5 +382,14 @@ class OrderApiTest extends TestCase
                 'success' => false,
                 'reason' => OrderRejectReason::OUTSIDE_DELIVERY_ZONE->value,
             ]);
+    }
+
+    public function test_malformed_ids_give_404_not_a_server_error(): void
+    {
+        // On PostgreSQL a non-UUID compared with a uuid column is an SQL error
+        $this->actingAs($this->user)->getJson('/api/v1/orders/not-a-uuid')->assertStatus(404);
+        $this->actingAs($this->user)->postJson('/api/v1/orders/not-a-uuid/cancel')->assertStatus(404);
+        $this->getJson('/api/v1/restaurants/no-such-restaurant')->assertStatus(404);
+        $this->withHeader('X-Vendor-ID', 'no-such-restaurant')->getJson('/api/v1/categories')->assertOk();
     }
 }

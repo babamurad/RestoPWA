@@ -63,9 +63,10 @@ class SetTenantContext
         if ($vendorId) {
             // Resolve raw slug or subdomain string to vendor UUID if it is not already a valid UUID
             if (! preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', (string) $vendorId)) {
+                // Not a UUID, so it can only be a slug. Comparing it with the uuid "id"
+                // column is an SQL error on PostgreSQL ("invalid input syntax for type uuid").
                 $resolved = DB::table('restaurants')
-                    ->where('slug', $vendorId)
-                    ->orWhere('id', $vendorId)
+                    ->where('slug', (string) $vendorId)
                     ->first();
                 if ($resolved) {
                     $vendorId = $resolved->id;

@@ -77,7 +77,7 @@ class RestaurantSeeder extends Seeder
                 'cover_image' => 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&h=400&fit=crop',
                 'rating' => null, // computed from reviews (ReviewObserver)
                 'review_count' => 0,
-                'delivery_time' => '25-35 мин',
+                'delivery_time' => '25-35',
                 'delivery_fee' => 0,
                 'min_order' => 800,
                 'is_active' => true,
@@ -96,7 +96,7 @@ class RestaurantSeeder extends Seeder
                 'cover_image' => 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&h=400&fit=crop',
                 'rating' => null, // computed from reviews (ReviewObserver)
                 'review_count' => 0,
-                'delivery_time' => '30-40 мин',
+                'delivery_time' => '30-40',
                 'delivery_fee' => 99,
                 'min_order' => 600,
                 'is_active' => true,
@@ -114,7 +114,7 @@ class RestaurantSeeder extends Seeder
                 'cover_image' => 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=800&h=400&fit=crop',
                 'rating' => null, // computed from reviews (ReviewObserver)
                 'review_count' => 0,
-                'delivery_time' => '40-50 мин',
+                'delivery_time' => '40-50',
                 'delivery_fee' => 149,
                 'min_order' => 1000,
                 'is_active' => true,
@@ -132,7 +132,7 @@ class RestaurantSeeder extends Seeder
                 'cover_image' => 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&h=400&fit=crop',
                 'rating' => null, // computed from reviews (ReviewObserver)
                 'review_count' => 0,
-                'delivery_time' => '20-30 мин',
+                'delivery_time' => '20-30',
                 'delivery_fee' => 0,
                 'min_order' => 500,
                 'is_active' => true,
@@ -149,7 +149,7 @@ class RestaurantSeeder extends Seeder
                 'cover_image' => 'https://images.unsplash.com/photo-1558301211-0d8c8ddee6ec?w=800&h=400&fit=crop',
                 'rating' => null, // computed from reviews (ReviewObserver)
                 'review_count' => 0,
-                'delivery_time' => '25-35 мин',
+                'delivery_time' => '25-35',
                 'delivery_fee' => 99,
                 'min_order' => 400,
                 'is_active' => true,
@@ -166,7 +166,7 @@ class RestaurantSeeder extends Seeder
                 'cover_image' => 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&h=400&fit=crop',
                 'rating' => null, // computed from reviews (ReviewObserver)
                 'review_count' => 0,
-                'delivery_time' => '15-25 мин',
+                'delivery_time' => '15-25',
                 'delivery_fee' => 0,
                 'min_order' => 300,
                 'is_active' => true,

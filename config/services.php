@@ -55,6 +55,16 @@ return [
         'private_key' => env('VAPID_PRIVATE_KEY'),
     ],
 
+    // SMS gateway. Off until a contract exists: with SMS_ENABLED=false (or without
+    // credentials) messages are recorded in sms_logs as "skipped", never as "sent".
+    'tmsms' => [
+        'enabled' => (bool) env('SMS_ENABLED', false),
+        'url' => env('TMSMS_URL', 'https://api.tmsms.tm/v1'),
+        'login' => env('TMSMS_LOGIN', ''),
+        'password' => env('TMSMS_PASSWORD', ''),
+        'sender' => env('TMSMS_SENDER', 'RestoPWA'),
+    ],
+
     'geo_driver' => env('GEO_DRIVER', 'yandex'),
 
     /*

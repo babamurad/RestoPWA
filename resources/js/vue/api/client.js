@@ -5,8 +5,13 @@ import { Capacitor } from '@capacitor/core';
 // on cookies/CSRF — it uses a Sanctum Bearer token instead (see vue/stores/auth.js).
 export const isNativeApp = Capacitor.isNativePlatform();
 
-// Replace with the production API domain before building the mobile app.
-const MOBILE_API_BASE = 'https://restopwa.loc';
+// Address of the site the mobile app talks to: VITE_MOBILE_API_BASE in .env
+// (e.g. https://example.com), read when the mobile bundle is built.
+const MOBILE_API_BASE = (import.meta.env?.VITE_MOBILE_API_BASE || '').replace(/\/+$/, '');
+
+if (isNativeApp && !MOBILE_API_BASE) {
+    console.error('VITE_MOBILE_API_BASE is not set: the mobile app does not know where the API is.');
+}
 
 export const MOBILE_AUTH_TOKEN_KEY = 'mobile_auth_token';
 

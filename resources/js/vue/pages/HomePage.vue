@@ -20,34 +20,43 @@
         </div>
       </div>
       
-      <!-- Search toggle or filter button -->
-      <button class="w-10 h-10 rounded-xl dark:bg-slate-700/50 dark:hover:bg-slate-700 hover:text-orange-400 transition-all flex items-center justify-center dark:text-slate-300 border dark:border-slate-700/50 active:scale-95 bg-slate-100 hover:bg-slate-100 text-slate-700 border-slate-300">
+      <!-- Search toggle -->
+      <button
+        type="button"
+        @click="toggleSearch"
+        :aria-label="t('home.search.toggle')"
+        :aria-expanded="searchOpen"
+        class="w-10 h-10 rounded-xl dark:bg-slate-700/50 dark:hover:bg-slate-700 hover:text-orange-400 transition-all flex items-center justify-center dark:text-slate-300 border dark:border-slate-700/50 active:scale-95 bg-slate-100 hover:bg-slate-100 text-slate-700 border-slate-300"
+        :class="searchOpen || search ? 'text-orange-500 border-orange-500/40' : ''"
+      >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.24 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
         </svg>
       </button>
     </div>
 
-    <!-- Stunning Hero Promo Banner with smooth gradients -->
-    <div class="relative overflow-hidden rounded-3xl mb-10 bg-gradient-to-tr from-orange-600 to-amber-500 p-6 md:p-8 shadow-xl shadow-orange-950/20 group">
-      <!-- Decorative circles -->
-      <div class="absolute -right-10 -bottom-10 w-44 h-44 rounded-full bg-white/10 blur-xl group-hover:scale-110 transition-transform duration-700"></div>
-      <div class="absolute -left-10 -top-10 w-32 h-32 rounded-full bg-white/10 blur-lg group-hover:scale-110 transition-transform duration-700"></div>
-      
-      <div class="relative z-10 max-w-xs md:max-w-md">
-        <span class="inline-block px-3 py-1 rounded-full bg-white/20 text-xs font-bold text-white uppercase tracking-wider mb-3 backdrop-blur-sm">
-          {{ t('home.promo.badge') }}
-        </span>
-        <h2 class="text-2xl md:text-3xl font-extrabold text-white leading-tight mb-2 font-outfit">
-          {{ t('home.promo.title') }}
-        </h2>
-        <p class="text-sm text-orange-100 mb-6 font-medium">
-          {{ t('home.promo.text') }}
-        </p>
-        <button class="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-100 dark:hover:bg-slate-100 text-orange-600 font-bold text-sm shadow-md transition-all active:scale-95 duration-200">
-          {{ t('home.promo.cta') }}
-        </button>
-      </div>
+    <!-- Search by restaurant or dish -->
+    <div v-if="searchOpen || search" class="relative mb-8 -mt-4">
+      <input
+        ref="searchInput"
+        v-model="search"
+        type="search"
+        maxlength="100"
+        :placeholder="t('home.search.placeholder')"
+        :aria-label="t('home.search.placeholder')"
+        class="w-full rounded-2xl border dark:bg-slate-800/60 dark:border-slate-700/50 dark:text-slate-100 bg-white border-slate-300 text-slate-900 px-4 py-3 pr-11 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500"
+      />
+      <button
+        v-if="search"
+        type="button"
+        @click="clearSearch"
+        :aria-label="t('home.search.clear')"
+        class="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center dark:text-slate-400 text-slate-500 hover:text-orange-500"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
 
     <!-- Horizontal Categories Carousel -->
@@ -76,9 +85,18 @@
 
     <!-- Restaurants Grid -->
     <div>
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h3 class="text-lg font-bold dark:text-slate-100 tracking-wide font-outfit text-slate-900">{{ t('home.best_places') }}</h3>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2 whitespace-nowrap">
+          <button
+            v-if="authStore.isAuthenticated"
+            type="button"
+            @click="onlyFavorites = !onlyFavorites"
+            :aria-pressed="onlyFavorites"
+            :class="['text-xs px-3 py-1.5 rounded-lg border font-bold transition-all', onlyFavorites ? 'bg-rose-500/10 border-rose-500/40 text-rose-500' : 'dark:bg-slate-800/40 dark:border-slate-700/50 dark:text-slate-400 dark:hover:bg-slate-800 bg-white border-slate-300 text-slate-600 hover:bg-white']"
+          >
+            ♥ {{ t('home.favorites.filter') }}
+          </button>
           <button 
             @click="sortBy = 'rating'"
             :class="['text-xs px-3 py-1.5 rounded-lg border font-bold transition-all', sortBy === 'rating' ? 'bg-orange-500/10 border-orange-500/40 text-orange-400' : 'dark:bg-slate-800/40 dark:border-slate-700/50 dark:text-slate-400 dark:hover:bg-slate-800 bg-white border-slate-300 text-slate-600 hover:bg-white']"
@@ -111,7 +129,7 @@
       <div v-else-if="filteredRestaurants.length === 0" class="text-center py-16">
         <span class="text-4xl mb-4 block">🔍</span>
         <h4 class="text-lg font-bold dark:text-slate-200 mb-1 text-slate-800">{{ t('home.empty_title') }}</h4>
-        <p class="text-xs dark:text-slate-400 text-slate-600">{{ t('home.empty_text') }}</p>
+        <p class="text-xs dark:text-slate-400 text-slate-600">{{ onlyFavorites && !search ? t('home.favorites.empty') : t('home.empty_text') }}</p>
       </div>
 
       <!-- Restaurants list -->
@@ -132,6 +150,21 @@
             />
             <div class="absolute inset-0 bg-gradient-to-t dark:from-slate-950/70 via-transparent to-transparent from-slate-100"></div>
             
+            <!-- Favourite -->
+            <button
+              v-if="authStore.isAuthenticated"
+              type="button"
+              @click.stop="store.toggleFavorite(restaurant.id)"
+              :aria-pressed="store.isFavorite(restaurant.id)"
+              :aria-label="store.isFavorite(restaurant.id) ? t('home.favorites.remove') : t('home.favorites.add')"
+              class="absolute top-3 left-3 w-9 h-9 rounded-xl dark:bg-slate-900/90 backdrop-blur-md border dark:border-slate-800/80 shadow-md bg-slate-50 border-slate-200 flex items-center justify-center active:scale-90 transition-transform"
+              :class="store.isFavorite(restaurant.id) ? 'text-rose-500' : 'dark:text-slate-400 text-slate-400 hover:text-rose-400'"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" :fill="store.isFavorite(restaurant.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+              </svg>
+            </button>
+
             <!-- Rating Badge -->
             <div class="absolute top-3 right-3 px-2.5 py-1 rounded-xl dark:bg-slate-900/90 backdrop-blur-md text-amber-400 text-xs font-black flex items-center gap-1 border dark:border-slate-800/80 shadow-md bg-slate-50 border-slate-200">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5">
@@ -184,7 +217,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useRestaurantsStore } from '../stores/restaurants';
@@ -220,14 +253,44 @@ const fetchDefaultAddress = async () => {
   }
 };
 
+// Ids match the cuisine tags restaurants get in the admin panel (Restaurant::CUISINES)
 const categories = ref([
   { id: 'all', icon: '🍽️' },
+  { id: 'national', icon: '🍲' },
+  { id: 'grill', icon: '🍢' },
   { id: 'burgers', icon: '🍔' },
   { id: 'pizza', icon: '🍕' },
   { id: 'sushi', icon: '🍣' },
   { id: 'desserts', icon: '🍰' },
   { id: 'drinks', icon: '🥤' }
 ]);
+
+// Search by restaurant or dish name: asks the server shortly after the user stops typing
+const search = ref('');
+const searchOpen = ref(false);
+const searchInput = ref(null);
+const onlyFavorites = ref(false);
+let searchTimer = null;
+
+const toggleSearch = async () => {
+  searchOpen.value = !searchOpen.value;
+  if (searchOpen.value) {
+    await nextTick();
+    searchInput.value?.focus();
+  }
+};
+
+const clearSearch = () => {
+  search.value = '';
+  searchInput.value?.focus();
+};
+
+watch(search, (value) => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => store.fetchRestaurants({ search: value.trim() }), 300);
+});
+
+onUnmounted(() => clearTimeout(searchTimer));
 
 const handleImageError = (e) => {
   e.target.src = 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=600&auto=format&fit=crop&q=80'; // Fallback food pattern
@@ -240,9 +303,13 @@ const openMenu = (slug) => {
 const filteredRestaurants = computed(() => {
   let list = [...(store.restaurants || [])];
   
-  // Filter by category
+  // Filter by cuisine tag
   if (activeCategory.value !== 'all') {
-    list = list.filter(r => r.category === activeCategory.value || (r.tags && r.tags.includes(activeCategory.value)));
+    list = list.filter(r => Array.isArray(r.tags) && r.tags.includes(activeCategory.value));
+  }
+
+  if (onlyFavorites.value) {
+    list = list.filter(r => store.isFavorite(r.id));
   }
   
   // Sort
@@ -262,6 +329,11 @@ const filteredRestaurants = computed(() => {
 onMounted(() => {
   store.fetchRestaurants();
   fetchDefaultAddress();
+  if (authStore.isAuthenticated) {
+    store.fetchFavorites();
+  } else {
+    store.clearFavorites();
+  }
 });
 </script>
 

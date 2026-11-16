@@ -19,6 +19,16 @@ export default {
         already_reviewed: 'Siz bu sargyda eýýäm baha berdiňiz.',
         send_error: 'Teswiri iberip bolmady. Gaýtadan synanyşyň.',
     },
+    cancel: {
+        button: 'Ýatyrmak',
+        sending: 'Ýatyrylýar...',
+        confirm_title: 'Sargydy ýatyrmalymy?',
+        confirm_text: 'Restoran entek taýýarlap başlamady. Sargyt ýatyrylar.',
+        confirm_button: 'Sargydy ýatyr',
+        keep: 'Galdyr',
+        error: 'Sargydy ýatyryp bolmady. Täzeden synanyşyň.',
+        reason: 'Ýatyrmagyň sebäbi: {reason}',
+    },
     repeat_dialog: {
         title: 'Sargyt gaýtalansynmy?',
         text: 'Häzirki sebet arassalanar we bu sargytdaky ähli naharlar goşular.',

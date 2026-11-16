@@ -39,3 +39,7 @@ Thumbs.db
 /android/local.properties
 /ios/App/build
 /ios/App/Pods
+
+# Database dumps hold personal data and password hashes: never commit them
+*.sql
+!/database/**/*.sql

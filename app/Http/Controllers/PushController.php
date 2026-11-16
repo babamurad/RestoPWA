@@ -46,7 +46,9 @@ class PushController extends Controller
             'endpoint' => 'required|url',
         ]);
 
+        // Only the caller's own subscription: an endpoint URL is not a secret
         PushSubscription::where('endpoint', $request->input('endpoint'))
+            ->where('user_id', $request->user()->id)
             ->delete();
 
         return response()->json(['success' => true]);

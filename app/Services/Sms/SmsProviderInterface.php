@@ -6,12 +6,9 @@ namespace App\Services\Sms;
 
 interface SmsProviderInterface
 {
-    /**
-     * Send an SMS message to a given phone number.
-     *
-     * @param string $phone
-     * @param string $message
-     * @return bool
-     */
+    /** Is sending switched on and are the gateway credentials set? */
+    public function isConfigured(): bool;
+
+    /** Send one message; true only if the gateway accepted it. */
     public function send(string $phone, string $message): bool;
 }

@@ -11,6 +11,8 @@ use App\Domains\Payment\Services\CommissionCalculator;
 use App\Domains\Payment\Services\PaymentService;
 use App\Events\OrderStatusUpdated;
 use App\Jobs\SendOrderStatusNotification;
+use App\Notifications\NewOrderForRestaurant;
+use App\Notifications\OrderReceipt;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -20,6 +22,32 @@ class OrderObserver
     public function created(Order $order): void
     {
         $this->broadcastStatus($order);
+
+        DB::afterCommit(fn () => $this->sendNewOrderEmails($order));
+    }
+
+    /**
+     * Email the restaurant's owner (so an order is not missed while the board is closed)
+     * and a receipt to the customer. Mail trouble must never fail the order itself.
+     */
+    private function sendNewOrderEmails(Order $order): void
+    {
+        try {
+            $owner = $order->restaurant?->owner;
+            if ($owner?->email) {
+                $owner->notify(new NewOrderForRestaurant($order));
+            }
+
+            $customer = $order->user;
+            if ($customer?->email && $customer->deleted_at === null) {
+                $customer->notify(new OrderReceipt($order));
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[OrderObserver] New order email failed', [
+                'order_id' => $order->id,
+                'exception' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -74,6 +102,8 @@ class OrderObserver
 
         if ($newStatus === Order::STATUS_CANCELLED) {
             app(PaymentService::class)->cancelPending($order);
+            // No courier should accept an order that no longer exists
+            $dispatcher->cancelPendingOffers($order);
         }
     }
 

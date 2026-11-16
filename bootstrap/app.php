@@ -9,9 +9,11 @@ use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Validation\ValidationException;
@@ -65,6 +67,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (Throwable $e, Request $request) {
             if ($request->is('api/*')) {
+                // Already a finished response (e.g. a rate limiter's 429): pass it on as is
+                if ($e instanceof HttpResponseException) {
+                    return $e->getResponse();
+                }
+
                 $code = 500;
                 $message = $e->getMessage();
                 $errors = [];
@@ -74,7 +81,10 @@ return Application::configure(basePath: dirname(__DIR__))
                     $message = __('api.validation_failed');
                     $errors = $e->errors();
                 } elseif ($e instanceof ModelNotFoundException ||
-                          $e instanceof NotFoundHttpException) {
+                          $e instanceof NotFoundHttpException ||
+                          // PostgreSQL: an id in the URL that is not a UUID ("invalid input
+                          // syntax for type uuid") — there is no such record
+                          ($e instanceof QueryException && $e->getCode() === '22P02')) {
                     $code = 404;
                     $message = __('api.not_found');
                 } elseif ($e instanceof AuthenticationException) {

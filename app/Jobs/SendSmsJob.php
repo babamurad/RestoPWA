@@ -45,6 +45,21 @@ class SendSmsJob implements ShouldQueue
             'provider' => get_class($smsService),
         ]);
 
+        // SMS switched off or no gateway credentials: record that nothing was sent
+        if (! $smsService->isConfigured()) {
+            $log->update([
+                'status' => 'skipped',
+                'error_message' => 'SMS sending is not configured (SMS_ENABLED, TMSMS_LOGIN, TMSMS_PASSWORD).',
+            ]);
+
+            // Switched on in production but unusable: someone must hear about it
+            if (config('services.tmsms.enabled') && app()->isProduction()) {
+                Log::error('[SMS] SMS_ENABLED is on, but the gateway credentials are missing: no SMS are sent.');
+            }
+
+            return;
+        }
+
         try {
             $success = $smsService->send($this->phone, $this->message);
 

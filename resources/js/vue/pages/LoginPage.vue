@@ -126,7 +126,8 @@ const handleLogin = async () => {
   errorMsg.value = '';
   try {
     await authStore.login({ ...form });
-    const redirectPath = route.query.redirect || '/profile';
+    // Couriers land on their work screen
+    const redirectPath = route.query.redirect || (authStore.isCourier ? '/courier' : '/profile');
     router.push(redirectPath);
   } catch (err) {
     errorMsg.value = err.message || t('auth.login.failed');

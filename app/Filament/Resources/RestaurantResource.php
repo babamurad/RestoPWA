@@ -71,6 +71,12 @@ class RestaurantResource extends Resource
                             ->label('Описание')
                             ->maxLength(65535)
                             ->columnSpanFull(),
+                        Forms\Components\CheckboxList::make('tags')
+                            ->label('Кухня')
+                            ->helperText('По этим меткам клиенты фильтруют рестораны в каталоге.')
+                            ->options(Restaurant::CUISINES)
+                            ->columns(3)
+                            ->columnSpanFull(),
                     ])->columns(2),
                 Section::make('Настройки')
                     ->schema([
@@ -97,7 +103,9 @@ class RestaurantResource extends Resource
                             ->default('Asia/Ashgabat')
                             ->required(),
                         Forms\Components\TextInput::make('delivery_time')
-                            ->label('Время доставки'),
+                            ->label('Среднее время доставки (мин)')
+                            ->helperText('Только числа, например 25-35: слово «мин» приложение добавляет само.')
+                            ->placeholder('25-35'),
                         Forms\Components\TextInput::make('delivery_fee')
                             ->label('Стоимость доставки')
                             ->numeric()
@@ -111,6 +119,13 @@ class RestaurantResource extends Resource
                             ->numeric()
                             ->suffix('%')
                             ->default(0),
+                        Forms\Components\TextInput::make('pickup_commission_percent')
+                            ->label('Комиссия за самовывоз')
+                            ->helperText('Оставьте пустым, чтобы брать ту же комиссию, что и с доставки.')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->suffix('%'),
                     ])->columns(2),
                 Section::make('Зона доставки')
                     ->description('Нарисуйте область доставки на карте. Координаты будут сохранены автоматически.')

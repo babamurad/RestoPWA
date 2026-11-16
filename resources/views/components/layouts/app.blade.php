@@ -41,7 +41,7 @@
     @livewireStyles
 </head>
 
-<body class="bg-gray-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden" x-data="cartManager">
+<body class="bg-gray-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden">
     <script>
 
         
@@ -58,9 +58,6 @@
             </div>
         </div>
 
-        <livewire:cart.cart-drawer />
-
-        <livewire:geo.address-selector />
     </div>
 
     <x-pwa.installer />

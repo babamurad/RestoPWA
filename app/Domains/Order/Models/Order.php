@@ -9,6 +9,7 @@ use App\Domains\Logistics\Models\Courier;
 use App\Domains\Payment\Models\PaymentTransaction;
 use App\Domains\Review\Models\Review;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Enums\OrderCancelReason;
 use App\Enums\PaymentStatus;
 use App\Models\User;
 use App\Models\VendorSettlement;
@@ -50,6 +51,14 @@ class Order extends Model
         return OrderFactory::new();
     }
 
+    /**
+     * Extra details for the history record of the next status change
+     * (who or what changed it); not a DB column, cleared once written.
+     *
+     * @var array<string, mixed>
+     */
+    public array $statusChangeMeta = [];
+
     public const STATUS_PENDING = 'pending';
 
     public const STATUS_CONFIRMED = 'confirmed';
@@ -71,6 +80,17 @@ class Order extends Model
     /** Pickup order handed over to the customer (set on the kanban) */
     public const STATUS_COMPLETED = 'completed';
 
+    public const CANCELLED_BY_CUSTOMER = 'customer';
+
+    public const CANCELLED_BY_RESTAURANT = 'restaurant';
+
+    public const CANCELLED_BY_ADMIN = 'admin';
+
+    public const CANCELLED_BY_SYSTEM = 'system';
+
+    /** The customer may cancel on their own only until the kitchen has started */
+    public const CUSTOMER_CANCELLABLE_STATUSES = [self::STATUS_PENDING, self::STATUS_CONFIRMED];
+
     public const STATUSES = [
         self::STATUS_PENDING => ['label' => 'Новый', 'color' => 'yellow', 'icon' => 'clock'],
         self::STATUS_CONFIRMED => ['label' => 'Подтверждён', 'color' => 'blue', 'icon' => 'check'],
@@ -78,6 +98,7 @@ class Order extends Model
         self::STATUS_READY_FOR_PICKUP => ['label' => 'Ожидает курьера', 'color' => 'indigo', 'icon' => 'box'],
         self::STATUS_DELIVERING => ['label' => 'Доставляется', 'color' => 'purple', 'icon' => 'truck'],
         self::STATUS_DELIVERED => ['label' => 'Доставлен', 'color' => 'green', 'icon' => 'check-circle'],
+        self::STATUS_COMPLETED => ['label' => 'Выдан', 'color' => 'green', 'icon' => 'check-circle'],
         self::STATUS_CANCELLED => ['label' => 'Отменён', 'color' => 'red', 'icon' => 'x'],
     ];
 
@@ -121,6 +142,10 @@ class Order extends Model
         'comment',
         'is_offline',
         'metadata',
+        'cancelled_by',
+        'cancel_reason',
+        'cancel_comment',
+        'cancelled_at',
     ];
 
     /**
@@ -137,6 +162,8 @@ class Order extends Model
             'commission_amount' => MoneyCast::class,
             'is_offline' => 'boolean',
             'metadata' => 'array',
+            'cancel_reason' => OrderCancelReason::class,
+            'cancelled_at' => 'datetime',
         ];
     }
 
@@ -223,17 +250,70 @@ class Order extends Model
         return self::STATUSES[$this->status]['color'] ?? 'gray';
     }
 
+    /**
+     * The only allowed steps of an order. The single dictionary of statuses:
+     * pending → confirmed → preparing → ready_for_pickup → delivering → delivered,
+     * a pickup order ends with "completed" instead of the delivery steps.
+     * "confirmed" (accepted by the restaurant) may be skipped: the kitchen starts cooking at once.
+     */
     public function getNextStatuses(): array
     {
         $transitions = [
-            self::STATUS_PENDING => [self::STATUS_CONFIRMED, self::STATUS_CANCELLED],
+            self::STATUS_PENDING => [self::STATUS_CONFIRMED, self::STATUS_PREPARING, self::STATUS_CANCELLED],
             self::STATUS_CONFIRMED => [self::STATUS_PREPARING, self::STATUS_CANCELLED],
             self::STATUS_PREPARING => [self::STATUS_READY_FOR_PICKUP, self::STATUS_CANCELLED],
-            self::STATUS_READY_FOR_PICKUP => [self::STATUS_DELIVERING, self::STATUS_CANCELLED],
+            self::STATUS_READY_FOR_PICKUP => $this->isPickup()
+                ? [self::STATUS_COMPLETED, self::STATUS_CANCELLED]
+                : [self::STATUS_DELIVERING, self::STATUS_CANCELLED],
             self::STATUS_DELIVERING => [self::STATUS_DELIVERED],
         ];
 
         return $transitions[$this->status] ?? [];
+    }
+
+    public function canBeCancelledByCustomer(): bool
+    {
+        return in_array($this->status, self::CUSTOMER_CANCELLABLE_STATUSES, true);
+    }
+
+    /** Why the order was cancelled, as shown to the customer (null if it was not cancelled) */
+    public function cancelReasonText(?string $locale = null): ?string
+    {
+        if ($this->status !== self::STATUS_CANCELLED) {
+            return null;
+        }
+
+        $text = $this->cancel_reason?->customerText($locale);
+
+        // "Other" says nothing by itself: show what the restaurant wrote
+        if ($this->cancel_comment && ($this->cancel_reason === null || $this->cancel_reason === OrderCancelReason::OTHER)) {
+            return $this->cancel_comment;
+        }
+
+        return $text;
+    }
+
+    public function canTransitionTo(string $status): bool
+    {
+        return in_array($status, $this->getNextStatuses(), true);
+    }
+
+    /** Status => label, for selects and badges */
+    public static function statusLabels(): array
+    {
+        return array_map(static fn (array $status): string => $status['label'], self::STATUSES);
+    }
+
+    /** Statuses a form may offer for this order: the current one and the allowed next steps */
+    public function selectableStatusLabels(): array
+    {
+        $allowed = [$this->status, ...$this->getNextStatuses()];
+
+        return array_filter(
+            self::statusLabels() + [$this->status => $this->status],
+            static fn (string $status): bool => in_array($status, $allowed, true),
+            ARRAY_FILTER_USE_KEY,
+        );
     }
 
     public function getCanTransitionToAttribute(): bool
@@ -324,11 +404,13 @@ class Order extends Model
 
         static::updated(static function (self $order): void {
             if ($order->isDirty('status')) {
+                // The one place a status change is written to the history
                 $order->statusHistory()->create([
                     'from_status' => $order->getOriginal('status'),
                     'to_status' => $order->status,
-                    'metadata' => ['changed_by' => Auth::id() ?? 'system'],
+                    'metadata' => ['changed_by' => Auth::id() ?? 'system'] + $order->statusChangeMeta,
                 ]);
+                $order->statusChangeMeta = [];
             }
         });
     }

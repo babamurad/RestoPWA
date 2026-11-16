@@ -21,6 +21,7 @@ export default {
     order_status: {
         new: 'Täze',
         pending: 'Täze',
+        confirmed: 'Kabul edildi',
         accepted: 'Kabul edildi',
         cooking: 'Taýýarlanýar',
         preparing: 'Taýýarlanýar',
@@ -37,6 +38,7 @@ export default {
         cart: 'Sebet',
         orders: 'Sargytlar',
         profile: 'Profil',
+        courier: 'Eltmek',
     },
     language: 'Dil',
 };

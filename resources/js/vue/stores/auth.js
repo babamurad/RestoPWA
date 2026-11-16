@@ -9,6 +9,9 @@ export const useAuthStore = defineStore('auth', {
         isLoading: false,
         hasChecked: false,
     }),
+    getters: {
+        isCourier: (state) => state.user?.role === 'courier',
+    },
     actions: {
         async fetchUser() {
             this.isLoading = true;

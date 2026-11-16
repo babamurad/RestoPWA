@@ -9,9 +9,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('app'))->name('home');
 Route::get('/login', fn () => view('app'))->name('login');
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 Route::get('/register', fn () => view('app'))->name('register');
-Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::prefix('auth/google')->name('auth.google.')->group(function () {
@@ -23,7 +23,7 @@ Route::get('/restaurants', fn () => view('app'))->name('restaurants.index');
 Route::get('/restaurants/{slug}', fn () => view('app'))->name('restaurants.show');
 Route::get('/cart', fn () => view('app'))->name('cart');
 Route::get('/checkout', fn () => view('app'))->name('checkout');
-Route::get('/orders', fn () => redirect('/profile'))->name('orders.index');
+Route::get('/orders', fn () => view('app'))->name('orders.index');
 Route::get('/profile', fn () => view('app'))->name('profile.edit');
 
 Route::view('/offline', 'offline');
@@ -32,22 +32,22 @@ Route::get('/legal/{document}', [LegalController::class, 'show'])
     ->name('legal.show');
 
 Route::get('/order/{orderId}/track', [OrderTrackingController::class, 'track'])
-    ->name('order.track')->middleware('auth');
+    ->name('order.track')->middleware('auth')->whereUuid('orderId');
 
 Route::get('/order/{orderId}/track/guest', [OrderTrackingController::class, 'track'])
-    ->name('order.track.guest')->middleware('signed');
+    ->name('order.track.guest')->middleware('signed')->whereUuid('orderId');
 
 Route::get('/order/success/{id}', [OrderSuccessController::class, 'show'])
-    ->name('order.success');
+    ->name('order.success')->whereUuid('id');
 
 Route::get('/api/order/success/{id}', [OrderSuccessController::class, 'apiShow'])
-    ->name('api.order.success');
+    ->name('api.order.success')->whereUuid('id');
 
 Route::get('/api/order/{orderId}/track', [OrderTrackingController::class, 'apiTrack'])
-    ->name('api.order.track')->middleware('auth');
+    ->name('api.order.track')->middleware('auth')->whereUuid('orderId');
 
 Route::get('/api/order/{orderId}/track/guest', [OrderTrackingController::class, 'apiTrack'])
-    ->name('api.order.track.guest')->middleware('signed');
+    ->name('api.order.track.guest')->middleware('signed')->whereUuid('orderId');
 
 Route::match(['get', 'head'], '/api/ping', function () {
     return response()->json([

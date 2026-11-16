@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { t } from '../i18n';
+import restaurantsApi from '../api/restaurants';
 
 export const useRestaurantsStore = defineStore('restaurants', {
   state: () => ({
@@ -17,27 +18,63 @@ export const useRestaurantsStore = defineStore('restaurants', {
       min: 0,
       max: 1000
     },
+    // Ids of the signed-in customer's favourite restaurants
+    favoriteIds: [],
     loading: false,
     error: null
   }),
 
+  getters: {
+    isFavorite: (state) => (id) => state.favoriteIds.includes(id),
+  },
+
   actions: {
-    // Fetch all active restaurants for the catalog list
-    async fetchRestaurants() {
+    // Fetch active restaurants for the catalog; params: { search, tag }
+    async fetchRestaurants(params = {}) {
       this.loading = true;
       this.error = null;
+      // Only the answer to the latest request counts (the user keeps typing)
+      const requestId = (this.lastRequestId = (this.lastRequestId || 0) + 1);
       try {
-        const response = await fetch('/api/v1/restaurants');
-        if (!response.ok) {
-          throw new Error(t('home.errors.load_restaurants'));
+        const query = Object.fromEntries(Object.entries(params).filter(([, value]) => value));
+        const data = await restaurantsApi.getRestaurants(query);
+        if (requestId === this.lastRequestId) {
+          this.restaurants = Array.isArray(data) ? data : [];
         }
-        const data = await response.json();
-        this.restaurants = data;
       } catch (err) {
-        console.error('Error fetching restaurants:', err);
-        this.error = err.message || t('home.errors.load_data');
+        if (requestId === this.lastRequestId) {
+          console.error('Error fetching restaurants:', err);
+          this.error = t('home.errors.load_restaurants');
+        }
       } finally {
-        this.loading = false;
+        if (requestId === this.lastRequestId) {
+          this.loading = false;
+        }
+      }
+    },
+
+    async fetchFavorites() {
+      try {
+        this.favoriteIds = await restaurantsApi.getFavorites();
+      } catch (err) {
+        this.favoriteIds = [];
+      }
+    },
+
+    clearFavorites() {
+      this.favoriteIds = [];
+    },
+
+    // Switches at once and rolls back if the server refuses
+    async toggleFavorite(id) {
+      const wasFavorite = this.favoriteIds.includes(id);
+      this.favoriteIds = wasFavorite ? this.favoriteIds.filter((x) => x !== id) : [...this.favoriteIds, id];
+      try {
+        await (wasFavorite ? restaurantsApi.removeFavorite(id) : restaurantsApi.addFavorite(id));
+        return true;
+      } catch (err) {
+        this.favoriteIds = wasFavorite ? [...this.favoriteIds, id] : this.favoriteIds.filter((x) => x !== id);
+        return false;
       }
     },
 

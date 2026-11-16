@@ -30,6 +30,7 @@ enum OrderRejectReason: string
     case ZONE_NOT_CONFIGURED = 'zone_not_configured';
     case INVALID_GEOMETRY = 'invalid_geometry';
     case RESTAURANT_CLOSED = 'restaurant_closed';
+    case INVALID_MODIFIERS = 'invalid_modifiers';
 
     public function userMessage(): string
     {
@@ -58,6 +59,7 @@ enum OrderRejectReason: string
             self::ZONE_NOT_CONFIGURED => 'Зона доставки ресторана не настроена.',
             self::INVALID_GEOMETRY => 'Некорректная геометрия зоны доставки.',
             self::RESTAURANT_CLOSED => 'Ресторан сейчас закрыт или временно не принимает заказы.',
+            self::INVALID_MODIFIERS => 'Выбор добавок не подходит к блюду. Откройте блюдо и выберите добавки заново.',
         };
     }
 
@@ -89,6 +91,7 @@ enum OrderRejectReason: string
             self::ZONE_NOT_CONFIGURED => 'Зона не настроена',
             self::INVALID_GEOMETRY => 'Ошибка геометрии зоны',
             self::RESTAURANT_CLOSED => 'Ресторан закрыт',
+            self::INVALID_MODIFIERS => 'Неверные добавки',
         };
     }
 
@@ -114,7 +117,8 @@ enum OrderRejectReason: string
             self::BELOW_MIN_ORDER,
             self::ZONE_NOT_CONFIGURED,
             self::INVALID_GEOMETRY,
-            self::RESTAURANT_CLOSED => 422,
+            self::RESTAURANT_CLOSED,
+            self::INVALID_MODIFIERS => 422,
 
             self::UNAUTHORIZED => 401,
             self::VALIDATION => 400,

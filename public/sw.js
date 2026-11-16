@@ -1,6 +1,6 @@
-const CACHE_NAME = 'resto-pwa-v5';
-const STATIC_CACHE = 'resto-static-v5';
-const API_CACHE = 'resto-api-v5';
+const CACHE_NAME = 'resto-pwa-v6';
+const STATIC_CACHE = 'resto-static-v6';
+const API_CACHE = 'resto-api-v6';
 
 const STATIC_ASSETS = [
     '/',
@@ -48,7 +48,14 @@ self.addEventListener('fetch', (event) => {
     }
 
     if (url.pathname.startsWith('/api/')) {
-        event.respondWith(networkFirst(request, API_CACHE));
+        // Only public data (menus, restaurants) is kept for offline use. Orders, the profile
+        // and anything else tied to an account never goes into the cache: the cache is shared
+        // by everyone who uses this device, also after a logout.
+        if (isPublicApi(url.pathname)) {
+            event.respondWith(networkFirst(request, API_CACHE));
+        } else {
+            event.respondWith(networkOnly(request));
+        }
         return;
     }
 
@@ -67,6 +74,28 @@ self.addEventListener('fetch', (event) => {
 
     event.respondWith(cacheFirst(request, STATIC_CACHE));
 });
+
+const PUBLIC_API_PREFIXES = [
+    '/api/v1/menu/',
+    '/api/v1/restaurants',
+    '/api/v1/categories',
+    '/api/v1/config',
+];
+
+function isPublicApi(pathname) {
+    return PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
+async function networkOnly(request) {
+    try {
+        return await fetch(request);
+    } catch (error) {
+        return new Response(
+            JSON.stringify({ error: 'Offline', message: 'Нет подключения к интернету' }),
+            { status: 503, headers: { 'Content-Type': 'application/json' } }
+        );
+    }
+}
 
 async function networkFirst(request, cacheName) {
     try {

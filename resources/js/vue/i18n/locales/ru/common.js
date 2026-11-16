@@ -21,6 +21,7 @@ export default {
     order_status: {
         new: 'Новый',
         pending: 'Новый',
+        confirmed: 'Принят',
         accepted: 'Принят',
         cooking: 'Готовится',
         preparing: 'Готовится',
@@ -37,6 +38,7 @@ export default {
         cart: 'Корзина',
         orders: 'Заказы',
         profile: 'Профиль',
+        courier: 'Доставка',
     },
     language: 'Язык',
 };

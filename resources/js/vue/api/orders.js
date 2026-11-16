@@ -36,6 +36,14 @@ export default {
     },
 
     /**
+     * Отменить свой заказ (пока ресторан не начал готовить)
+     */
+    async cancelOrder(orderId) {
+        const response = await apiClient.post(`/orders/${orderId}/cancel`);
+        return response.data;
+    },
+
+    /**
      * Оставить отзыв о доставленном заказе (оценка 1-5 и комментарий)
      */
     async reviewOrder(orderId, payload) {

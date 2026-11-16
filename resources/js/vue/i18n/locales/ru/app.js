@@ -16,6 +16,7 @@ export default {
         payments: 'Способы оплаты',
         support: 'Служба поддержки',
         orders: 'Заказы',
+        courier: 'Доставка',
     },
     auth_required: {
         title: 'Требуется авторизация',

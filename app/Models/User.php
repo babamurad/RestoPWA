@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -50,6 +51,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'terms_accepted_at' => 'datetime',
+            'notification_preferences' => 'array',
             'deleted_at' => 'datetime',
             'role' => UserRole::class,
         ];
@@ -129,6 +131,12 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     public function paymentMethods(): HasMany
     {
         return $this->hasMany(UserPaymentMethod::class);
+    }
+
+    /** Restaurants the customer marked as favourite */
+    public function favoriteRestaurants(): BelongsToMany
+    {
+        return $this->belongsToMany(Restaurant::class, 'user_favorites', 'user_id', 'restaurant_id');
     }
 
     public function supportTickets(): HasMany

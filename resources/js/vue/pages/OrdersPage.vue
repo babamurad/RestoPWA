@@ -73,6 +73,11 @@
           </div>
         </div>
 
+        <!-- Why the order was cancelled -->
+        <p v-if="order.cancel_reason" class="mt-3 text-xs dark:text-slate-400 text-slate-600">
+          {{ t('orders.cancel.reason', { reason: order.cancel_reason }) }}
+        </p>
+
         <!-- Price & action -->
         <div class="flex justify-between items-center mt-4">
           <span class="text-xs dark:text-slate-400 font-semibold text-slate-600">
@@ -88,6 +93,14 @@
               class="px-3.5 py-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold rounded-lg border border-amber-500/30 hover:bg-amber-500/20 active:scale-95 transition-colors"
             >
               {{ t('orders.rate') }}
+            </button>
+            <button
+              v-if="order.can_cancel"
+              @click="cancelOrder(order)"
+              :disabled="cancellingId === order.id"
+              class="px-3.5 py-1.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold rounded-lg border border-rose-500/30 hover:bg-rose-500/20 active:scale-95 transition-colors disabled:opacity-50"
+            >
+              {{ cancellingId === order.id ? t('orders.cancel.sending') : t('orders.cancel.button') }}
             </button>
             <button 
               @click="repeatOrder(order)"
@@ -213,7 +226,7 @@ const getRestaurantImage = (vendorId) => {
 // Generates items string description
 const getOrderItemsSummary = (order) => {
   if (!order.items || !Array.isArray(order.items)) return '';
-  return order.items.map(item => `${item.name} x${item.quantity}`).join(', ');
+  return order.items.map(item => `${item.name || item.product_name} x${item.quantity}`).join(', ');
 };
 
 // One-click Repeat Order Action
@@ -262,9 +275,60 @@ const submitReview = async () => {
   }
 };
 
+// Cancel an order the restaurant has not started cooking yet
+const cancellingId = ref(null);
+
+const confirmCancel = async () => {
+  if (!window.Swal) return confirm(t('orders.cancel.confirm_text'));
+  const result = await window.Swal.fire({
+    title: t('orders.cancel.confirm_title'),
+    text: t('orders.cancel.confirm_text'),
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: t('orders.cancel.confirm_button'),
+    cancelButtonText: t('orders.cancel.keep'),
+    confirmButtonColor: '#e11d48',
+    cancelButtonColor: '#334155',
+    reverseButtons: true,
+    customClass: { popup: 'rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl' }
+  });
+  return result.isConfirmed;
+};
+
+const showCancelError = (message) => {
+  if (window.Swal) {
+    window.Swal.fire({ icon: 'error', text: message, confirmButtonColor: '#f97316' });
+  } else {
+    alert(message);
+  }
+};
+
+const cancelOrder = async (order) => {
+  if (cancellingId.value || !(await confirmCancel())) return;
+  cancellingId.value = order.id;
+  try {
+    await ordersApi.cancelOrder(order.id);
+  } catch (err) {
+    showCancelError(err.response?.data?.message || t('orders.cancel.error'));
+  } finally {
+    cancellingId.value = null;
+    // Either way the list may be out of date (e.g. the kitchen has just started)
+    await ordersStore.fetchOrders();
+  }
+};
+
 const repeatOrder = (order) => {
   if (!order.items || !Array.isArray(order.items)) return;
-  
+
+  const fillCart = () => {
+    cartStore.clearCart();
+    const vendor = restaurantsStore.restaurants.find(r => r.id === order.vendor_id)
+      || { id: order.vendor_id, slug: null, name: t('common.restaurant') };
+
+    order.items.forEach(item => cartStore.addOrderItem(item, vendor));
+    router.push('/cart');
+  };
+
   if (window.Swal) {
     window.Swal.fire({
       title: t('orders.repeat_dialog.title'),
@@ -281,39 +345,11 @@ const repeatOrder = (order) => {
       customClass: { popup: 'rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl' }
     }).then((result) => {
       if (result.isConfirmed) {
-        cartStore.clear();
-        cartStore.setVendorId(order.vendor_id);
-        
-        order.items.forEach(item => {
-          cartStore.addItem({
-            id: item.product_id || item.id,
-            name: item.name,
-            price: Number(item.price),
-            weight_g: item.weight_g || item.weight || null,
-            image_url: item.image_url || null
-          }, item.quantity);
-        });
-        
-        router.push('/cart');
+        fillCart();
       }
     });
-  } else {
-    if (confirm(t('orders.repeat_dialog.fallback_confirm'))) {
-      cartStore.clear();
-      cartStore.setVendorId(order.vendor_id);
-      
-      order.items.forEach(item => {
-        cartStore.addItem({
-          id: item.product_id || item.id,
-          name: item.name,
-          price: Number(item.price),
-          weight_g: item.weight_g || item.weight || null,
-          image_url: item.image_url || null
-        }, item.quantity);
-      });
-      
-      router.push('/cart');
-    }
+  } else if (confirm(t('orders.repeat_dialog.fallback_confirm'))) {
+    fillCart();
   }
 };
 </script>

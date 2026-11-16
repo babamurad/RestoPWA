@@ -42,6 +42,15 @@
             <span>📋</span> {{ t('common.nav.orders') }}
           </router-link>
 
+          <router-link
+            v-if="authStore.isCourier"
+            to="/courier"
+            active-class="dark:bg-slate-800/50 text-orange-400 dark:border-slate-700/40 bg-white border-slate-300"
+            class="px-4 py-2.5 rounded-xl border border-transparent dark:hover:bg-slate-800/40 dark:hover:text-slate-100 transition-all flex items-center gap-2 hover:bg-white hover:text-slate-900"
+          >
+            <span>🛵</span> {{ t('common.nav.courier') }}
+          </router-link>
+
           <router-link 
             to="/profile" 
             active-class="dark:bg-slate-800/50 text-orange-400 dark:border-slate-700/40 bg-white border-slate-300"
@@ -99,6 +108,17 @@
         <span class="text-[9px] font-black uppercase tracking-wider">{{ t('common.nav.orders') }}</span>
       </router-link>
 
+      <!-- Courier tab, only for couriers -->
+      <router-link
+        v-if="authStore.isCourier"
+        to="/courier"
+        active-class="text-orange-500 scale-105"
+        class="flex flex-col items-center gap-1 dark:text-slate-400 transition-all duration-200 text-slate-600"
+      >
+        <span class="text-xl">🛵</span>
+        <span class="text-[9px] font-black uppercase tracking-wider">{{ t('common.nav.courier') }}</span>
+      </router-link>
+
       <!-- Profile tab -->
       <router-link 
         to="/profile" 
@@ -134,9 +154,11 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useCartStore } from './stores/cart';
+import { useAuthStore } from './stores/auth';
 import LanguageSwitcher from './components/LanguageSwitcher.vue';
 
 const cartStore = useCartStore();
+const authStore = useAuthStore();
 const { t } = useI18n();
 
 const isOffline = ref(!navigator.onLine);
