@@ -101,7 +101,8 @@ function createMockDB() {
 let mockDb;
 
 vi.mock('dexie', () => ({
-    default: vi.fn(() => {
+    // A regular function, not an arrow: the service does `class … extends Dexie`
+    default: vi.fn(function () {
         mockDb = createMockDB();
         return mockDb;
     }),

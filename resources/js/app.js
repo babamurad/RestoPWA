@@ -3,7 +3,6 @@ import { startConnectivityMonitor } from './vue/connectivity';
 import { setupOfflineAuthPrompt } from './vue/offlineOrders';
 import './bootstrap';
 import './services/CartService';
-import './services/CartAlpine';
 import Swal from 'sweetalert2'
 
 window.Swal = Swal
@@ -15,7 +14,6 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
             .then((registration) => {
-                console.log('SW registered:', registration.scope);
                 setupOrderSubmission(registration);
             })
             .catch((error) => {
@@ -80,7 +78,6 @@ async function subscribeToPush() {
             body: JSON.stringify(subscription)
         });
 
-        console.log('Push subscription successful');
     } catch (error) {
         console.error('Push subscription failed:', error);
     }

@@ -105,7 +105,6 @@ const CartService = {
             return existingItem.id;
         }
 
-        console.log('CartService: Adding to IndexedDB', { productId: normalizedProductId, vendorId: normalizedVendorId, quantity });
         const id = await db.cart.add({
             productId: normalizedProductId,
             vendorId: normalizedVendorId,
@@ -117,7 +116,6 @@ const CartService = {
             price,
             addedAt: new Date()
         });
-        console.log('CartService: Added with ID', id);
         return id;
     },
 
@@ -200,7 +198,6 @@ const CartService = {
         const existingOrders = await db.pendingOrders.toArray();
         const existing = existingOrders.find(o => o.payload.idempotency_key === orderPayload.idempotency_key);
         if (existing) {
-            console.log('CartService: Order already queued', orderPayload.idempotency_key);
             return existing.id;
         }
         
