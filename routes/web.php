@@ -32,22 +32,22 @@ Route::get('/legal/{document}', [LegalController::class, 'show'])
     ->name('legal.show');
 
 Route::get('/order/{orderId}/track', [OrderTrackingController::class, 'track'])
-    ->name('order.track')->middleware('auth');
+    ->name('order.track')->middleware('auth')->whereUuid('orderId');
 
 Route::get('/order/{orderId}/track/guest', [OrderTrackingController::class, 'track'])
-    ->name('order.track.guest')->middleware('signed');
+    ->name('order.track.guest')->middleware('signed')->whereUuid('orderId');
 
 Route::get('/order/success/{id}', [OrderSuccessController::class, 'show'])
-    ->name('order.success');
+    ->name('order.success')->whereUuid('id');
 
 Route::get('/api/order/success/{id}', [OrderSuccessController::class, 'apiShow'])
-    ->name('api.order.success');
+    ->name('api.order.success')->whereUuid('id');
 
 Route::get('/api/order/{orderId}/track', [OrderTrackingController::class, 'apiTrack'])
-    ->name('api.order.track')->middleware('auth');
+    ->name('api.order.track')->middleware('auth')->whereUuid('orderId');
 
 Route::get('/api/order/{orderId}/track/guest', [OrderTrackingController::class, 'apiTrack'])
-    ->name('api.order.track.guest')->middleware('signed');
+    ->name('api.order.track.guest')->middleware('signed')->whereUuid('orderId');
 
 Route::match(['get', 'head'], '/api/ping', function () {
     return response()->json([

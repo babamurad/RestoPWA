@@ -21,7 +21,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('ping', fn () => response()->json(['status' => 'ok']))->name('api.ping');
 
-Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->group(function () {
+// {id} is always a UUID: anything else is a 404 before it reaches the database
+// (PostgreSQL raises an SQL error when a uuid column is compared with other text)
+Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->whereUuid('id')->group(function () {
     Route::bind('vendor', fn ($value) => Restaurant::where('slug', $value)->firstOrFail());
     Route::bind('product', fn ($value) => Product::findOrFail($value));
 

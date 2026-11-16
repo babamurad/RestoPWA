@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class OrderController
@@ -111,7 +112,7 @@ class OrderController
             $updatedItems = [];
             foreach ($itemsInput as $item) {
                 if (is_array($item) && isset($item['product_id'])) {
-                    $product = Product::find($item['product_id']);
+                    $product = Str::isUuid((string) $item['product_id']) ? Product::find($item['product_id']) : null;
 
                     // Unknown product, or one from another restaurant's menu
                     if ($product && $orderVendorId !== '' && (string) $product->vendor_id !== $orderVendorId) {

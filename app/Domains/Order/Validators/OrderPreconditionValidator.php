@@ -10,6 +10,7 @@ use App\Domains\Vendor\Models\Restaurant;
 use App\Enums\OrderRejectReason;
 use App\Support\PhoneNormalizer;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 final readonly class OrderPreconditionValidator
 {
@@ -73,6 +74,11 @@ final readonly class OrderPreconditionValidator
     {
         if (empty($data['vendor_id'])) {
             return OrderRejectReason::NO_VENDOR;
+        }
+
+        // PostgreSQL refuses to compare a uuid column with anything that is not a UUID
+        if (! Str::isUuid((string) $data['vendor_id'])) {
+            return OrderRejectReason::VENDOR_NOT_FOUND;
         }
 
         $restaurant = Restaurant::find($data['vendor_id']);
