@@ -71,7 +71,7 @@ class TestSalesScenario extends Command
                 ],
             ],
             'total' => $testProduct->price * 2,
-            'delivery_fee' => 100,
+            'delivery_fee' => 1.00,
             'comment' => 'Тестовый заказ [TEST_ORDER]',
         ]);
         $this->info("✓ Заказ создан: {$order->id}");

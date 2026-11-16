@@ -22,13 +22,13 @@ class CartSyncTest extends TestCase
         parent::setUp();
 
         $this->restaurant = Restaurant::factory()->create([
-            'min_order' => 50000,
+            'min_order' => 500.00,
         ]);
         $this->restaurant->update(['vendor_id' => $this->restaurant->id]);
 
         $this->product = Product::factory()->create([
             'vendor_id' => $this->restaurant->id,
-            'price' => 20000, // 200.00 in MoneyCast units (store as integer 20000)
+            'price' => 200.00,
             'is_available' => true,
         ]);
     }

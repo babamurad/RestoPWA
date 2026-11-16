@@ -38,7 +38,7 @@ class OrderRejectReasonsTest extends TestCase
 
         $this->product = Product::factory()->create([
             'vendor_id' => $this->restaurant->id,
-            'price' => 1000,
+            'price' => 10.00,
             'is_available' => true,
         ]);
         $this->user = User::factory()->create();
@@ -241,7 +241,7 @@ class OrderRejectReasonsTest extends TestCase
         // Set min_order above what the server-recalculated total will be
         // Product price = 10.00, quantity 1 → 1000 cents; delivery_fee = 500 cents; total = 1500 cents
         // min_order = 20.00 = 2000 cents → 1500 < 2000 → rejected
-        $this->restaurant->update(['min_order' => 2000]);
+        $this->restaurant->update(['min_order' => 20.00]);
 
         $response = $this->actingAs($this->user)
             ->postJson('/api/v1/orders', $this->validOrderPayload([
@@ -339,7 +339,7 @@ class OrderRejectReasonsTest extends TestCase
     public function test_rejects_product_of_another_restaurant_with_422(): void
     {
         $other = Restaurant::factory()->create(['is_active' => true]);
-        $foreign = Product::factory()->create(['vendor_id' => $other->id, 'price' => 1000, 'is_available' => true]);
+        $foreign = Product::factory()->create(['vendor_id' => $other->id, 'price' => 10.00, 'is_available' => true]);
 
         $payload = $this->validOrderPayload();
         $payload['items'][0]['product_id'] = $foreign->id;

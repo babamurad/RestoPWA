@@ -93,7 +93,7 @@ class RestaurantAnalyticsTest extends TestCase
         $this->order('2026-10-15 11:00', status: Order::STATUS_CANCELLED, total: 500);
         $this->order('2026-10-15 11:30', status: Order::STATUS_PREPARING, total: 300);
         $this->order('2026-10-01 12:00', total: 999); // before the period
-        Order::factory()->create(['status' => Order::STATUS_DELIVERED, 'total' => 777]); // another restaurant
+        Order::factory()->create(['status' => Order::STATUS_DELIVERED, 'total' => 7.77]); // another restaurant
 
         $summary = $this->analytics->summary($this->restaurant->id, $this->week());
 
@@ -169,7 +169,7 @@ class RestaurantAnalyticsTest extends TestCase
         $owner = User::factory()->create(['role' => UserRole::RESTAURATEUR]);
         $this->restaurant->update(['owner_id' => $owner->id]);
         $this->order('2026-10-15 10:00', total: 1234, delivery: 0);
-        Order::factory()->create(['status' => Order::STATUS_DELIVERED, 'total' => 98765]);
+        Order::factory()->create(['status' => Order::STATUS_DELIVERED, 'total' => 987.65]);
 
         $this->actingAs($owner);
         Filament::setCurrentPanel(Filament::getPanel('vendor'));

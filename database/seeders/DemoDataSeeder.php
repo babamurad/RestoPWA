@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Casts\MoneyCast;
 use App\Domains\Geo\Models\District;
 use App\Domains\Logistics\Models\Courier;
 use App\Domains\Logistics\Models\CourierEarning;
@@ -114,7 +115,7 @@ class DemoDataSeeder extends Seeder
             foreach ($districts as $district) {
                 RestaurantDeliveryPrice::firstOrCreate(
                     ['restaurant_id' => $restaurant->id, 'district_id' => $district->id],
-                    ['price' => fake()->randomElement([800, 1000, 1200, 1500, 1800, 2000])]
+                    ['price' => fake()->randomElement([8.0, 10.0, 12.0, 15.0, 18.0, 20.0])]
                 );
             }
         }
@@ -148,7 +149,7 @@ class DemoDataSeeder extends Seeder
                 UserAddress::create([
                     'user_id' => $user->id,
                     'title' => 'Дом',
-                    'full_address' => 'г. Туркменабат, ' . ['3-й микрорайон', 'Бахар', 'Центр'][array_rand(['3-й микрорайон', 'Бахар', 'Центр'])] . ', дом ' . random_int(1, 60),
+                    'full_address' => 'г. Туркменабат, '.['3-й микрорайон', 'Бахар', 'Центр'][array_rand(['3-й микрорайон', 'Бахар', 'Центр'])].', дом '.random_int(1, 60),
                     'floor' => (string) random_int(1, 9),
                     'apartment' => (string) random_int(1, 120),
                     'lat' => 39.05 + mt_rand(-400, 400) / 10000,
@@ -354,9 +355,9 @@ class DemoDataSeeder extends Seeder
             'payment_status' => $paymentStatus,
             'address' => $this->fakeAddress($client),
             'items' => $items,
-            'total' => $totalCents,
-            'delivery_fee' => $deliveryFeeCents,
-            'commission_amount' => $commissionCents,
+            'total' => MoneyCast::fromMinor($totalCents),
+            'delivery_fee' => MoneyCast::fromMinor($deliveryFeeCents),
+            'commission_amount' => MoneyCast::fromMinor($commissionCents),
             'delivery_time' => 'asap',
             'payment_method' => $paymentMethod,
             'is_offline' => false,
@@ -531,9 +532,9 @@ class DemoDataSeeder extends Seeder
                     'restaurant_id' => $restaurant->id,
                     'period_from' => $from->toDateString(),
                     'period_to' => $to->toDateString(),
-                    'gross_amount' => $gross,
-                    'commission_amount' => $commission,
-                    'net_payable' => max(0, $gross - $deliveryFees - $commission),
+                    'gross_amount' => MoneyCast::fromMinor($gross),
+                    'commission_amount' => MoneyCast::fromMinor($commission),
+                    'net_payable' => MoneyCast::fromMinor(max(0, $gross - $deliveryFees - $commission)),
                     'status' => $weeksAgo === 1 ? 'approved' : 'paid',
                     'paid_at' => $weeksAgo === 1 ? null : $to->copy()->addDays(2),
                 ]);

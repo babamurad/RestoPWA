@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Casts\MoneyCast;
 use App\Domains\Menu\Models\Category;
 use App\Domains\Menu\Models\Product;
 use App\Domains\Vendor\Models\Restaurant;
@@ -34,6 +35,9 @@ class RestaurantSeeder extends Seeder
 
             $restaurantData['slug'] = Str::slug($restaurantData['name']);
             $restaurantData['owner_id'] = $owner->id;
+            // Amounts in the seed data below are written in tyiyn (1/100 TMT)
+            $restaurantData['delivery_fee'] = MoneyCast::fromMinor($restaurantData['delivery_fee']);
+            $restaurantData['min_order'] = MoneyCast::fromMinor($restaurantData['min_order']);
             $restaurantData['delivery_zones'] = [
                 'type' => 'MultiPolygon',
                 'coordinates' => [
@@ -207,7 +211,7 @@ class RestaurantSeeder extends Seeder
                 'category_id' => $categoryId,
                 'name' => $item['name'],
                 'description' => $item['description'],
-                'price' => $item['price'],
+                'price' => MoneyCast::fromMinor($item['price']),
                 'image' => $item['image'] ?? null,
                 'weight_g' => $weight ?: null,
                 'is_available' => true,

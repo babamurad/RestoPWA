@@ -51,11 +51,42 @@ class MoneyCastTest extends TestCase
         $this->assertIsInt($result);
     }
 
-    public function test_set_converts_integer_to_cents(): void
+    public function test_set_treats_an_integer_as_currency_units_like_a_float(): void
     {
-        $result = $this->cast->set($this->model, 'price', 100, []);
+        // 100 means 100 TMT, exactly as 100.0 does: the type of a number never changes its meaning
+        $this->assertSame(10000, $this->cast->set($this->model, 'price', 100, []));
+        $this->assertSame(10000, $this->cast->set($this->model, 'price', 100.0, []));
+        $this->assertSame(10000, $this->cast->set($this->model, 'price', '100', []));
+    }
 
-        $this->assertSame(100, $result);
+    public function test_set_and_get_round_trip_for_every_numeric_form(): void
+    {
+        foreach ([20, 20.0, '20', '20.00', 19.99, '19.99', 0, 0.0, '0'] as $amount) {
+            $stored = $this->cast->set($this->model, 'price', $amount, []);
+
+            $this->assertSame((float) $amount, $this->cast->get($this->model, 'price', $stored, []), var_export($amount, true));
+        }
+    }
+
+    public function test_set_treats_an_empty_string_as_zero(): void
+    {
+        $this->assertSame(0, $this->cast->set($this->model, 'price', '', []));
+    }
+
+    public function test_set_rejects_what_is_not_a_number(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        $this->cast->set($this->model, 'price', 'ten', []);
+    }
+
+    public function test_minor_unit_helpers(): void
+    {
+        $this->assertSame(19.99, MoneyCast::fromMinor(1999));
+        $this->assertSame(19.99, MoneyCast::fromMinor('1999'));
+        $this->assertSame(1999, MoneyCast::toMinor(19.99));
+        // 0.1 + 0.2 is 0.30000000000000004 in floats: still 30 tyiyn
+        $this->assertSame(30, MoneyCast::toMinor(0.1 + 0.2));
     }
 
     public function test_set_converts_string_to_cents(): void

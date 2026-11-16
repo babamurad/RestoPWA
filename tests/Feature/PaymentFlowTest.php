@@ -142,7 +142,7 @@ class PaymentFlowTest extends TestCase
             'vendor_id' => $this->restaurant->id,
             'status' => Order::STATUS_DELIVERING,
             'payment_method' => 'cash',
-            'total' => 11200,
+            'total' => 112.00,
         ]);
         PaymentTransaction::where('order_id', $order->id)->delete();
 
