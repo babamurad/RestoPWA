@@ -6,12 +6,14 @@ use App\Domains\Menu\Models\Category;
 use App\Domains\Menu\Models\Product;
 use App\Domains\Order\Http\Controllers\Api\OrderController as DomainOrderController;
 use App\Domains\Review\Http\Controllers\ReviewController;
+use App\Domains\Vendor\Http\Controllers\RestaurantController;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\GeoController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\Profile\AccountController;
 use App\Http\Controllers\Api\Profile\AddressController;
+use App\Http\Controllers\Api\Profile\FavoriteController;
 use App\Http\Controllers\Api\Profile\PaymentMethodController;
 use App\Http\Controllers\Api\Profile\SupportController;
 use App\Http\Controllers\Auth\AuthController;
@@ -30,20 +32,8 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->whe
     Route::get('menu/{vendor}', [MenuController::class, 'index'])->name('api.menu.index');
     Route::get('menu/product/{product}', [MenuController::class, 'show'])->name('api.menu.product.show');
 
-    Route::get('restaurants', function () {
-        return Restaurant::active()
-            ->with('schedules')
-            ->select('id', 'slug', 'name', 'image', 'cover_image', 'rating', 'review_count', 'delivery_time', 'delivery_fee', 'min_order', 'is_active', 'description', 'is_paused', 'timezone')
-            ->get()
-            ->each(fn ($r) => $r->setAppends(['is_open_now', 'delivery_fee_from'])->makeHidden(['schedules']));
-    })->name('api.restaurants.index');
-
-    Route::get('restaurants/{vendor}', function (Restaurant $vendor) {
-        $vendor->load('schedules');
-        $vendor->setAppends(['is_open_now', 'delivery_fee_from']);
-
-        return response()->json($vendor);
-    })->name('api.restaurants.show');
+    Route::get('restaurants', [RestaurantController::class, 'index'])->name('api.restaurants.index');
+    Route::get('restaurants/{vendor}', [RestaurantController::class, 'show'])->name('api.restaurants.show');
 
     Route::get('restaurants/{vendor}/reviews', [ReviewController::class, 'index'])->name('api.restaurants.reviews');
 
@@ -92,6 +82,9 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->whe
                 ->middleware('throttle:5,1')
                 ->name('api.profile.destroy');
             Route::apiResource('addresses', AddressController::class)->except(['show']);
+            Route::get('favorites', [FavoriteController::class, 'index'])->name('api.profile.favorites.index');
+            Route::put('favorites/{id}', [FavoriteController::class, 'store'])->name('api.profile.favorites.store');
+            Route::delete('favorites/{id}', [FavoriteController::class, 'destroy'])->name('api.profile.favorites.destroy');
             Route::apiResource('payments', PaymentMethodController::class)->only(['index', 'store', 'destroy']);
             Route::apiResource('support', SupportController::class)->only(['index', 'store']);
         });

@@ -23,5 +23,21 @@ export default {
     async getReviews(slug, page = 1) {
         const response = await apiClient.get(`/restaurants/${slug}/reviews`, { params: { page } });
         return response.data;
+    },
+
+    /**
+     * Избранные рестораны текущего пользователя (список id)
+     */
+    async getFavorites() {
+        const response = await apiClient.get('/profile/favorites');
+        return response.data.data || [];
+    },
+
+    async addFavorite(id) {
+        return (await apiClient.put(`/profile/favorites/${id}`)).data;
+    },
+
+    async removeFavorite(id) {
+        return (await apiClient.delete(`/profile/favorites/${id}`)).data;
     }
 };

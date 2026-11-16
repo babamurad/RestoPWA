@@ -53,6 +53,7 @@ class AccountDeletionService
             DB::table('support_tickets')->where('user_id', $user->id)->delete();
             DB::table('push_subscriptions')->where('user_id', $user->id)->delete();
             DB::table('sessions')->where('user_id', $user->id)->delete();
+            DB::table('user_favorites')->where('user_id', $user->id)->delete();
             if ($user->phone) {
                 DB::table('sms_logs')->where('phone', $user->phone)->delete();
             }

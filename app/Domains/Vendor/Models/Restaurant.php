@@ -85,6 +85,20 @@ class Restaurant extends Model
     }
 
     /**
+     * Cuisine tags a restaurant can carry; the customer app filters the catalog by them.
+     * Keys are also the translation keys of the app (home.categories.*).
+     */
+    public const CUISINES = [
+        'national' => 'Национальная кухня',
+        'grill' => 'Шашлык и гриль',
+        'burgers' => 'Бургеры',
+        'pizza' => 'Пицца',
+        'sushi' => 'Суши',
+        'desserts' => 'Сладости',
+        'drinks' => 'Напитки',
+    ];
+
+    /**
      * @var list<string>
      */
     protected $fillable = [
@@ -109,6 +123,7 @@ class Restaurant extends Model
         'courier_fixed_fee',
         'courier_percent_fee',
         'timezone',
+        'tags',
     ];
 
     /**
@@ -125,6 +140,7 @@ class Restaurant extends Model
             'pickup_commission_percent' => 'decimal:2',
             'courier_fixed_fee' => 'decimal:2',
             'settings' => 'array',
+            'tags' => 'array',
             'is_active' => 'boolean',
             'is_paused' => 'boolean',
             'courier_percent_fee' => 'float',

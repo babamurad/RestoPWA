@@ -71,6 +71,12 @@ class RestaurantResource extends Resource
                             ->label('Описание')
                             ->maxLength(65535)
                             ->columnSpanFull(),
+                        Forms\Components\CheckboxList::make('tags')
+                            ->label('Кухня')
+                            ->helperText('По этим меткам клиенты фильтруют рестораны в каталоге.')
+                            ->options(Restaurant::CUISINES)
+                            ->columns(3)
+                            ->columnSpanFull(),
                     ])->columns(2),
                 Section::make('Настройки')
                     ->schema([
