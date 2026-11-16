@@ -8,13 +8,20 @@ use App\Domains\Order\Models\Order;
 
 /**
  * Platform commission: the restaurant's percent of the food total.
- * The delivery fee is excluded (it goes to the courier); pickup orders pay it too.
+ * The delivery fee is excluded (it goes to the courier); pickup orders pay it too,
+ * at the restaurant's pickup rate when one is set.
  */
 class CommissionCalculator
 {
     public function amount(Order $order): float
     {
-        $percent = (float) $order->restaurant?->commission_percent;
+        $restaurant = $order->restaurant;
+
+        // Pickup may have its own rate (the platform does less for such an order);
+        // an empty one means the usual rate
+        $percent = $order->isPickup() && $restaurant?->pickup_commission_percent !== null
+            ? (float) $restaurant->pickup_commission_percent
+            : (float) $restaurant?->commission_percent;
 
         if ($percent <= 0) {
             return 0.0;

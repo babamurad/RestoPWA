@@ -55,6 +55,30 @@ class MarketplaceCommissionTest extends TestCase
         $this->assertEquals(8.00, $order->fresh()->commission_amount);
     }
 
+    public function test_pickup_has_its_own_rate_when_one_is_set(): void
+    {
+        $this->restaurant->update(['pickup_commission_percent' => 4.00]);
+
+        $pickup = $this->order(['status' => Order::STATUS_READY_FOR_PICKUP, 'delivery_type' => Order::DELIVERY_TYPE_PICKUP, 'total' => 80.00, 'delivery_fee' => 0]);
+        $pickup->update(['status' => Order::STATUS_COMPLETED]);
+        $this->assertEquals(3.20, $pickup->fresh()->commission_amount);
+
+        // Delivery orders keep the usual rate
+        $delivery = $this->order(['status' => Order::STATUS_DELIVERING, 'total' => 100.00, 'delivery_fee' => 20.00]);
+        $delivery->update(['status' => Order::STATUS_DELIVERED]);
+        $this->assertEquals(8.00, $delivery->fresh()->commission_amount);
+    }
+
+    public function test_zero_pickup_rate_means_no_commission_on_pickup(): void
+    {
+        $this->restaurant->update(['pickup_commission_percent' => 0]);
+
+        $pickup = $this->order(['status' => Order::STATUS_READY_FOR_PICKUP, 'delivery_type' => Order::DELIVERY_TYPE_PICKUP, 'total' => 80.00, 'delivery_fee' => 0]);
+        $pickup->update(['status' => Order::STATUS_COMPLETED]);
+
+        $this->assertEquals(0, $pickup->fresh()->commission_amount);
+    }
+
     public function test_cancelled_order_has_no_commission(): void
     {
         $order = $this->order(['status' => Order::STATUS_PREPARING, 'total' => 100.00]);

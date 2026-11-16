@@ -111,6 +111,13 @@ class RestaurantResource extends Resource
                             ->numeric()
                             ->suffix('%')
                             ->default(0),
+                        Forms\Components\TextInput::make('pickup_commission_percent')
+                            ->label('Комиссия за самовывоз')
+                            ->helperText('Оставьте пустым, чтобы брать ту же комиссию, что и с доставки.')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->suffix('%'),
                     ])->columns(2),
                 Section::make('Зона доставки')
                     ->description('Нарисуйте область доставки на карте. Координаты будут сохранены автоматически.')
