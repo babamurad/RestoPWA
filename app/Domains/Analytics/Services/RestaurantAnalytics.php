@@ -185,6 +185,18 @@ class RestaurantAnalytics
         return CarbonImmutable::parse($order->created_at)->setTimezone($period->timezone);
     }
 
+    /**
+     * Why this restaurant's orders were cancelled and by whom.
+     *
+     * @return array{reasons: list<array{reason: string, label: string, count: int, share: float}>, by: list<array{who: string, label: string, count: int}>}
+     */
+    public function cancellationReasons(string $restaurantId, AnalyticsPeriod $period): array
+    {
+        return CancellationReasons::summarize(
+            $this->orders($restaurantId, $period)->filter(fn (Order $o) => in_array($o->status, self::CANCELLED_STATUSES, true))
+        );
+    }
+
     /** @return Collection<int, Order> */
     private function orders(string $restaurantId, AnalyticsPeriod $period): Collection
     {
@@ -193,6 +205,6 @@ class RestaurantAnalytics
         return $this->cache[$key] ??= Order::query()
             ->where('vendor_id', $restaurantId)
             ->whereBetween('created_at', $period->utcBounds())
-            ->get(['id', 'number', 'status', 'delivery_type', 'total', 'delivery_fee', 'commission_amount', 'items', 'created_at']);
+            ->get(['id', 'number', 'status', 'delivery_type', 'total', 'delivery_fee', 'commission_amount', 'items', 'cancel_reason', 'cancelled_by', 'created_at']);
     }
 }

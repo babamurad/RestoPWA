@@ -170,6 +170,16 @@ class PlatformAnalytics
             ->all();
     }
 
+    /**
+     * Why orders were cancelled and by whom (customers, restaurants, admins, the system).
+     *
+     * @return array{reasons: list<array{reason: string, label: string, count: int, share: float}>, by: list<array{who: string, label: string, count: int}>}
+     */
+    public function cancellationReasons(AnalyticsPeriod $period): array
+    {
+        return CancellationReasons::summarize($this->orders($period)->filter(fn (Order $o) => $this->isCancelled($o)));
+    }
+
     private function isCancelled(Order $order): bool
     {
         return in_array($order->status, [Order::STATUS_CANCELLED, 'canceled'], true);
@@ -182,6 +192,6 @@ class PlatformAnalytics
 
         return $this->cache[$key] ??= Order::query()
             ->whereBetween('created_at', $period->utcBounds())
-            ->get(['id', 'vendor_id', 'courier_id', 'status', 'delivery_type', 'total', 'delivery_fee', 'commission_amount', 'created_at']);
+            ->get(['id', 'vendor_id', 'courier_id', 'status', 'delivery_type', 'total', 'delivery_fee', 'commission_amount', 'cancel_reason', 'cancelled_by', 'created_at']);
     }
 }

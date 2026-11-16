@@ -7,6 +7,7 @@ namespace App\Filament\Vendor\Pages;
 use App\Domains\Analytics\Data\AnalyticsPeriod;
 use App\Domains\Analytics\Services\RestaurantAnalytics;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Filament\Vendor\Analytics\Widgets\CancellationReasons;
 use App\Filament\Vendor\Analytics\Widgets\HourlyOrdersChart;
 use App\Filament\Vendor\Analytics\Widgets\RevenueChart;
 use App\Filament\Vendor\Analytics\Widgets\SalesOverview;
@@ -113,6 +114,7 @@ class Analytics extends Dashboard
             RevenueChart::class,
             TopProducts::class,
             HourlyOrdersChart::class,
+            CancellationReasons::class,
         ];
     }
 
