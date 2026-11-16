@@ -10,8 +10,10 @@ use App\Domains\Logistics\Models\Courier;
 use App\Domains\Order\Models\Order;
 use App\Domains\Order\Models\OrderRejection;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Enums\OrderCancelReason;
 use App\Enums\OrderRejectReason;
 use App\Enums\UserRole;
+use App\Filament\Admin\Analytics\Widgets\CancellationReasons;
 use App\Filament\Admin\Analytics\Widgets\PlatformOverview;
 use App\Filament\Admin\Analytics\Widgets\RejectionReasons;
 use App\Filament\Admin\Analytics\Widgets\RestaurantsTable;
@@ -144,5 +146,37 @@ class PlatformAnalyticsTest extends TestCase
         Livewire::test(RestaurantsTable::class, ['pageFilters' => ['period' => 'today']])->assertSee('Плов-центр');
         Livewire::test(RejectionReasons::class, ['pageFilters' => ['period' => 'today']])->assertSee('Ресторан закрыт');
         Livewire::test(RejectionReasons::class, ['pageFilters' => ['period' => 'yesterday']])->assertSee('отказов не было');
+    }
+
+    public function test_cancellation_reasons_split_by_reason_and_by_who_cancelled(): void
+    {
+        $this->order($this->plov, Order::STATUS_CANCELLED, 50, 0, ['cancel_reason' => OrderCancelReason::OUT_OF_STOCK, 'cancelled_by' => Order::CANCELLED_BY_RESTAURANT]);
+        $this->order($this->plov, Order::STATUS_CANCELLED, 50, 0, ['cancel_reason' => OrderCancelReason::OUT_OF_STOCK, 'cancelled_by' => Order::CANCELLED_BY_RESTAURANT]);
+        $this->order($this->pizza, Order::STATUS_CANCELLED, 50, 0, ['cancel_reason' => OrderCancelReason::CHANGED_MIND, 'cancelled_by' => Order::CANCELLED_BY_CUSTOMER]);
+        // Cancelled before reasons were recorded
+        $this->order($this->pizza, Order::STATUS_CANCELLED, 50, 0);
+        $this->order($this->pizza, Order::STATUS_DELIVERED, 50, 0);
+
+        $summary = app(PlatformAnalytics::class)->cancellationReasons($this->week());
+
+        $this->assertSame(['out_of_stock', 'changed_mind', 'unknown'], array_column($summary['reasons'], 'reason'));
+        $this->assertSame([2, 1, 1], array_column($summary['reasons'], 'count'));
+        $this->assertSame(50.0, $summary['reasons'][0]['share']);
+        $this->assertSame('Причина не указана', $summary['reasons'][2]['label']);
+        $this->assertSame(['restaurant' => 2, 'customer' => 1, 'unknown' => 1], array_column($summary['by'], 'count', 'who'));
+    }
+
+    public function test_admin_widget_shows_the_cancellation_breakdown(): void
+    {
+        $this->order($this->plov, Order::STATUS_CANCELLED, 50, 0, ['cancel_reason' => OrderCancelReason::TOO_BUSY, 'cancelled_by' => Order::CANCELLED_BY_RESTAURANT]);
+
+        $this->actingAs(User::factory()->create(['role' => UserRole::ADMIN]));
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        Livewire::test(CancellationReasons::class, ['pageFilters' => ['period' => 'today']])
+            ->assertSee('Не успеваем приготовить')
+            ->assertSee('Рестораны');
+        Livewire::test(CancellationReasons::class, ['pageFilters' => ['period' => 'yesterday']])
+            ->assertSee('отмен не было');
     }
 }

@@ -114,6 +114,10 @@
           </div>
           <!-- Interactive Switch -->
           <button 
+            type="button"
+            role="switch"
+            :aria-checked="pushEnabled"
+            :aria-label="t('profile.push_notifications')"
             @click="togglePush"
             :class="['w-9 h-5 rounded-full p-0.5 transition-all shadow-inner relative flex items-center', pushEnabled ? 'bg-orange-500' : 'bg-slate-300 dark:bg-slate-700']"
           >
@@ -144,6 +148,9 @@
         </div>
       </div>
 
+      <!-- What the customer is notified about: orders always, marketing by choice -->
+      <NotificationSettings v-if="authStore.user?.role === 'client'" class="mt-6" />
+
       <!-- Account deletion (customers only; staff accounts are managed by the admin) -->
       <div v-if="authStore.user?.role === 'client'" class="mt-6 text-center">
         <button type="button" @click="handleDeleteAccount" class="text-[11px] font-bold text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 underline underline-offset-2 transition-colors">
@@ -167,16 +174,32 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
 import LanguageSwitcher from '../components/LanguageSwitcher.vue';
+import NotificationSettings from '../components/profile/NotificationSettings.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const { t } = useI18n();
 
-const pushEnabled = ref(true);
+// Whether this device really receives push (permission given and a subscription exists)
+const pushEnabled = ref(false);
 const isDark = ref(false);
+
+const refreshPushState = async () => {
+  try {
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || Notification.permission !== 'granted') {
+      pushEnabled.value = false;
+      return;
+    }
+    const registration = await navigator.serviceWorker.ready;
+    pushEnabled.value = !!(await registration.pushManager.getSubscription());
+  } catch (e) {
+    pushEnabled.value = false;
+  }
+};
 
 // Initialize theme
 onMounted(() => {
+  refreshPushState();
   const theme = localStorage.getItem('theme');
   if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
     isDark.value = true;
@@ -213,12 +236,14 @@ const formatPhone = (phone) => {
   return phone;
 };
 
-// Interactive Switch for push notifications
-const togglePush = () => {
-  pushEnabled.value = !pushEnabled.value;
-  if (pushEnabled.value && window.askPushPermission) {
-    window.askPushPermission();
+// Switch push on or off for this device
+const togglePush = async () => {
+  if (pushEnabled.value) {
+    if (window.unsubscribeFromPush) await window.unsubscribeFromPush();
+  } else if (window.askPushPermission) {
+    await window.askPushPermission();
   }
+  await refreshPushState();
 };
 
 // Handle account logout

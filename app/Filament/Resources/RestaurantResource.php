@@ -103,7 +103,9 @@ class RestaurantResource extends Resource
                             ->default('Asia/Ashgabat')
                             ->required(),
                         Forms\Components\TextInput::make('delivery_time')
-                            ->label('Время доставки'),
+                            ->label('Среднее время доставки (мин)')
+                            ->helperText('Только числа, например 25-35: слово «мин» приложение добавляет само.')
+                            ->placeholder('25-35'),
                         Forms\Components\TextInput::make('delivery_fee')
                             ->label('Стоимость доставки')
                             ->numeric()

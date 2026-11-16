@@ -55,14 +55,52 @@
             <p v-else class="text-xs dark:text-slate-500 italic mt-3 text-slate-500">{{ t('menu.modal.no_description') }}</p>
           </div>
 
-          <!-- Modifiers Placeholder if exists in JSON -->
-          <div v-if="product.modifiers && product.modifiers.length > 0" class="space-y-3 pt-3 border-t dark:border-slate-800/40 border-slate-200">
-            <h4 class="text-xs font-black uppercase tracking-wider dark:text-slate-400 font-outfit text-slate-600">{{ t('menu.modal.modifiers') }}</h4>
-            <div class="space-y-2">
-              <div v-for="mod in product.modifiers" :key="mod.id" class="flex justify-between items-center text-xs">
-                <span class="dark:text-slate-300 font-bold text-slate-700">{{ mod.name }}</span>
-                <span class="text-orange-400 font-black">+{{ mod.price }} TMT</span>
-              </div>
+          <!-- Modifier groups: choose what goes into the dish -->
+          <div v-for="group in groups" :key="group.id" class="space-y-2 pt-3 border-t dark:border-slate-800/40 border-slate-200">
+            <div class="flex items-baseline justify-between gap-3">
+              <h4 class="text-xs font-black uppercase tracking-wider dark:text-slate-300 font-outfit text-slate-700">{{ group.name }}</h4>
+              <span
+                class="text-[10px] font-bold whitespace-nowrap"
+                :class="groupError(group) ? 'text-rose-500' : (group.min > 0 ? 'text-orange-500' : 'dark:text-slate-500 text-slate-500')"
+              >{{ groupHint(group) }}</span>
+            </div>
+
+            <div class="space-y-1.5">
+              <template v-for="option in group.options" :key="option.id">
+                <!-- Counter: portions with - / + -->
+                <div v-if="group.type === 'counter'" class="flex items-center justify-between gap-3 text-xs">
+                  <span class="dark:text-slate-300 font-bold text-slate-700 min-w-0 truncate">
+                    {{ option.name }}
+                    <span v-if="option.price > 0" class="text-orange-400 font-black ml-1">+{{ option.price }} TMT</span>
+                  </span>
+                  <div class="flex items-center gap-1 flex-shrink-0">
+                    <button type="button" @click="setPortions(group, option, portions(group, option) - 1)" :disabled="portions(group, option) === 0"
+                            :aria-label="t('menu.modal.fewer', { name: option.name })"
+                            class="w-7 h-7 rounded-lg dark:bg-slate-800 bg-white border dark:border-slate-700 border-slate-300 font-black disabled:opacity-40 active:scale-90">-</button>
+                    <span class="w-6 text-center font-black dark:text-slate-200 text-slate-800">{{ portions(group, option) }}</span>
+                    <button type="button" @click="setPortions(group, option, portions(group, option) + 1)" :disabled="!canAddPortion(group)"
+                            :aria-label="t('menu.modal.more', { name: option.name })"
+                            class="w-7 h-7 rounded-lg dark:bg-slate-800 bg-white border dark:border-slate-700 border-slate-300 font-black disabled:opacity-40 active:scale-90">+</button>
+                  </div>
+                </div>
+
+                <!-- Radio / checkbox -->
+                <label v-else class="flex items-center justify-between gap-3 text-xs cursor-pointer"
+                       :class="isDisabled(group, option) ? 'opacity-40 cursor-not-allowed' : ''">
+                  <span class="flex items-center gap-2.5 min-w-0">
+                    <input
+                      :type="group.type === 'radio' ? 'radio' : 'checkbox'"
+                      :name="'mod-' + group.id"
+                      :checked="portions(group, option) > 0"
+                      :disabled="isDisabled(group, option)"
+                      @change="toggle(group, option)"
+                      class="w-4 h-4 accent-orange-500 flex-shrink-0"
+                    />
+                    <span class="dark:text-slate-300 font-bold text-slate-700 truncate">{{ option.name }}</span>
+                  </span>
+                  <span v-if="option.price > 0" class="text-orange-400 font-black flex-shrink-0">+{{ option.price }} TMT</span>
+                </label>
+              </template>
             </div>
           </div>
         </div>
@@ -89,7 +127,7 @@
           <!-- Add to Cart CTA -->
           <button 
             @click="addToCart"
-            :disabled="!product.is_available"
+            :disabled="!product.is_available || !isValid"
             class="flex-1 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:disabled:from-slate-800 dark:disabled:to-slate-800 dark:disabled:text-slate-500 disabled:cursor-not-allowed text-white font-extrabold text-xs rounded-2xl shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20 active:scale-[0.97] transition-all flex items-center justify-center gap-1.5 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-500"
           >
             <span>{{ t('menu.modal.add_to_cart_for') }}</span>
@@ -104,6 +142,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useModifierSelection } from '../composables/useModifierSelection';
 
 const { t } = useI18n();
 
@@ -122,16 +161,40 @@ const emit = defineEmits(['close', 'add-to-cart']);
 
 const quantity = ref(1);
 
-// Reset quantity when modal opens/closes
-watch(() => props.show, (newVal) => {
-  if (newVal) {
+const groups = computed(() => (Array.isArray(props.product?.modifiers) ? props.product.modifiers : []).filter(
+  (group) => group && Array.isArray(group.options) && group.options.length > 0
+));
+
+const {
+  portions, reset: resetSelection, canAddPortion, isDisabled, toggle, setPortions,
+  groupError, isValid, chosenModifiers, modifiersTotal,
+} = useModifierSelection(groups);
+
+// Reset quantity and choice when the modal opens. The page may mount the modal already
+// open (v-if on the product), so this also runs once at the start, not only on a change.
+watch(() => [props.show, props.product], ([isOpen]) => {
+  if (isOpen) {
     quantity.value = 1;
+    resetSelection();
   }
-});
+}, { immediate: true });
+
+const groupHint = (group) => {
+  if (group.type === 'radio') {
+    return group.min > 0 ? t('menu.modal.choose_one') : t('menu.modal.optional');
+  }
+  if (group.min > 0 && group.max && group.min === group.max) {
+    return t('menu.modal.choose_exactly', { n: group.min });
+  }
+  if (group.min > 0) {
+    return group.max ? t('menu.modal.choose_between', { min: group.min, max: group.max }) : t('menu.modal.choose_at_least', { n: group.min });
+  }
+  return group.max ? t('menu.modal.up_to', { n: group.max }) : t('menu.modal.optional');
+};
 
 const totalPrice = computed(() => {
   if (!props.product) return 0;
-  return props.product.price * quantity.value;
+  return Math.round((Number(props.product.price) + modifiersTotal.value) * quantity.value * 100) / 100;
 });
 
 const increaseQty = () => {
@@ -150,9 +213,11 @@ const close = () => {
 
 const addToCart = () => {
   if (!props.product.is_available) return;
+  if (!isValid.value) return;
   emit('add-to-cart', {
     product: props.product,
-    quantity: quantity.value
+    quantity: quantity.value,
+    modifiers: chosenModifiers.value
   });
   close();
 };

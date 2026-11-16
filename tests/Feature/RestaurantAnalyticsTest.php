@@ -8,6 +8,7 @@ use App\Domains\Analytics\Data\AnalyticsPeriod;
 use App\Domains\Analytics\Services\RestaurantAnalytics;
 use App\Domains\Order\Models\Order;
 use App\Domains\Vendor\Models\Restaurant;
+use App\Enums\OrderCancelReason;
 use App\Enums\UserRole;
 use App\Filament\Vendor\Analytics\Widgets\SalesOverview;
 use App\Filament\Vendor\Analytics\Widgets\TopProducts;
@@ -242,5 +243,18 @@ class RestaurantAnalyticsTest extends TestCase
         $this->actingAs($owner)
             ->get(Analytics::getUrl(panel: 'vendor', tenant: $this->restaurant))
             ->assertNotFound();
+    }
+
+    public function test_cancellation_reasons_cover_only_this_restaurant(): void
+    {
+        $this->order('2026-10-15 10:00', Order::STATUS_CANCELLED, attributes: ['cancel_reason' => OrderCancelReason::CLOSING, 'cancelled_by' => Order::CANCELLED_BY_RESTAURANT]);
+        $this->order('2026-10-15 11:00', Order::STATUS_DELIVERED);
+        Order::factory()->create(['status' => Order::STATUS_CANCELLED, 'cancel_reason' => OrderCancelReason::TOO_BUSY, 'cancelled_by' => Order::CANCELLED_BY_RESTAURANT]);
+
+        $summary = $this->analytics->cancellationReasons($this->restaurant->id, $this->week());
+
+        $this->assertSame(['closing'], array_column($summary['reasons'], 'reason'));
+        $this->assertSame(100.0, $summary['reasons'][0]['share']);
+        $this->assertSame(['restaurant' => 1], array_column($summary['by'], 'count', 'who'));
     }
 }

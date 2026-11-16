@@ -2,12 +2,6 @@
 export default {
     delivery_to: 'Eltip bermek salgysy',
     choose_address: 'Salgyny görkeziň',
-    promo: {
-        badge: '20% arzanladyş',
-        title: 'Ilkinji sargyt has tagamly!',
-        text: 'Halaýan restoranlaryňyzdan şu wagt eltip bermek arzanladyşy bilen sargyt ediň.',
-        cta: 'Restoran saýla',
-    },
     popular_categories: 'Meşhur kategoriýalar',
     all: 'Ählisi',
     categories: {

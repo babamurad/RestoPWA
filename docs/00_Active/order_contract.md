@@ -17,7 +17,7 @@
       "quantity": "integer, required, min:1",
       "unit_price": "integer, required (в центах)",
       "total_price": "integer, required (в центах)",
-      "modifiers": "array, optional",
+      "modifiers": "array, optional: выбранные добавки [{option_id, quantity?}] (см. «Добавки» ниже)",
       "image": "string, optional"
     }
   ],
@@ -99,3 +99,13 @@
 | `server_error`             | 500  | Внутренняя ошибка сервера. |
 
 *(Полный список см. в `app/Enums/OrderRejectReason.php`)*
+
+## Добавки (модификаторы блюд)
+
+У блюда могут быть группы добавок. Группа: `id`, `name`, `type` (`radio` — один вариант, `checkbox` — несколько, `counter` — несколько порций каждого), `required`, `min`, `max` (для `radio` всегда 1; для `counter` считаются порции) и `options` (`id`, `name`, `price` в манатах, `is_default`). Меню (`GET /api/v1/menu/{vendor}`, `GET /api/v1/menu/product/{id}`) отдаёт группы уже с идентификаторами и правилами.
+
+Клиент присылает в `items[].modifiers` только выбор: `[{ "option_id": "o1a2b3c4d5", "quantity": 1 }]` (`quantity` нужен только для `counter`). Названия и цены, которые прислал клиент, игнорируются: цену и название сервер берёт из блюда. Неизвестные варианты отбрасываются; старая форма `{id, name}` пока принимается.
+
+Нарушение правил группы (не выбрана обязательная, выбрано больше `max`) отклоняет заказ с причиной `invalid_modifiers` (422). Тот же выбор принимает `POST /api/v1/cart/sync`; строки корзины там различаются полем `key`, которое сервер возвращает обратно, а строка, чей выбор больше не подходит блюду, попадает в `unavailable_items`.
+
+В сохранённом заказе `items[].modifiers` — выбранные варианты с названием группы и варианта, ценой и количеством.

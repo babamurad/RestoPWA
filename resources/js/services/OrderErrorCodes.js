@@ -22,6 +22,7 @@ export const OrderRejectReason = Object.freeze({
     VALIDATION: 'validation',
     SERVER_ERROR: 'server_error',
     BELOW_MIN_ORDER: 'below_min_order',
+    INVALID_MODIFIERS: 'invalid_modifiers',
 });
 
 // Messages are resolved on access so they follow the current UI language

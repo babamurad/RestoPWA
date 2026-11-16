@@ -6,6 +6,7 @@ namespace App\Domains\Menu\Http\Controllers;
 
 use App\Domains\Menu\Models\Category;
 use App\Domains\Menu\Models\Product;
+use App\Domains\Menu\Services\ProductModifiers;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Http\Resources\ProductResource;
 use Illuminate\Http\JsonResponse;
@@ -32,7 +33,7 @@ class MenuController
         } catch (\Throwable $e) {
             Cache::forget($cacheKey);
         }
-        
+
         $fetchData = function () use ($vendorId, $categoryId) {
             $categories = $this->getCategories($vendorId);
             $products = $this->getProducts($vendorId, $categoryId);
@@ -67,7 +68,7 @@ class MenuController
             'name' => $product->name,
             'price' => (float) $product->price,
             'description' => $product->description,
-            'modifiers' => $product->modifiers ?? collect(),
+            'modifiers' => ProductModifiers::groups($product->modifiers),
             'image_url' => $product->image ? (str_starts_with($product->image, 'http') ? $product->image : asset('storage/'.$product->image)) : null,
             'is_available' => $product->is_available,
             'weight_g' => $product->weight_g,

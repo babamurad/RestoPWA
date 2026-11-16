@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\Profile\AccountController;
 use App\Http\Controllers\Api\Profile\AddressController;
 use App\Http\Controllers\Api\Profile\FavoriteController;
+use App\Http\Controllers\Api\Profile\NotificationSettingsController;
 use App\Http\Controllers\Api\Profile\PaymentMethodController;
 use App\Http\Controllers\Api\Profile\SupportController;
 use App\Http\Controllers\Auth\AuthController;
@@ -25,7 +26,7 @@ Route::get('ping', fn () => response()->json(['status' => 'ok']))->name('api.pin
 
 // {id} is always a UUID: anything else is a 404 before it reaches the database
 // (PostgreSQL raises an SQL error when a uuid column is compared with other text)
-Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->whereUuid('id')->group(function () {
+Route::middleware([SetTenantContext::class, 'throttle:api'])->prefix('v1')->whereUuid('id')->group(function () {
     Route::bind('vendor', fn ($value) => Restaurant::where('slug', $value)->firstOrFail());
     Route::bind('product', fn ($value) => Product::findOrFail($value));
 
@@ -42,12 +43,15 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->whe
     Route::post('cart/sync', [CartController::class, 'sync'])->name('api.cart.sync');
 
     // Geo endpoints (public — no auth required)
-    Route::post('geo/zone-check', [GeoController::class, 'zoneCheck'])->name('api.geo.zone-check');
-    Route::post('geo/reverse', [GeoController::class, 'reverse'])->name('api.geo.reverse');
-    Route::post('telemetry', [GeoController::class, 'telemetry'])->name('api.telemetry');
+    Route::post('geo/zone-check', [GeoController::class, 'zoneCheck'])
+        ->withoutMiddleware('throttle:api')->middleware('throttle:geo')->name('api.geo.zone-check');
+    Route::post('geo/reverse', [GeoController::class, 'reverse'])
+        ->withoutMiddleware('throttle:api')->middleware('throttle:geo')->name('api.geo.reverse');
+    Route::post('telemetry', [GeoController::class, 'telemetry'])
+        ->withoutMiddleware('throttle:api')->middleware('throttle:telemetry')->name('api.telemetry');
 
-    Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login')->name('api.login');
-    Route::post('register', [AuthController::class, 'register'])->middleware('throttle:register')->name('api.register');
+    Route::post('login', [AuthController::class, 'login'])->withoutMiddleware('throttle:api')->middleware('throttle:login')->name('api.login');
+    Route::post('register', [AuthController::class, 'register'])->withoutMiddleware('throttle:api')->middleware('throttle:register')->name('api.register');
     Route::post('logout', [AuthController::class, 'logout'])->name('api.logout');
     Route::get('user', [AuthController::class, 'user'])->name('api.user');
 
@@ -56,11 +60,11 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->whe
     ]))->name('api.config');
 
     // Mobile app (Capacitor) — Bearer-token auth instead of the web session/CSRF flow
-    Route::post('mobile/login', [AuthController::class, 'loginMobile'])->middleware('throttle:login')->name('api.mobile.login');
-    Route::post('mobile/register', [AuthController::class, 'registerMobile'])->middleware('throttle:register')->name('api.mobile.register');
+    Route::post('mobile/login', [AuthController::class, 'loginMobile'])->withoutMiddleware('throttle:api')->middleware('throttle:login')->name('api.mobile.login');
+    Route::post('mobile/register', [AuthController::class, 'registerMobile'])->withoutMiddleware('throttle:api')->middleware('throttle:register')->name('api.mobile.register');
     Route::post('mobile/logout', [AuthController::class, 'logoutMobile'])->middleware('auth:sanctum')->name('api.mobile.logout');
 
-    Route::post('orders', [DomainOrderController::class, 'store'])->middleware('throttle:orders')->name('api.orders.store');
+    Route::post('orders', [DomainOrderController::class, 'store'])->withoutMiddleware('throttle:api')->middleware('throttle:orders')->name('api.orders.store');
 
     // Accepts either the web session (cookie) or a mobile Sanctum Bearer token
     Route::middleware('auth:web,sanctum')->group(function () {
@@ -82,6 +86,8 @@ Route::middleware([SetTenantContext::class, 'throttle:60,1'])->prefix('v1')->whe
                 ->middleware('throttle:5,1')
                 ->name('api.profile.destroy');
             Route::apiResource('addresses', AddressController::class)->except(['show']);
+            Route::get('notifications', [NotificationSettingsController::class, 'show'])->name('api.profile.notifications.show');
+            Route::put('notifications', [NotificationSettingsController::class, 'update'])->name('api.profile.notifications.update');
             Route::get('favorites', [FavoriteController::class, 'index'])->name('api.profile.favorites.index');
             Route::put('favorites/{id}', [FavoriteController::class, 'store'])->name('api.profile.favorites.store');
             Route::delete('favorites/{id}', [FavoriteController::class, 'destroy'])->name('api.profile.favorites.destroy');

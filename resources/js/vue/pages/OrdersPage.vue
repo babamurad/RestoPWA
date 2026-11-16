@@ -226,7 +226,7 @@ const getRestaurantImage = (vendorId) => {
 // Generates items string description
 const getOrderItemsSummary = (order) => {
   if (!order.items || !Array.isArray(order.items)) return '';
-  return order.items.map(item => `${item.name} x${item.quantity}`).join(', ');
+  return order.items.map(item => `${item.name || item.product_name} x${item.quantity}`).join(', ');
 };
 
 // One-click Repeat Order Action
@@ -319,7 +319,16 @@ const cancelOrder = async (order) => {
 
 const repeatOrder = (order) => {
   if (!order.items || !Array.isArray(order.items)) return;
-  
+
+  const fillCart = () => {
+    cartStore.clearCart();
+    const vendor = restaurantsStore.restaurants.find(r => r.id === order.vendor_id)
+      || { id: order.vendor_id, slug: null, name: t('common.restaurant') };
+
+    order.items.forEach(item => cartStore.addOrderItem(item, vendor));
+    router.push('/cart');
+  };
+
   if (window.Swal) {
     window.Swal.fire({
       title: t('orders.repeat_dialog.title'),
@@ -336,39 +345,11 @@ const repeatOrder = (order) => {
       customClass: { popup: 'rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl' }
     }).then((result) => {
       if (result.isConfirmed) {
-        cartStore.clear();
-        cartStore.setVendorId(order.vendor_id);
-        
-        order.items.forEach(item => {
-          cartStore.addItem({
-            id: item.product_id || item.id,
-            name: item.name,
-            price: Number(item.price),
-            weight_g: item.weight_g || item.weight || null,
-            image_url: item.image_url || null
-          }, item.quantity);
-        });
-        
-        router.push('/cart');
+        fillCart();
       }
     });
-  } else {
-    if (confirm(t('orders.repeat_dialog.fallback_confirm'))) {
-      cartStore.clear();
-      cartStore.setVendorId(order.vendor_id);
-      
-      order.items.forEach(item => {
-        cartStore.addItem({
-          id: item.product_id || item.id,
-          name: item.name,
-          price: Number(item.price),
-          weight_g: item.weight_g || item.weight || null,
-          image_url: item.image_url || null
-        }, item.quantity);
-      });
-      
-      router.push('/cart');
-    }
+  } else if (confirm(t('orders.repeat_dialog.fallback_confirm'))) {
+    fillCart();
   }
 };
 </script>

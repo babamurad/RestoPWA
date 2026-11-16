@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Pages;
 
 use App\Domains\Analytics\Data\AnalyticsPeriod;
+use App\Filament\Admin\Analytics\Widgets\CancellationReasons;
 use App\Filament\Admin\Analytics\Widgets\PlatformOverview;
 use App\Filament\Admin\Analytics\Widgets\RejectionReasons;
 use App\Filament\Admin\Analytics\Widgets\RestaurantsTable;
@@ -70,6 +71,7 @@ class Analytics extends Dashboard
             PlatformOverview::class,
             TurnoverChart::class,
             RestaurantsTable::class,
+            CancellationReasons::class,
             RejectionReasons::class,
             TopCouriers::class,
         ];
