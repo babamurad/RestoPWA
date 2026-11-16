@@ -14,6 +14,9 @@ return [
     'courier' => [
         'finish_delivery_first' => 'Ilki ýoldaky sargydy eltip beriň.',
     ],
+    'notifications' => [
+        'status_locked' => 'Sargyt habarlaryny öçürip bolmaýar: olar iýmitiňiziň nirededigini bilmek üçin gerek.',
+    ],
     'account' => [
         'deleted' => 'Hasap pozuldy',
         'wrong_password' => 'Parol nädogry',

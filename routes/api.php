@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\Profile\AccountController;
 use App\Http\Controllers\Api\Profile\AddressController;
 use App\Http\Controllers\Api\Profile\FavoriteController;
+use App\Http\Controllers\Api\Profile\NotificationSettingsController;
 use App\Http\Controllers\Api\Profile\PaymentMethodController;
 use App\Http\Controllers\Api\Profile\SupportController;
 use App\Http\Controllers\Auth\AuthController;
@@ -85,6 +86,8 @@ Route::middleware([SetTenantContext::class, 'throttle:api'])->prefix('v1')->wher
                 ->middleware('throttle:5,1')
                 ->name('api.profile.destroy');
             Route::apiResource('addresses', AddressController::class)->except(['show']);
+            Route::get('notifications', [NotificationSettingsController::class, 'show'])->name('api.profile.notifications.show');
+            Route::put('notifications', [NotificationSettingsController::class, 'update'])->name('api.profile.notifications.update');
             Route::get('favorites', [FavoriteController::class, 'index'])->name('api.profile.favorites.index');
             Route::put('favorites/{id}', [FavoriteController::class, 'store'])->name('api.profile.favorites.store');
             Route::delete('favorites/{id}', [FavoriteController::class, 'destroy'])->name('api.profile.favorites.destroy');

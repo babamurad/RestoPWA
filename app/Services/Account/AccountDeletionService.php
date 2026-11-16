@@ -74,6 +74,7 @@ class AccountDeletionService
                 'password' => null,
                 'google_id' => null,
                 'avatar' => null,
+                'notification_preferences' => null,
                 'remember_token' => Str::random(60),
                 'deleted_at' => now(),
             ])->saveQuietly();
