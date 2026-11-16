@@ -216,8 +216,8 @@ class CourierApiTest extends TestCase
             'vendor_id' => $restaurant->id,
             'courier_id' => $courier->id,
             'status' => Order::STATUS_DELIVERING,
-            'total' => 100000,
-            'delivery_fee' => 1500, // 15.00 TMT (MoneyCast stores minor units)
+            'total' => 1000.00,
+            'delivery_fee' => 15.00,
         ]);
 
         $response = $this->actingAs($user)->postJson("/api/v1/courier/orders/{$order->id}/status", [

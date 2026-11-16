@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Order\Services;
 
+use App\Casts\MoneyCast;
 use App\Domains\Order\Exceptions\InvalidStatusTransition;
 use App\Domains\Order\Models\Order;
 use App\Domains\Payment\Services\PaymentService;
@@ -30,6 +31,10 @@ class OrderService
 
     public const STATUS_CANCELLED = 'cancelled';
 
+    /**
+     * @param  array  $data  order as accepted by the API: `total`, `delivery_fee` and item prices
+     *                       are whole minor units (tyiyn), see docs/00_Active/order_contract.md
+     */
     public function createOrder(array $data): Order
     {
         return DB::transaction(function () use ($data) {
@@ -44,8 +49,9 @@ class OrderService
                 'payment_status' => PaymentStatus::UNPAID,
                 'address' => $data['address'] ?? [],
                 'items' => $data['items'],
-                'total' => $data['total'],
-                'delivery_fee' => $data['delivery_fee'] ?? 0,
+                // $data comes from the order API, which counts money in minor units (tyiyn)
+                'total' => MoneyCast::fromMinor($data['total']),
+                'delivery_fee' => MoneyCast::fromMinor($data['delivery_fee'] ?? 0),
                 'delivery_time' => $data['delivery_time'] ?? null,
                 'payment_method' => $data['payment_method'] ?? 'card',
                 'comment' => $data['comment'] ?? null,

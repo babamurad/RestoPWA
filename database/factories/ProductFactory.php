@@ -18,7 +18,8 @@ class ProductFactory extends Factory
             'category_id' => null,
             'name' => fake()->words(3, true),
             'description' => fake()->sentence(),
-            'price' => fake()->numberBetween(100, 10000),
+            // Currency units (TMT), as everywhere in the application
+            'price' => fake()->randomFloat(2, 1, 100),
             'image' => null,
             'weight_g' => fake()->numberBetween(50, 1000),
             'modifiers' => [],
@@ -47,10 +48,11 @@ class ProductFactory extends Factory
         ]);
     }
 
-    public function withPrice(int $priceInCents): static
+    /** @param  float  $price  in currency units (TMT) */
+    public function withPrice(float $price): static
     {
         return $this->state(fn (array $attributes) => [
-            'price' => $priceInCents,
+            'price' => $price,
         ]);
     }
 }

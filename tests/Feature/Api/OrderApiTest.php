@@ -33,7 +33,7 @@ class OrderApiTest extends TestCase
 
         $this->product = Product::factory()->create([
             'vendor_id' => $this->restaurant->id,
-            'price' => 10000,
+            'price' => 100.00,
             'is_available' => true,
         ]);
         $this->user = User::factory()->create(['phone' => '+99361234567']);

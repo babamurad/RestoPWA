@@ -74,7 +74,7 @@ class ProductScopeTest extends TestCase
         $this->tenantContext->setCurrentVendor($vendorId);
 
         $product = Product::factory()->forVendor($vendorId)->create([
-            'price' => 1999,
+            'price' => 19.99,
         ]);
 
         $this->assertSame(19.99, $product->price);

@@ -16,6 +16,7 @@ class OrderStatusHistoryTest extends TestCase
     use RefreshDatabase;
 
     private Restaurant $restaurant;
+
     private User $user;
 
     protected function setUp(): void
@@ -34,7 +35,7 @@ class OrderStatusHistoryTest extends TestCase
             'status' => 'pending',
             'address' => ['address' => 'Test St'],
             'items' => [],
-            'total' => 1000,
+            'total' => 10.00,
         ]);
 
         $order->update(['status' => 'processing']);
@@ -54,7 +55,7 @@ class OrderStatusHistoryTest extends TestCase
             'status' => 'pending',
             'address' => [],
             'items' => [],
-            'total' => 500,
+            'total' => 5.00,
         ]);
 
         $order->update(['status' => 'shipped']);
@@ -73,7 +74,7 @@ class OrderStatusHistoryTest extends TestCase
             'status' => 'pending',
             'address' => [],
             'items' => [],
-            'total' => 500,
+            'total' => 5.00,
         ]);
 
         $order->update(['status' => 'pending']);
@@ -91,7 +92,7 @@ class OrderStatusHistoryTest extends TestCase
             'status' => 'pending',
             'address' => [],
             'items' => [],
-            'total' => 500,
+            'total' => 5.00,
         ]);
 
         $order->update(['status' => 'processing']);
@@ -116,7 +117,7 @@ class OrderStatusHistoryTest extends TestCase
             'status' => 'pending',
             'address' => [],
             'items' => [],
-            'total' => 500,
+            'total' => 5.00,
         ]);
 
         $order->update(['status' => 'completed']);
@@ -134,7 +135,7 @@ class OrderStatusHistoryTest extends TestCase
             'status' => 'pending',
             'address' => [],
             'items' => [],
-            'total' => 2500,
+            'total' => 25.00,
         ]);
 
         $this->assertSame(25.0, $order->total);

@@ -4,21 +4,22 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Domains\Geo\Services\GeoService;
 use App\Domains\Geo\Services\DeliveryZoneCheckResult;
+use App\Domains\Geo\Services\GeoService;
 use App\Domains\Menu\Models\Product;
 use App\Domains\Order\Models\Order;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use Illuminate\Support\Str;
+use Tests\TestCase;
 
 class OrderIdempotencyTest extends TestCase
 {
     use RefreshDatabase;
 
     protected Restaurant $restaurant;
+
     protected Product $product;
 
     protected function setUp(): void
@@ -34,7 +35,7 @@ class OrderIdempotencyTest extends TestCase
 
         $this->product = Product::factory()->create([
             'vendor_id' => $this->restaurant->id,
-            'price' => 1000,
+            'price' => 10.00,
             'is_available' => true,
         ]);
 
@@ -58,7 +59,7 @@ class OrderIdempotencyTest extends TestCase
                     'quantity' => 2,
                     'unit_price' => 1000,
                     'total_price' => 2000,
-                ]
+                ],
             ],
             'total' => 2000,
             'payment_method' => 'cash',
@@ -117,7 +118,7 @@ class OrderIdempotencyTest extends TestCase
                     'quantity' => 1,
                     'unit_price' => 1000,
                     'total_price' => 1000,
-                ]
+                ],
             ],
             'total' => 1000,
             'payment_method' => 'cash',
@@ -161,7 +162,7 @@ class OrderIdempotencyTest extends TestCase
                     'quantity' => 1,
                     'unit_price' => 1000,
                     'total_price' => 1000,
-                ]
+                ],
             ],
             'total' => 1000,
             'payment_method' => 'cash',
@@ -197,7 +198,7 @@ class OrderIdempotencyTest extends TestCase
                     'address' => 'Main St 10',
                     'lat' => 39.0886,
                     'lon' => 63.5593,
-                ]
+                ],
             ]));
 
         $response->assertStatus(500);
