@@ -151,6 +151,18 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('register', fn (Request $request) => Limit::perMinute(5)->by('register:'.$request->ip())->response($tooMany));
 
+        // The map fires zone and address lookups while the customer moves the pin; they get a limit
+        // of their own, so a busy map can never use up the shared API limit (cart, orders, menu)
+        RateLimiter::for('geo', fn (Request $request) => Limit::perMinute(90)
+            ->by('geo:'.($request->user()?->id ?? $request->ip()))->response($tooMany));
+
+        RateLimiter::for('telemetry', fn (Request $request) => Limit::perMinute(120)
+            ->by('telemetry:'.$request->ip())->response($tooMany));
+
+        // Everything else under /api/v1
+        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(60)
+            ->by('api:'.($request->user()?->id ?? $request->ip()))->response($tooMany));
+
         RateLimiter::for('orders', fn (Request $request) => Limit::perMinute(10)->by('orders:'.($request->user()?->id ?? $request->ip()))->response($tooMany));
     }
 }

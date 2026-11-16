@@ -25,7 +25,6 @@ class RestaurantFactory extends Factory
                 'currency' => 'RUB',
             ],
             'is_active' => true,
-            'commission_rate' => fake()->randomFloat(2, 5, 20),
             'owner_id' => UserFactory::new(),
             'delivery_zones' => '{"type":"MultiPolygon","coordinates":[[[[63.0,39.0],[64.0,39.0],[64.0,40.0],[63.0,40.0],[63.0,39.0]]]]}',
         ];

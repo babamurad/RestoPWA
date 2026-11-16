@@ -34,6 +34,10 @@ use Illuminate\Support\Str;
  * guarded by a deterministic demo user so a second run does not double data.
  *
  * Run with: php artisan db:seed --class=DemoDataSeeder
+ *
+ * Refuses to run in production. It also changes the commission, courier fee and district
+ * delivery prices of the restaurants that RestaurantSeeder knows (see configureRestaurants()).
+ * Remove everything it made with: php artisan demo:purge [--include-restaurants] --force
  */
 class DemoDataSeeder extends Seeder
 {
@@ -44,6 +48,12 @@ class DemoDataSeeder extends Seeder
 
     public function run(): void
     {
+        // The seeder creates users with the password "password" and rewrites the settings of
+        // restaurants (commission, delivery prices): never on a live database
+        if (app()->isProduction()) {
+            throw new \RuntimeException('DemoDataSeeder must not run in production. To clear demo data use: php artisan demo:purge');
+        }
+
         if (User::where('email', 'demo.client1@restopwa.local')->exists()) {
             $this->command?->warn('Demo data already present — skipping (delete demo.* users to reseed).');
 
@@ -148,7 +158,7 @@ class DemoDataSeeder extends Seeder
                 UserAddress::create([
                     'user_id' => $user->id,
                     'title' => 'Дом',
-                    'full_address' => 'г. Туркменабат, ' . ['3-й микрорайон', 'Бахар', 'Центр'][array_rand(['3-й микрорайон', 'Бахар', 'Центр'])] . ', дом ' . random_int(1, 60),
+                    'full_address' => 'г. Туркменабат, '.['3-й микрорайон', 'Бахар', 'Центр'][array_rand(['3-й микрорайон', 'Бахар', 'Центр'])].', дом '.random_int(1, 60),
                     'floor' => (string) random_int(1, 9),
                     'apartment' => (string) random_int(1, 120),
                     'lat' => 39.05 + mt_rand(-400, 400) / 10000,
