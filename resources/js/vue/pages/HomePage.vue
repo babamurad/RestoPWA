@@ -59,28 +59,6 @@
       </button>
     </div>
 
-    <!-- Stunning Hero Promo Banner with smooth gradients -->
-    <div class="relative overflow-hidden rounded-3xl mb-10 bg-gradient-to-tr from-orange-600 to-amber-500 p-6 md:p-8 shadow-xl shadow-orange-950/20 group">
-      <!-- Decorative circles -->
-      <div class="absolute -right-10 -bottom-10 w-44 h-44 rounded-full bg-white/10 blur-xl group-hover:scale-110 transition-transform duration-700"></div>
-      <div class="absolute -left-10 -top-10 w-32 h-32 rounded-full bg-white/10 blur-lg group-hover:scale-110 transition-transform duration-700"></div>
-      
-      <div class="relative z-10 max-w-xs md:max-w-md">
-        <span class="inline-block px-3 py-1 rounded-full bg-white/20 text-xs font-bold text-white uppercase tracking-wider mb-3 backdrop-blur-sm">
-          {{ t('home.promo.badge') }}
-        </span>
-        <h2 class="text-2xl md:text-3xl font-extrabold text-white leading-tight mb-2 font-outfit">
-          {{ t('home.promo.title') }}
-        </h2>
-        <p class="text-sm text-orange-100 mb-6 font-medium">
-          {{ t('home.promo.text') }}
-        </p>
-        <button class="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-100 dark:hover:bg-slate-100 text-orange-600 font-bold text-sm shadow-md transition-all active:scale-95 duration-200">
-          {{ t('home.promo.cta') }}
-        </button>
-      </div>
-    </div>
-
     <!-- Horizontal Categories Carousel -->
     <div class="mb-8">
       <div class="flex items-center justify-between mb-4">
