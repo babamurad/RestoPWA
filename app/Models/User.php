@@ -115,7 +115,8 @@ class User extends Authenticatable implements FilamentUser, HasTenants
      */
     public function restaurant(): HasOne
     {
-        return $this->hasOne(Restaurant::class, 'vendor_id');
+        // Ownership is owner_id; the legacy restaurants.vendor_id is not an owner reference
+        return $this->hasOne(Restaurant::class, 'owner_id');
     }
 
     public function courierProfile(): HasOne
