@@ -25,17 +25,17 @@ class EnsureTenant
         }
 
         // We check if the user is a restaurateur by looking for their restaurant.
-        $restaurant = Restaurant::where('vendor_id', $user->id)->first();
+        $restaurant = Restaurant::where('owner_id', $user->id)->first();
 
         if (! $restaurant) {
             abort(403, 'Доступ запрещен. Вы не являетесь администратором ресторана.');
         }
 
-        // Determine if tenant matches the user's restaurant
+        // The tenant context holds the restaurant id (not the legacy vendor_id column).
         $tenant = app('tenant');
-        
-        if (! $tenant || ! isset($tenant->vendor_id) || $tenant->vendor_id !== $user->id) {
-            $request->session()->put('vendor_id', $restaurant->vendor_id);
+
+        if (! $tenant || ($tenant->id ?? null) !== $restaurant->id) {
+            $request->session()->put('vendor_id', $restaurant->id);
         }
 
         return $next($request);
