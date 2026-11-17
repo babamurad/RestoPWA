@@ -213,3 +213,60 @@ describe('cart store: modifiers', () => {
         expect(cart.items[0].key).toBe(cartLineKey('p1', cart.items[0].modifiers));
     });
 });
+
+describe('cart store: promo code', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia());
+        vi.clearAllMocks();
+        localStorage.clear();
+    });
+
+    const cartWithItem = () => {
+        const cart = useCartStore();
+        cart.items = [{ id: 'p1', name: 'Плов', price: 100, quantity: 1, key: 'p1|' }];
+        cart.vendorId = 'v1';
+        return cart;
+    };
+
+    const promoResponse = (discountMinor = 2000) => ({
+        data: { success: true, data: { valid: true, code: 'PLOV20', discount: discountMinor, subtotal: 10000 } },
+    });
+
+    it('applies the code and takes the server discount off the total', async () => {
+        apiClient.post.mockResolvedValueOnce(syncResponse());
+        const cart = cartWithItem();
+        await cart.syncCart();
+        apiClient.post.mockResolvedValueOnce(promoResponse());
+
+        expect(await cart.applyPromo(' plov20 ')).toBe(true);
+
+        expect(apiClient.post).toHaveBeenLastCalledWith('/cart/apply-promo', expect.objectContaining({ code: 'plov20' }));
+        expect(cart.discount).toBe(20);
+        expect(cart.payable).toBe(90);
+    });
+
+    it('keeps the reason and drops the code when the server refuses it', async () => {
+        const cart = cartWithItem();
+        cart.promo = { code: 'OLD', discount: 5 };
+        apiClient.post.mockRejectedValueOnce({ response: { data: { reason: 'expired', message: 'Срок действия промокода истёк.' } } });
+
+        expect(await cart.applyPromo('OLD')).toBe(false);
+
+        expect(cart.promo).toBeNull();
+        expect(cart.promoError.reason).toBe('expired');
+        expect(cart.payable).toBe(cart.total);
+    });
+
+    it('re-checks the code after the cart syncs, and forgets it when the cart is cleared', async () => {
+        const cart = cartWithItem();
+        cart.promo = { code: 'PLOV20', discount: 20 };
+        apiClient.post.mockResolvedValueOnce(syncResponse()).mockResolvedValueOnce(promoResponse(1000));
+
+        await cart.syncCart();
+
+        expect(cart.discount).toBe(10);
+
+        cart.clearCart();
+        expect(cart.promo).toBeNull();
+    });
+});

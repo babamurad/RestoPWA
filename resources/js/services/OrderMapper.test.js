@@ -81,6 +81,17 @@ describe('OrderMapper', () => {
     });
 
     describe('buildOrderPayload', () => {
+        it('sends the promo code only when there is one', () => {
+            const base = {
+                cartItems: [{ productId: 'p1', productName: 'Pizza', price: 10, quantity: 1 }],
+                vendorId: 'v1',
+                address: { lat: 1, lon: 2, address: 'x' },
+            };
+
+            expect(buildOrderPayload(base)).not.toHaveProperty('promo_code');
+            expect(buildOrderPayload({ ...base, promoCode: 'PLOV20' }).promo_code).toBe('PLOV20');
+        });
+
         it('builds complete payload with all fields', () => {
             const payload = buildOrderPayload({
                 cartItems: [

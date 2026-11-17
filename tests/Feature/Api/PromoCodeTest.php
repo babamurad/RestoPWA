@@ -13,8 +13,13 @@ use App\Domains\Promo\Models\PromoCode;
 use App\Domains\Promo\Models\PromoCodeUsage;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Enums\OrderCancelReason;
+use App\Enums\UserRole;
+use App\Filament\Resources\PromoCodeResource\Pages\CreatePromoCode;
+use App\Filament\Resources\PromoCodeResource\Pages\ListPromoCodes;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Mockery;
 use Tests\TestCase;
 
@@ -195,5 +200,30 @@ class PromoCodeTest extends TestCase
 
         // 10% of 80 (food after the discount), not of 100
         $this->assertEquals(8.00, $order->fresh()->commission_amount);
+    }
+
+    public function test_admin_manages_promo_codes(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => UserRole::ADMIN]));
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        Livewire::test(CreatePromoCode::class)
+            ->fillForm(['code' => 'summer15', 'percent' => 15, 'per_user_limit' => 1, 'min_order' => 20, 'is_active' => true])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $promo = PromoCode::where('code', 'SUMMER15')->sole();
+        $this->assertSame(15.0, $promo->percent);
+        $this->assertEquals(20.0, $promo->min_order);
+
+        // Either a percent or an amount, not both and not neither
+        Livewire::test(CreatePromoCode::class)
+            ->fillForm(['code' => 'BAD', 'percent' => 10, 'amount' => 5, 'per_user_limit' => 1])
+            ->call('create')
+            ->assertHasFormErrors(['percent', 'amount']);
+
+        Livewire::test(ListPromoCodes::class)
+            ->assertCanSeeTableRecords([$promo])
+            ->assertSee('15%');
     }
 }
