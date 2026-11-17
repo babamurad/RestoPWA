@@ -36,6 +36,11 @@ export const useCartStore = defineStore('cart', {
     minOrder: 0,
     isMinOrderMet: true,
     
+    // Applied promo code: { code, discount } (discount in TMT, calculated by the server)
+    promo: null,
+    promoError: null,
+    promoLoading: false,
+
     syncLoading: false,
     syncError: null,
     priceChanges: [],
@@ -55,8 +60,12 @@ export const useCartStore = defineStore('cart', {
     },
     localTotal: (state) => {
       const sub = state.items.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
-      return sub + state.deliveryFee;
-    }
+      return Math.max(0, sub + state.deliveryFee - (state.promo?.discount || 0));
+    },
+    // What the promo takes off the food (0 without a promo)
+    discount: (state) => state.promo?.discount || 0,
+    // The cart total after the promo; the server prices the order the same way
+    payable: (state) => Math.max(0, state.total - (state.promo?.discount || 0))
   },
 
   actions: {
@@ -159,6 +168,8 @@ export const useCartStore = defineStore('cart', {
         this.total = 0;
         this.minOrder = 0;
         this.isMinOrderMet = true;
+        this.promo = null;
+        this.promoError = null;
       }
 
       this.saveToLocalStorage();
@@ -178,7 +189,9 @@ export const useCartStore = defineStore('cart', {
       this.total = 0;
       this.minOrder = 0;
       this.isMinOrderMet = true;
-      
+      this.promo = null;
+      this.promoError = null;
+
       this.saveToLocalStorage();
     },
 
@@ -249,6 +262,11 @@ export const useCartStore = defineStore('cart', {
           this.minOrder = syncData.min_order || 0;
           this.isMinOrderMet = syncData.is_min_order_met !== undefined ? syncData.is_min_order_met : true;
         }
+
+        // The cart changed: the discount may have changed or the code stopped fitting
+        if (this.promo) {
+          await this.applyPromo(this.promo.code, { silent: true });
+        }
       } catch (err) {
         console.error('Error syncing cart:', err);
         this.syncError = err.message || t('cart.sync_error');
@@ -260,6 +278,51 @@ export const useCartStore = defineStore('cart', {
       } finally {
         this.syncLoading = false;
       }
+    },
+
+    // Check a promo code against the cart; the server tells what it takes off.
+    // silent: re-check after a cart change, keep the code on a network failure.
+    async applyPromo(code, { silent = false } = {}) {
+      const value = String(code || '').trim();
+      if (!value || this.items.length === 0) return false;
+
+      if (!silent) {
+        this.promoLoading = true;
+        this.promoError = null;
+      }
+
+      try {
+        const response = await apiClient.post('/cart/apply-promo', {
+          code: value,
+          vendor_id: this.vendorId,
+          items: this.items.map((item) => ({
+            product_id: item.id,
+            quantity: item.quantity,
+            modifiers: (item.modifiers || []).map((m) => ({ option_id: m.option_id, quantity: m.quantity || 1 })),
+          })),
+        });
+        const data = response.data?.data;
+        this.promo = { code: data.code, discount: (data.discount || 0) / 100 };
+        this.promoError = null;
+        return true;
+      } catch (err) {
+        const body = err.response?.data;
+        if (body?.reason) {
+          // Not valid (any more): drop the code and say why
+          this.promo = null;
+          this.promoError = { reason: body.reason, message: body.message || null };
+        } else if (!silent) {
+          this.promoError = { reason: 'network', message: null };
+        }
+        return false;
+      } finally {
+        this.promoLoading = false;
+      }
+    },
+
+    removePromo() {
+      this.promo = null;
+      this.promoError = null;
     },
 
     // Exact delivery price for the chosen address (district pricing)

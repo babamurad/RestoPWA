@@ -184,7 +184,8 @@ const submitOrder = async () => {
     paymentMethod: orderData.value.payment_method,
     comment: orderData.value.comment,
     idempotencyKey: self.crypto.randomUUID(),
-    traceId: traceId.value
+    traceId: traceId.value,
+    promoCode: cartStore.promo?.code || null
   });
 
   try {

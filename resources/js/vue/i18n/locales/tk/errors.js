@@ -9,6 +9,7 @@ export default {
         invalid_items: 'Sargydyň düzümi nädogry.',
         item_not_found: 'Käbir harytlar tapylmady.',
         item_unavailable: 'Käbir harytlar wagtlaýyn elýeterli däl.',
+        invalid_promo: 'Promokody ulanyp bolmady. Sebetde barlaň.',
         invalid_modifiers: 'Goşundylaryň saýlanyşy tagama gelişmeýär. Tagamy açyp, goşundylary täzeden saýlaň.',
         invalid_price: 'Harydyň bahasy nädogry görkezildi.',
         invalid_total: 'Sargydyň jemi bahasy nädogry hasaplandy.',

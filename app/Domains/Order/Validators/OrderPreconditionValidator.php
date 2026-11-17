@@ -195,7 +195,7 @@ final readonly class OrderPreconditionValidator
         }
 
         $deliveryFee = (int) ($data['delivery_fee'] ?? 0);
-        $expectedTotal += $deliveryFee;
+        $expectedTotal += $deliveryFee - (int) ($data['discount_amount'] ?? 0);
 
         $submittedTotal = (int) $data['total'];
 
