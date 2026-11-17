@@ -121,3 +121,74 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # The browser tests of the customer app, the courier screen and the panels (Laravel Dusk).
+  # They run against a real server with the production build of the front end.
+  e2e:
+    name: E2E (Dusk)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3, intl, bcmath, gd
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci --no-audit --no-fund
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch database/dusk.sqlite
+
+      - name: Build the front end
+        run: npm run build
+
+      # The driver must match the Chrome of the runner
+      - name: ChromeDriver
+        run: php artisan dusk:chrome-driver --detect
+
+      - name: Start the app
+        run: |
+          nohup php artisan serve --host=127.0.0.1 --port=8001 --env=dusk.local > server.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -fs http://127.0.0.1:8001/up > /dev/null && exit 0
+            sleep 1
+          done
+          cat server.log
+          exit 1
+
+      - name: Dusk
+        env:
+          DUSK_NO_SANDBOX: '1'
+        run: php artisan dusk
+
+      - name: Screenshots and logs of a failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dusk-failure
+          path: |
+            tests/Browser/screenshots
+            tests/Browser/console
+            storage/logs
+            server.log
+          if-no-files-found: ignore

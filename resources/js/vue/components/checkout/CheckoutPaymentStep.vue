@@ -54,6 +54,7 @@
 
     <!-- Next Button -->
     <button 
+      dusk="checkout-payment-next"
       @click="handleNext"
       class="w-full mt-4 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-extrabold text-sm rounded-xl shadow-lg transition-all active:scale-[0.98]"
     >

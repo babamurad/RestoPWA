@@ -27,6 +27,7 @@
           <div class="relative">
             <input 
               v-model="form.email" 
+              dusk="login-email"
               type="email" 
               required
               placeholder="example@mail.com"
@@ -41,6 +42,7 @@
           <div class="relative">
             <input 
               v-model="form.password" 
+              dusk="login-password"
               type="password" 
               required
               placeholder="••••••••"
@@ -52,6 +54,7 @@
         <!-- Submit Button -->
         <button 
           type="submit" 
+          dusk="login-submit"
           :disabled="authStore.isLoading"
           class="w-full py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm rounded-xl shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
         >

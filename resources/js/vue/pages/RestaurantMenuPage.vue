@@ -163,6 +163,7 @@
           <div 
             v-for="product in filteredProducts" 
             :key="product.id"
+            :dusk="'product-' + product.id"
             @click="openProductModal(product)"
             class="dark:bg-slate-800/40 backdrop-blur-sm border dark:border-slate-800/80 rounded-2xl p-4 dark:hover:border-slate-700/40 dark:hover:bg-slate-800/65 transition-all duration-300 shadow-md flex gap-4 items-center group cursor-pointer bg-white border-slate-200 hover:border-slate-300 hover:bg-white"
           >

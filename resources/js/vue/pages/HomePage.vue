@@ -23,6 +23,7 @@
       <!-- Search toggle -->
       <button
         type="button"
+        dusk="search-toggle"
         @click="toggleSearch"
         :aria-label="t('home.search.toggle')"
         :aria-expanded="searchOpen"
@@ -39,6 +40,7 @@
     <div v-if="searchOpen || search" class="relative mb-8 -mt-4">
       <input
         ref="searchInput"
+        dusk="search-input"
         v-model="search"
         type="search"
         maxlength="100"
@@ -69,6 +71,7 @@
         <div 
           v-for="cat in categories" 
           :key="cat.id" 
+          :dusk="'category-' + cat.id"
           @click="activeCategory = cat.id"
           :class="[
             'flex flex-col items-center justify-center p-3 rounded-2xl min-w-[76px] cursor-pointer transition-all border shadow-sm active:scale-95 duration-200',
@@ -91,6 +94,7 @@
           <button
             v-if="authStore.isAuthenticated"
             type="button"
+            dusk="favorites-filter"
             @click="onlyFavorites = !onlyFavorites"
             :aria-pressed="onlyFavorites"
             :class="['text-xs px-3 py-1.5 rounded-lg border font-bold transition-all', onlyFavorites ? 'bg-rose-500/10 border-rose-500/40 text-rose-500' : 'dark:bg-slate-800/40 dark:border-slate-700/50 dark:text-slate-400 dark:hover:bg-slate-800 bg-white border-slate-300 text-slate-600 hover:bg-white']"
@@ -113,7 +117,7 @@
       </div>
 
       <!-- Skeleton Loaders if fetching data -->
-      <div v-if="store.loading" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div v-if="store.loading && store.restaurants.length === 0" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div v-for="n in 4" :key="n" class="dark:bg-slate-800/30 border dark:border-slate-800/60 rounded-3xl p-4 animate-pulse bg-white border-slate-200">
           <div class="w-full h-44 dark:bg-slate-800/60 rounded-2xl mb-4 bg-white"></div>
           <div class="h-5 dark:bg-slate-800/60 rounded-lg w-2/3 mb-2 bg-white"></div>
@@ -137,6 +141,7 @@
         <div 
           v-for="restaurant in filteredRestaurants" 
           :key="restaurant.id"
+          :dusk="'restaurant-' + restaurant.slug"
           @click="openMenu(restaurant.slug)"
           class="dark:bg-slate-800/40 backdrop-blur-sm border dark:border-slate-800/80 rounded-3xl p-4 dark:hover:border-slate-700/50 dark:hover:bg-slate-800/60 transition-all duration-300 shadow-lg hover:shadow-orange-950/5 group cursor-pointer bg-white border-slate-200 hover:border-slate-300 hover:bg-white"
         >
@@ -154,6 +159,7 @@
             <button
               v-if="authStore.isAuthenticated"
               type="button"
+              :dusk="'favorite-' + restaurant.slug"
               @click.stop="store.toggleFavorite(restaurant.id)"
               :aria-pressed="store.isFavorite(restaurant.id)"
               :aria-label="store.isFavorite(restaurant.id) ? t('home.favorites.remove') : t('home.favorites.add')"
