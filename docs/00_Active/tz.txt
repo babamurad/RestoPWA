@@ -16,3 +16,12 @@ php artisan queue:restart
 sudo supervisorctl restart restopwa-reverb
 
 php artisan up
+
+
+cd /var/www/restopwa.tmtourism.com
+git status                         # нет локальных правок
+git pull origin main               # получить свежий deploy.sh
+APP_DIR=/var/www/restopwa.tmtourism.com ./deploy/deploy.sh
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R 775 storage bootstrap/cache
+curl -I https://restopwa.tmtourism.com/up
