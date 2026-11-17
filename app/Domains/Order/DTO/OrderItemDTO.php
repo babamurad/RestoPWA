@@ -14,8 +14,7 @@ final readonly class OrderItemDTO
         public int $totalPrice,
         public array $modifiers = [],
         public ?string $image = null,
-    ) {
-    }
+    ) {}
 
     public static function fromArray(array $data): self
     {

@@ -28,13 +28,13 @@ final class GeoJsonNormalizer
 
         if (is_string($input)) {
             $decoded = json_decode($input, true);
-            if (!is_array($decoded)) {
+            if (! is_array($decoded)) {
                 return null;
             }
             $input = $decoded;
         }
 
-        if (!is_array($input)) {
+        if (! is_array($input)) {
             return null;
         }
 
@@ -50,17 +50,20 @@ final class GeoJsonNormalizer
                     }
                 }
             }
+
             return self::buildMultiPolygon($polygons);
         }
 
         // Handle Feature
         if (isset($input['type']) && $input['type'] === 'Feature') {
             $geom = $input['geometry'] ?? null;
+
             return $geom ? self::toMultiPolygon($geom) : null;
         }
 
         // Handle directly geometries
         $polygons = self::extractPolygons($input);
+
         return self::buildMultiPolygon($polygons);
     }
 
@@ -87,6 +90,7 @@ final class GeoJsonNormalizer
             foreach ($geometry['geometries'] ?? [] as $geom) {
                 $polygons = array_merge($polygons, self::extractPolygons($geom));
             }
+
             return $polygons;
         }
 
@@ -107,14 +111,14 @@ final class GeoJsonNormalizer
         foreach ($polygons as $polygon) {
             $validRings = [];
             foreach ($polygon as $ring) {
-                if (!is_array($ring) || count($ring) < 3) {
+                if (! is_array($ring) || count($ring) < 3) {
                     continue;
                 }
-                
+
                 $validRing = [];
                 foreach ($ring as $point) {
                     if (is_array($point) && count($point) >= 2) {
-                        $validRing[] = [(float)$point[0], (float)$point[1]];
+                        $validRing[] = [(float) $point[0], (float) $point[1]];
                     }
                 }
 
@@ -128,7 +132,7 @@ final class GeoJsonNormalizer
                     $validRings[] = $validRing;
                 }
             }
-            if (!empty($validRings)) {
+            if (! empty($validRings)) {
                 $validPolygons[] = $validRings;
             }
         }

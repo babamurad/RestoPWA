@@ -28,4 +28,3 @@ class BelongsToVendorScope implements Scope
         }
     }
 }
-

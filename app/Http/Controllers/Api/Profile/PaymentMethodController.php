@@ -11,7 +11,7 @@ class PaymentMethodController extends Controller
     public function index(Request $request)
     {
         return response()->json([
-            'data' => $request->user()->paymentMethods()->orderByDesc('is_default')->latest()->get()
+            'data' => $request->user()->paymentMethods()->orderByDesc('is_default')->latest()->get(),
         ]);
     }
 
@@ -31,7 +31,7 @@ class PaymentMethodController extends Controller
 
         return response()->json([
             'message' => 'Способ оплаты добавлен',
-            'data' => $method
+            'data' => $method,
         ], 201);
     }
 

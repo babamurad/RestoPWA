@@ -88,7 +88,9 @@ class AppServiceProvider extends ServiceProvider
             $vendorId = $tenantContext->getCurrentVendor();
 
             if ($vendorId) {
-                return Restaurant::where('vendor_id', $vendorId)->first()
+                // The tenant context holds a restaurant id. The legacy restaurants.vendor_id
+                // column is not an identifier and must not be used for lookups.
+                return Restaurant::find($vendorId)
                     ?? (object) ['id' => $vendorId];
             }
 

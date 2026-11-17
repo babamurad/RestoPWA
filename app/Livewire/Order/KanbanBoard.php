@@ -81,7 +81,7 @@ class KanbanBoard extends Component
             $this->vendorId = $tenant?->id ?? '';
 
             if (empty($this->vendorId) && auth()->check()) {
-                $restaurant = Restaurant::where('vendor_id', auth()->id())->first();
+                $restaurant = Restaurant::where('owner_id', auth()->id())->first();
                 $this->vendorId = $restaurant?->id ?? '';
             }
         }

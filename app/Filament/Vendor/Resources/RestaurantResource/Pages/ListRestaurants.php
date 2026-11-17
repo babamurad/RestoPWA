@@ -3,7 +3,6 @@
 namespace App\Filament\Vendor\Resources\RestaurantResource\Pages;
 
 use App\Filament\Vendor\Resources\RestaurantResource;
-use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
 class ListRestaurants extends ListRecords

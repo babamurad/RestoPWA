@@ -3,22 +3,24 @@
 namespace App\Filament\Vendor\Resources;
 
 use App\Domains\Menu\Models\Category;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
 
 class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-tag';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-tag';
 
     protected static ?string $modelLabel = 'Категория';
+
     protected static ?string $pluralModelLabel = 'Категории';
-    protected static string | \UnitEnum | null $navigationGroup = 'Меню';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Меню';
 
     public static function form(Schema $schema): Schema
     {

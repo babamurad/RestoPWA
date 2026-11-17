@@ -22,7 +22,7 @@ final class PIIMasker
         $suffix = substr($clean, -2);
         $masked = str_repeat('*', max(0, $length - 6));
 
-        return $prefix . $masked . $suffix;
+        return $prefix.$masked.$suffix;
     }
 
     /**
@@ -38,7 +38,7 @@ final class PIIMasker
             if (strlen($part) === 0) {
                 continue;
             }
-            $masked[] = mb_substr($part, 0, 1) . str_repeat('*', max(0, mb_strlen($part) - 1));
+            $masked[] = mb_substr($part, 0, 1).str_repeat('*', max(0, mb_strlen($part) - 1));
         }
 
         return implode(' ', $masked) ?: '***';
@@ -55,7 +55,7 @@ final class PIIMasker
             return $address;
         }
 
-        return trim($parts[0]) . ', ***';
+        return trim($parts[0]).', ***';
     }
 
     /**
@@ -67,7 +67,7 @@ final class PIIMasker
             return $comment;
         }
 
-        return mb_substr($comment, 0, $maxVisible) . '...';
+        return mb_substr($comment, 0, $maxVisible).'...';
     }
 
     /**

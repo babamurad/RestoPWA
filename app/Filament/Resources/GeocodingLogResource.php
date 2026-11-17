@@ -5,17 +5,18 @@ namespace App\Filament\Resources;
 use App\Domains\Geo\Models\GeocodingLog;
 use App\Filament\Resources\GeocodingLogResource\Pages;
 use BackedEnum;
-use UnitEnum;
+use Filament\Actions;
+use Filament\Forms\Components\DatePicker;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions;
+use UnitEnum;
 
 class GeocodingLogResource extends Resource
 {
     protected static ?string $model = GeocodingLog::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chart-bar';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar';
 
     protected static ?string $navigationLabel = 'Логи геокодинга';
 
@@ -23,7 +24,7 @@ class GeocodingLogResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Логи геокодинга';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Гео';
+    protected static string|UnitEnum|null $navigationGroup = 'Гео';
 
     public static function table(Table $table): Table
     {
@@ -102,8 +103,8 @@ class GeocodingLogResource extends Resource
                     ]),
                 Tables\Filters\Filter::make('created_at')
                     ->form([
-                        \Filament\Forms\Components\DatePicker::make('created_from'),
-                        \Filament\Forms\Components\DatePicker::make('created_until'),
+                        DatePicker::make('created_from'),
+                        DatePicker::make('created_until'),
                     ])
                     ->query(function ($query, array $data) {
                         return $query
