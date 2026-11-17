@@ -11,7 +11,7 @@ class AddressController extends Controller
     public function index(Request $request)
     {
         return response()->json([
-            'data' => $request->user()->addresses()->orderByDesc('is_default')->latest()->get(),
+            'data' => $request->user()->addresses()->orderByDesc('is_default')->latest()->get()
         ]);
     }
 
@@ -38,7 +38,7 @@ class AddressController extends Controller
 
         return response()->json([
             'message' => 'Адрес добавлен',
-            'data' => $address,
+            'data' => $address
         ], 201);
     }
 
@@ -61,7 +61,7 @@ class AddressController extends Controller
             'is_default' => 'boolean',
         ]);
 
-        if ($request->is_default && ! $address->is_default) {
+        if ($request->is_default && !$address->is_default) {
             $request->user()->addresses()->update(['is_default' => false]);
         }
 
@@ -69,7 +69,7 @@ class AddressController extends Controller
 
         return response()->json([
             'message' => 'Адрес обновлен',
-            'data' => $address,
+            'data' => $address
         ]);
     }
 

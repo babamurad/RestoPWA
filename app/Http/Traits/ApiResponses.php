@@ -10,6 +10,11 @@ trait ApiResponses
 {
     /**
      * Return a success JSON response.
+     *
+     * @param mixed $data
+     * @param string|null $message
+     * @param int $code
+     * @return JsonResponse
      */
     protected function success(mixed $data, ?string $message = null, int $code = 200): JsonResponse
     {
@@ -22,6 +27,11 @@ trait ApiResponses
 
     /**
      * Return an error JSON response.
+     *
+     * @param string $message
+     * @param int $code
+     * @param mixed $errors
+     * @return JsonResponse
      */
     protected function error(string $message, int $code = 400, mixed $errors = []): JsonResponse
     {

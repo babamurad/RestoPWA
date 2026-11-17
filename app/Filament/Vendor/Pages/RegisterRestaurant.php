@@ -6,9 +6,8 @@ use App\Domains\Vendor\Models\Restaurant;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Pages\Tenancy\RegisterTenant;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Pages\Tenancy\RegisterTenant;
 use Illuminate\Support\Str;
 
 class RegisterRestaurant extends RegisterTenant
@@ -27,7 +26,7 @@ class RegisterRestaurant extends RegisterTenant
                     ->required()
                     ->maxLength(255)
                     ->live(onBlur: true)
-                    ->afterStateUpdated(function (?string $state, Set $set) {
+                    ->afterStateUpdated(function (?string $state, \Filament\Schemas\Components\Utilities\Set $set) {
                         $set('slug', Str::slug($state));
                     }),
 

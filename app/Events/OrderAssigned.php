@@ -13,12 +13,14 @@ class OrderAssigned implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public Order $order) {}
+    public function __construct(public Order $order)
+    {
+    }
 
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('courier.'.$this->order->courier_id),
+            new PrivateChannel('courier.' . $this->order->courier_id),
         ];
     }
 

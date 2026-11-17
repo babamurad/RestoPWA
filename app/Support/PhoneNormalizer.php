@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use Illuminate\Support\Facades\Config;
+
 /**
  * PhoneNormalizer: handles phone number normalization and validation
  * using a shared policy that both Livewire and API can use.
@@ -24,7 +26,7 @@ final class PhoneNormalizer
 
         // Replace leading '00' with '+'
         if (str_starts_with($trimmed, '00')) {
-            $trimmed = '+'.substr($trimmed, 2);
+            $trimmed = '+' . substr($trimmed, 2);
         }
 
         // Remove all non-digit characters except leading '+'
@@ -35,7 +37,6 @@ final class PhoneNormalizer
             if ($char === '+' && $i === 0) {
                 $starts = true;
                 $clean = '+';
-
                 continue;
             }
             if (ctype_digit($char)) {
@@ -185,7 +186,6 @@ final class PhoneNormalizer
 
         // Try 3-digit country codes
         $three = substr($digits, 0, 3);
-
         return $three;
     }
 

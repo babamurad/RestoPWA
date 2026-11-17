@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\UserRole;
 use App\Models\User;
+use App\Enums\UserRole;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 
