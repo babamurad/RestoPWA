@@ -226,4 +226,31 @@ class PromoCodeTest extends TestCase
             ->assertCanSeeTableRecords([$promo])
             ->assertSee('15%');
     }
+
+    public function test_a_restaurant_creates_and_sees_only_its_own_codes(): void
+    {
+        $owner = User::factory()->create(['role' => UserRole::RESTAURATEUR]);
+        $mine = Restaurant::factory()->create(['owner_id' => $owner->id]);
+        $own = $this->code(['code' => 'MINE', 'restaurant_id' => $mine->id]);
+        $foreign = $this->code(['code' => 'THEIRS', 'restaurant_id' => $this->restaurant->id]);
+        $global = $this->code(['code' => 'EVERYONE']);
+
+        $this->actingAs($owner);
+        Filament::setCurrentPanel(Filament::getPanel('vendor'));
+        Filament::setTenant($mine);
+
+        Livewire::test(\App\Filament\Vendor\Resources\PromoCodeResource\Pages\ListPromoCodes::class)
+            ->assertCanSeeTableRecords([$own])
+            ->assertCanNotSeeTableRecords([$foreign, $global]);
+
+        Livewire::test(\App\Filament\Vendor\Resources\PromoCodeResource\Pages\CreatePromoCode::class)
+            ->fillForm(['code' => 'welcome5', 'amount' => 5, 'per_user_limit' => 1, 'is_active' => true])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        // The code is attached to the restaurant, and works only there
+        $created = PromoCode::where('code', 'WELCOME5')->sole();
+        $this->assertSame($mine->id, $created->restaurant_id);
+        $this->apply('WELCOME5')->assertStatus(422)->assertJsonPath('reason', 'wrong_restaurant');
+    }
 }
