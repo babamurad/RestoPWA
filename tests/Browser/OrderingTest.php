@@ -6,6 +6,7 @@ namespace Tests\Browser;
 
 use App\Domains\Menu\Models\Product;
 use App\Domains\Order\Models\Order;
+use App\Domains\Promo\Models\PromoCode;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Enums\UserRole;
 use App\Models\User;
@@ -170,6 +171,56 @@ class OrderingTest extends DuskTestCase
         $order->refresh();
         $this->assertSame(Order::STATUS_CANCELLED, $order->status);
         $this->assertSame(Order::CANCELLED_BY_CUSTOMER, $order->cancelled_by);
+    }
+
+    public function test_a_promo_code_takes_its_discount_off_the_food_and_the_order(): void
+    {
+        PromoCode::create(['code' => 'FIRST10', 'percent' => 10]);
+
+        $this->browse(function (Browser $browser) {
+            $this->signIn($browser, $this->customer)->waitForLocation('/profile');
+
+            $this->openDish($browser, 'pepperoni-pizza', $this->pizza);
+            $browser->click($this->optionDusk($this->pizza, 'Размер', 'Большая'))
+                ->click($this->optionDusk($this->pizza, 'Топпинг', 'Сыр'))
+                ->click('@qty-plus')
+                ->click('@add-to-cart')
+                ->visit('/cart')
+                ->waitFor('@promo-input');
+
+            // A wrong code is explained and changes nothing
+            $browser->type('@promo-input', 'NOPE')
+                ->click('@promo-apply')
+                ->waitFor('@promo-error')
+                ->assertMissing('@cart-discount');
+
+            $browser->clear('@promo-input')
+                ->type('@promo-input', 'first10')
+                ->click('@promo-apply')
+                ->waitFor('@promo-applied')
+                ->waitFor('@cart-discount')
+                ->assertSeeIn('@cart-discount', '36');
+
+            $browser->waitFor('@cart-checkout')
+                ->click('@cart-checkout')
+                ->waitForText('Оформление заказа')
+                ->click('@delivery-pickup')
+                ->type('@checkout-phone', '+99361234567')
+                ->waitUntilEnabled('@checkout-address-next')
+                ->click('@checkout-address-next')
+                ->waitFor('@checkout-payment-next')
+                ->click('@checkout-payment-next')
+                ->waitFor('@checkout-submit')
+                ->click('@checkout-submit')
+                ->waitForText('Заказ оформлен!', 30);
+        });
+
+        // (100 + 50 + 30) × 2 = 360; 10% off the food
+        $order = Order::sole();
+        $this->assertEquals(324.0, $order->total);
+        $this->assertEquals(36.0, $order->discount_amount);
+        $this->assertSame('FIRST10', $order->promo_code);
+        $this->assertSame(1, PromoCode::where('code', 'FIRST10')->value('used_count'));
     }
 
     public function test_an_order_the_kitchen_has_started_cannot_be_cancelled_by_the_customer(): void

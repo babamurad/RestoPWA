@@ -21,6 +21,8 @@ final readonly class OrderSubmitDTO
         public string $customerName,
         public string $customerPhone,
         public string $deliveryType = 'delivery',
+        public ?string $promoCode = null,
+        public int $discountAmount = 0,
     ) {}
 
     public static function fromArray(array $data, string $traceId): self
@@ -45,6 +47,8 @@ final readonly class OrderSubmitDTO
             customerName: (string) ($data['customer_name'] ?? ''),
             customerPhone: (string) ($data['customer_phone'] ?? ''),
             deliveryType: (string) ($data['delivery_type'] ?? 'delivery'),
+            promoCode: isset($data['promo_code']) && $data['promo_code'] !== '' ? (string) $data['promo_code'] : null,
+            discountAmount: (int) ($data['discount_amount'] ?? 0),
         );
     }
 
@@ -70,6 +74,8 @@ final readonly class OrderSubmitDTO
             'customer_name' => $this->customerName,
             'customer_phone' => $this->customerPhone,
             'delivery_type' => $this->deliveryType,
+            'promo_code' => $this->promoCode,
+            'discount_amount' => $this->discountAmount,
         ];
     }
 
@@ -91,6 +97,8 @@ final readonly class OrderSubmitDTO
             'items' => $items,
             'total' => $this->total,
             'delivery_fee' => $this->deliveryFee,
+            'promo_code' => $this->promoCode,
+            'discount_amount' => $this->discountAmount,
             'delivery_type' => $this->deliveryType,
             'delivery_time' => $this->deliveryTime,
             'payment_method' => $this->paymentMethod,

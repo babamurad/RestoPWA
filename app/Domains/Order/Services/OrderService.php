@@ -8,6 +8,7 @@ use App\Casts\MoneyCast;
 use App\Domains\Order\Exceptions\InvalidStatusTransition;
 use App\Domains\Order\Models\Order;
 use App\Domains\Payment\Services\PaymentService;
+use App\Domains\Promo\Services\PromoCodeService;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Enums\OrderCancelReason;
 use App\Enums\PaymentStatus;
@@ -52,12 +53,19 @@ class OrderService
                 // $data comes from the order API, which counts money in minor units (tyiyn)
                 'total' => MoneyCast::fromMinor($data['total']),
                 'delivery_fee' => MoneyCast::fromMinor($data['delivery_fee'] ?? 0),
+                'discount_amount' => MoneyCast::fromMinor($data['discount_amount'] ?? 0),
                 'delivery_time' => $data['delivery_time'] ?? null,
                 'payment_method' => $data['payment_method'] ?? 'card',
                 'comment' => $data['comment'] ?? null,
                 'is_offline' => $data['is_offline'] ?? false,
                 'metadata' => $data['metadata'] ?? null,
             ]);
+
+            if (! empty($data['promo_code'])) {
+                $itemsTotal = (int) collect($data['items'])->sum('total_price');
+                $promo = app(PromoCodeService::class)->redeem($order, $data['promo_code'], $itemsTotal, (int) ($data['discount_amount'] ?? 0));
+                $order->update(['promo_code_id' => $promo->id, 'promo_code' => $promo->code]);
+            }
 
             app(PaymentService::class)->start($order);
 
@@ -128,6 +136,8 @@ class OrderService
                 'cancel_comment' => $comment !== null && trim($comment) !== '' ? trim($comment) : null,
                 'cancelled_at' => now(),
             ]);
+
+            app(PromoCodeService::class)->release($order);
 
             return $order;
         });

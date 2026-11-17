@@ -91,9 +91,7 @@ import { computed } from 'vue';
 
 const finalTotal = computed(() => {
   const subtotal = cartStore.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  if (props.orderData.delivery_type === 'delivery') {
-    return subtotal + cartStore.deliveryFee;
-  }
-  return subtotal;
+  const delivery = props.orderData.delivery_type === 'delivery' ? cartStore.deliveryFee : 0;
+  return Math.max(0, subtotal + delivery - cartStore.discount);
 });
 </script>

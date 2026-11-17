@@ -143,6 +143,10 @@
                 {{ t('common.price', { amount: cartStore.syncLoading ? cartStore.localSubtotal.toFixed(0) : cartStore.subtotal }) }}
               </span>
             </div>
+            <div v-if="cartStore.discount > 0" class="flex justify-between text-emerald-500" dusk="cart-discount">
+              <span>{{ t('cart.promo.discount') }}</span>
+              <span>−{{ t('common.price', { amount: cartStore.discount.toFixed(0) }) }}</span>
+            </div>
             <div class="flex justify-between">
               <span>{{ t('cart.delivery') }}</span>
               <span class="dark:text-slate-200 text-slate-800">
@@ -150,6 +154,34 @@
                 <template v-else>{{ cartStore.deliveryFee === 0 ? t('common.free') : t('common.price', { amount: cartStore.deliveryFee }) }}</template>
               </span>
             </div>
+          </div>
+
+          <!-- Promo code -->
+          <div class="space-y-2" dusk="promo-block">
+            <div v-if="cartStore.promo" class="flex items-center justify-between gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-3 py-2 text-xs font-bold text-emerald-500">
+              <span dusk="promo-applied">{{ t('cart.promo.applied', { code: cartStore.promo.code }) }}</span>
+              <button type="button" dusk="promo-remove" class="underline" @click="cartStore.removePromo()">{{ t('cart.promo.remove') }}</button>
+            </div>
+            <form v-else class="flex gap-2" @submit.prevent="applyPromo">
+              <input
+                v-model="promoInput"
+                dusk="promo-input"
+                type="text"
+                maxlength="40"
+                autocomplete="off"
+                :placeholder="t('cart.promo.placeholder')"
+                class="flex-1 min-w-0 px-3 py-2.5 rounded-2xl text-sm font-bold uppercase border dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 bg-white border-slate-300 text-slate-800 outline-none focus:border-orange-500"
+              />
+              <button
+                type="submit"
+                dusk="promo-apply"
+                :disabled="!promoInput.trim() || cartStore.promoLoading"
+                class="px-4 py-2.5 rounded-2xl text-xs font-extrabold bg-orange-500 text-white disabled:opacity-50"
+              >
+                {{ t('cart.promo.apply') }}
+              </button>
+            </form>
+            <p v-if="cartStore.promoError" dusk="promo-error" class="text-[11px] font-semibold text-rose-400">{{ promoErrorText }}</p>
           </div>
 
           <!-- Minimum Order warning block -->
@@ -165,7 +197,7 @@
           <div class="flex justify-between items-baseline">
             <span class="text-sm font-bold dark:text-slate-400 font-outfit text-slate-600">{{ t('cart.total') }}</span>
             <span class="text-2xl font-black text-orange-500 font-outfit">
-              {{ t('common.price', { amount: cartStore.syncLoading ? cartStore.localTotal.toFixed(0) : cartStore.total }) }}
+              {{ t('common.price', { amount: cartStore.syncLoading ? cartStore.localTotal.toFixed(0) : cartStore.payable }) }}
             </span>
           </div>
 
@@ -188,15 +220,28 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useCartStore } from '../stores/cart';
 
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n();
+const { t, te } = useI18n();
 const router = useRouter();
 const cartStore = useCartStore();
+
+const promoInput = ref('');
+const promoErrorText = computed(() => {
+  const error = cartStore.promoError;
+  if (!error) return '';
+  const key = `cart.promo.reasons.${error.reason}`;
+  return te(key) ? t(key) : (error.message || t('cart.promo.reasons.unknown'));
+});
+
+async function applyPromo() {
+  const ok = await cartStore.applyPromo(promoInput.value);
+  if (ok) promoInput.value = '';
+}
 
 const increaseQty = (item) => {
   cartStore.updateQuantity(item.key, item.quantity + 1);

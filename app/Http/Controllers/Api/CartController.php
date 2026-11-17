@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Domains\Menu\Models\Product;
 use App\Domains\Menu\Services\ProductModifiers;
+use App\Domains\Promo\Services\PromoCodeService;
 use App\Domains\Vendor\Models\Restaurant;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ApiResponses;
@@ -152,5 +153,72 @@ class CartController extends Controller
             'min_order' => (float) $restaurant->min_order,
             'is_min_order_met' => $subtotal >= $restaurant->min_order,
         ]);
+    }
+
+    /**
+     * Check a promo code against the cart and tell what it would take off.
+     * Nothing is redeemed here: the code is taken when the order is placed. All amounts are
+     * minor units (tyiyn), like the order API; the food total is priced from the database.
+     */
+    public function applyPromo(Request $request, PromoCodeService $promoCodes): JsonResponse
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|max:40',
+            'vendor_id' => 'required|uuid|exists:restaurants,id',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|uuid',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.modifiers' => 'nullable|array',
+        ]);
+
+        $products = Product::whereIn('id', collect($validated['items'])->pluck('product_id')->unique())
+            ->where('vendor_id', $validated['vendor_id'])
+            ->where('is_available', true)
+            ->get()
+            ->keyBy('id');
+
+        $subtotal = 0;
+        foreach ($validated['items'] as $item) {
+            $product = $products->get($item['product_id']);
+
+            if (! $product) {
+                return $this->promoResponse(false, 'items_changed', 'Состав корзины изменился. Обновите корзину.');
+            }
+
+            $choice = ProductModifiers::resolve(ProductModifiers::groups($product->modifiers), $item['modifiers'] ?? []);
+
+            if ($choice['violations'] !== []) {
+                return $this->promoResponse(false, 'items_changed', 'Состав корзины изменился. Обновите корзину.');
+            }
+
+            $subtotal += ((int) round($product->price * 100) + (int) round($choice['price'] * 100)) * (int) $item['quantity'];
+        }
+
+        $result = $promoCodes->evaluate($validated['code'], $request->user('sanctum')?->id, $validated['vendor_id'], $subtotal);
+
+        if ($result['reason'] !== null) {
+            return $this->promoResponse(false, $result['reason']->value, $result['reason']->message());
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'valid' => true,
+                'code' => $result['promo']->code,
+                'discount' => $result['discount'],
+                'subtotal' => $subtotal,
+                'description' => $result['promo']->description,
+            ],
+        ]);
+    }
+
+    private function promoResponse(bool $valid, string $reason, string $message): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'message' => $message,
+            'reason' => $reason,
+            'data' => ['valid' => $valid],
+        ], 422);
     }
 }

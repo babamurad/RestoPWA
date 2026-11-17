@@ -191,6 +191,9 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(60)
             ->by('api:'.($request->user()?->id ?? $request->ip()))->response($tooMany));
 
+        // Guessing promo codes: few tries per minute per address
+        RateLimiter::for('promo', fn (Request $request) => Limit::perMinute(10)->by('promo:'.$request->ip())->response($tooMany));
+
         RateLimiter::for('orders', fn (Request $request) => Limit::perMinute(10)->by('orders:'.($request->user()?->id ?? $request->ip()))->response($tooMany));
     }
 }

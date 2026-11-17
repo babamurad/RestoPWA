@@ -71,6 +71,7 @@ export function buildOrderPayload({
     comment = '',
     idempotencyKey = null,
     traceId = null,
+    promoCode = null,
 }) {
     const mappedItems = mapCartItemsToApiFormat(cartItems);
     const total = calculateOrderTotal(mappedItems, deliveryFee);
@@ -104,5 +105,7 @@ export function buildOrderPayload({
         },
         idempotency_key: idempotencyKey,
         trace_id: traceId,
+        // The server prices the discount itself; only the code is sent
+        ...(promoCode ? { promo_code: promoCode } : {}),
     };
 }
