@@ -41,6 +41,8 @@ Route::middleware([SetTenantContext::class, 'throttle:api'])->prefix('v1')->wher
     Route::get('categories', fn () => response()->json(['data' => Category::where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'sort_order', 'parent_id'])]))->name('api.categories.index');
 
     Route::post('cart/sync', [CartController::class, 'sync'])->name('api.cart.sync');
+    Route::post('cart/apply-promo', [CartController::class, 'applyPromo'])
+        ->withoutMiddleware('throttle:api')->middleware('throttle:promo')->name('api.cart.apply-promo');
 
     // Geo endpoints (public — no auth required)
     Route::post('geo/zone-check', [GeoController::class, 'zoneCheck'])

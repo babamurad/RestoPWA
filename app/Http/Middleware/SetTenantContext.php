@@ -55,7 +55,7 @@ class SetTenantContext
                 }
             } elseif ($request->is('api/v1/restaurants/*')) {
                 $vendorId = $request->segment(4);
-            } elseif ($request->is('api/v1/cart/sync') || $request->is('api/v1/orders') || $request->is('api/v1/geo/zone-check')) {
+            } elseif ($request->is('api/v1/cart/sync') || $request->is('api/v1/cart/apply-promo') || $request->is('api/v1/orders') || $request->is('api/v1/geo/zone-check')) {
                 $vendorId = $request->input('vendor_id');
             }
         }

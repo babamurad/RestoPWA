@@ -12,6 +12,8 @@ use App\Domains\Order\Models\Order;
 use App\Domains\Order\Models\OrderRejection;
 use App\Domains\Order\Services\OrderService;
 use App\Domains\Order\Validators\OrderPreconditionValidator;
+use App\Domains\Promo\Exceptions\PromoUnavailable;
+use App\Domains\Promo\Services\PromoCodeService;
 use App\Enums\OrderRejectReason;
 use App\Http\Traits\ApiResponses;
 use App\Support\PIIMasker;
@@ -34,6 +36,7 @@ class OrderController
     public function __construct(
         private readonly OrderService $orderService,
         private readonly OrderPreconditionValidator $preconditionValidator,
+        private readonly PromoCodeService $promoCodes,
     ) {}
 
     public function store(Request $request): JsonResponse
@@ -107,6 +110,7 @@ class OrderController
         // the client: the kitchen must see what is really being sold at the real price.
         $itemsInput = $request->input('items');
         $itemReject = null;
+        $promoReject = null;
         if (is_array($itemsInput)) {
             $orderVendorId = (string) $request->input('vendor_id');
             $updatedItems = [];
@@ -183,9 +187,30 @@ class OrderController
                 }
             }
 
+            // Promo discount: taken from the food only and calculated here; whatever discount the
+            // client sends is overwritten
+            $discount = 0;
+            $promoCode = trim((string) $request->input('promo_code', ''));
+            if ($promoCode !== '') {
+                $evaluation = $this->promoCodes->evaluate(
+                    $promoCode,
+                    $request->user()?->id,
+                    (string) $vendorId,
+                    $itemsTotal,
+                );
+
+                if ($evaluation['reason'] !== null) {
+                    $promoReject = $evaluation['reason'];
+                    $itemReject ??= OrderRejectReason::INVALID_PROMO;
+                } else {
+                    $discount = $evaluation['discount'];
+                }
+            }
+
             $request->merge([
                 'delivery_fee' => $deliveryFee,
-                'total' => $itemsTotal + $deliveryFee,
+                'discount_amount' => $discount,
+                'total' => $itemsTotal - $discount + $deliveryFee,
             ]);
         }
         // --- PREPROCESSING LAYER END ---
@@ -218,6 +243,8 @@ class OrderController
                 'address.geolocate_status' => 'nullable|string',
                 'address.geolocate_accuracy_m' => 'nullable|numeric',
                 'total' => 'required|integer|min:0',
+                'promo_code' => 'nullable|string|max:40',
+                'discount_amount' => 'nullable|integer|min:0',
                 'delivery_fee' => 'nullable|integer|min:0',
                 'delivery_type' => 'nullable|in:delivery,pickup',
                 'delivery_time' => 'nullable|string',
@@ -267,6 +294,9 @@ class OrderController
 
             return $this->errorResponse(
                 reason: $preconditionReason,
+                details: $promoReject !== null && $preconditionReason === OrderRejectReason::INVALID_PROMO
+                    ? ['promo_reason' => $promoReject->value, 'promo_message' => $promoReject->message()]
+                    : [],
                 traceId: $traceId,
             );
         }
@@ -324,6 +354,13 @@ class OrderController
                 'trace_id' => $traceId,
             ], null, 201);
 
+        } catch (PromoUnavailable $e) {
+            // The code ran out or expired between the check and the order
+            return $this->errorResponse(
+                reason: OrderRejectReason::INVALID_PROMO,
+                details: ['promo_reason' => $e->reason->value, 'promo_message' => $e->reason->message()],
+                traceId: $traceId,
+            );
         } catch (\Exception $e) {
             Log::error('[API Order] Creation failed', [
                 'trace_id' => $traceId,
