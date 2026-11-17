@@ -2,12 +2,16 @@
 
 namespace App\Filament\Resources\CourierResource\RelationManagers;
 
+use App\Domains\Logistics\Models\CourierEarning;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
 
 class EarningsRelationManager extends RelationManager
 {
@@ -59,8 +63,20 @@ class EarningsRelationManager extends RelationManager
                     ->dateTime('d.m.Y H:i')
                     ->sortable(),
             ])
-            ->actions([
+            ->recordActions([
                 EditAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    BulkAction::make('markPaid')
+                        ->label('Отметить выплаченными')
+                        ->icon('heroicon-o-check-circle')
+                        ->requiresConfirmation()
+                        ->deselectRecordsAfterCompletion()
+                        ->action(fn (Collection $records) => $records
+                            ->where('status', 'pending')
+                            ->each(fn (CourierEarning $e) => $e->update(['status' => 'paid']))),
+                ]),
             ]);
     }
 }

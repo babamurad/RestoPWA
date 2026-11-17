@@ -5,11 +5,16 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\VendorSettlementResource\Pages;
 use App\Models\VendorSettlement;
 use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
 use UnitEnum;
 
 class VendorSettlementResource extends Resource
@@ -20,9 +25,9 @@ class VendorSettlementResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Финансы';
 
-    protected static ?string $modelLabel = 'Выплата ресторану';
+    protected static ?string $modelLabel = 'Счёт ресторану';
 
-    protected static ?string $pluralModelLabel = 'Выплаты ресторанам';
+    protected static ?string $pluralModelLabel = 'Счета ресторанам (комиссия)';
 
     public static function form(Schema $schema): Schema
     {
@@ -44,23 +49,23 @@ class VendorSettlementResource extends Resource
                     ->disabled()
                     ->suffix('TMT'),
                 Forms\Components\TextInput::make('commission_amount')
-                    ->label('Комиссия маркетплейса')
+                    ->label('К оплате платформе (комиссия)')
                     ->disabled()
                     ->suffix('TMT'),
                 Forms\Components\TextInput::make('net_payable')
-                    ->label('К выплате')
+                    ->label('Остаётся ресторану')
                     ->disabled()
                     ->suffix('TMT'),
                 Forms\Components\Select::make('status')
                     ->label('Статус')
                     ->options([
                         'draft' => 'Черновик',
-                        'approved' => 'Одобрено',
-                        'paid' => 'Выплачено',
+                        'approved' => 'Выставлен',
+                        'paid' => 'Оплачен',
                     ])
                     ->required(),
                 Forms\Components\DateTimePicker::make('paid_at')
-                    ->label('Дата выплаты'),
+                    ->label('Дата оплаты'),
             ]);
     }
 
@@ -80,8 +85,12 @@ class VendorSettlementResource extends Resource
                     ->label('Период ПО')
                     ->date('d.m.Y')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('commission_amount')
+                    ->label('К оплате платформе')
+                    ->money('TMT')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('net_payable')
-                    ->label('К выплате')
+                    ->label('Остаётся ресторану')
                     ->money('TMT')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
@@ -95,8 +104,8 @@ class VendorSettlementResource extends Resource
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'draft' => 'Черновик',
-                        'approved' => 'Одобрено',
-                        'paid' => 'Выплачено',
+                        'approved' => 'Выставлен',
+                        'paid' => 'Оплачен',
                         default => $state,
                     }),
             ])
@@ -107,17 +116,37 @@ class VendorSettlementResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'draft' => 'Черновик',
-                        'approved' => 'Одобрено',
-                        'paid' => 'Выплачено',
+                        'approved' => 'Выставлен',
+                        'paid' => 'Оплачен',
                     ])
                     ->label('Статус'),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                Action::make('issue')
+                    ->label('Выставить счёт')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->visible(fn (VendorSettlement $record) => $record->status === 'draft')
+                    ->requiresConfirmation()
+                    ->action(fn (VendorSettlement $record) => $record->update(['status' => 'approved'])),
+                Action::make('markPaid')
+                    ->label('Отметить оплаченным')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn (VendorSettlement $record) => $record->status !== 'paid')
+                    ->requiresConfirmation()
+                    ->action(fn (VendorSettlement $record) => $record->update(['status' => 'paid', 'paid_at' => now()])),
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    BulkAction::make('markPaid')
+                        ->label('Отметить оплаченными')
+                        ->icon('heroicon-o-check-circle')
+                        ->requiresConfirmation()
+                        ->deselectRecordsAfterCompletion()
+                        ->action(fn (Collection $records) => $records
+                            ->where('status', '!=', 'paid')
+                            ->each(fn (VendorSettlement $r) => $r->update(['status' => 'paid', 'paid_at' => now()]))),
                 ]),
             ]);
     }

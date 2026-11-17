@@ -158,7 +158,7 @@ class RestaurantAnalytics
                     'Доставка' => $o->delivery_fee,
                     'Выручка' => $revenue,
                     'Комиссия' => $completed ? $o->commission_amount : 0.0,
-                    'К выплате' => $completed ? round($revenue - $o->commission_amount, 2) : 0.0,
+                    'Остаётся ресторану' => $completed ? round($revenue - $o->commission_amount, 2) : 0.0,
                 ];
             })
             ->values()

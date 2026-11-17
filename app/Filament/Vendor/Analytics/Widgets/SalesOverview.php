@@ -35,8 +35,8 @@ class SalesOverview extends StatsOverviewWidget
             $this->stat('Выполнено заказов', (string) $now['completed'], $now['completed'], $before['completed'])
                 ->chart($daily->pluck('orders')->all()),
             $this->stat('Средний чек', $this->money($now['average_check']), $now['average_check'], $before['average_check']),
-            Stat::make('К выплате ресторану', $this->money($now['payout']))
-                ->description('Комиссия платформы: '.$this->money($now['commission']))
+            Stat::make('Остаётся ресторану', $this->money($now['payout']))
+                ->description('К оплате платформе (комиссия): '.$this->money($now['commission']))
                 ->color('success'),
             Stat::make('Отмены', $now['cancelled'].' из '.$now['orders'])
                 ->description($now['cancel_rate'].'% заказов отменено')

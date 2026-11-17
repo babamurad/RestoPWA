@@ -4,6 +4,7 @@ namespace App\Filament\Vendor\Resources;
 
 use App\Filament\Vendor\Resources\VendorSettlementResource\Pages;
 use App\Models\VendorSettlement;
+use Filament\Facades\Filament;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
@@ -19,9 +20,9 @@ class VendorSettlementResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Финансы';
 
-    protected static ?string $modelLabel = 'Выплата';
+    protected static ?string $modelLabel = 'Счёт за комиссию';
 
-    protected static ?string $pluralModelLabel = 'История выплат';
+    protected static ?string $pluralModelLabel = 'Счета платформы';
 
     public static function form(Schema $schema): Schema
     {
@@ -45,11 +46,11 @@ class VendorSettlementResource extends Resource
                     ->money('TMT')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('commission_amount')
-                    ->label('Комиссия')
+                    ->label('К оплате платформе')
                     ->money('TMT')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('net_payable')
-                    ->label('К выплате')
+                    ->label('Остаётся ресторану')
                     ->money('TMT')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
@@ -63,8 +64,8 @@ class VendorSettlementResource extends Resource
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'draft' => 'Формируется',
-                        'approved' => 'Готов к выплате',
-                        'paid' => 'Выплачено',
+                        'approved' => 'Выставлен, ждёт оплаты',
+                        'paid' => 'Оплачен',
                         default => $state,
                     }),
             ])
@@ -91,7 +92,7 @@ class VendorSettlementResource extends Resource
         $query = parent::getEloquentQuery();
 
         if (Auth::user()->isRestaurateur()) {
-            return $query->where('restaurant_id', Auth::user()->restaurant->id);
+            return $query->where('restaurant_id', Filament::getTenant()?->id ?? Auth::user()->restaurant?->id);
         }
 
         return $query;

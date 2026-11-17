@@ -72,6 +72,7 @@ php artisan up
 
 Пояснения:
 
+- Каталога `public/build` в git нет: сборку делает сервер (`npm run build`).
 - `npm run build` обязателен: ключи Reverb и Sentry (`VITE_*`) берутся из `.env` сервера и вшиваются в сборку. Сборка, сделанная на другой машине, будет без них.
 - `queue:restart` — воркеры дорабатывают текущую задачу и перезапускаются с новым кодом. Без этого шага они продолжат выполнять старый код.
 - Reverb тоже держит код в памяти, поэтому его перезапускают отдельно.
@@ -220,8 +221,30 @@ location /app {
 
 ---
 
-## 4. Что ещё не решено
+## 4. Первая настройка сервера (Hostinger VPS)
 
-- **Где хостится прод и есть ли staging.** От этого зависит автоматическая выкладка; пока она ручная, по чек-листу выше.
-- **`public/build` в git.** Сейчас собранный фронтенд хранится в репозитории, а сервер должен собирать его сам (см. пояснение к `npm run build`). Чтобы на прод не попала устаревшая сборка, каталог стоит убрать из git и добавить в `.gitignore`.
+Делается один раз. Ubuntu 22.04/24.04, команды от пользователя с `sudo`. Путь приложения — `/var/www/restopwa`.
+
+1. **Пакеты.** Nginx, PHP 8.3 (fpm, cli, pgsql, mbstring, xml, curl, zip, gd, intl, bcmath), PostgreSQL с PostGIS, Node.js 22, Composer, Supervisor, Certbot, Git.
+2. **База.** Создать пользователя и базу PostgreSQL, в базе выполнить `CREATE EXTENSION postgis;`.
+3. **Код.** `git clone` репозитория в `/var/www/restopwa`, владелец каталога — пользователь, от которого вы выкладываете (например `deploy`); `storage` и `bootstrap/cache` должны быть доступны на запись для `www-data`.
+4. **Настройки.** `cp .env.example .env`, затем `php artisan key:generate` и заполнить `.env`: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL`, база (`DB_CONNECTION=pgsql`, ...), почта, `QUEUE_CONNECTION=database`, ключи Reverb (раздел 2), Sentry, VAPID, SMS. Значения `VITE_*` вшиваются в сборку, поэтому `.env` заполняют до первой сборки.
+5. **Первый запуск:** `./deploy/deploy.sh`. Скрипт сам выполнит `composer install`, `npm ci`, `npm run build`, миграции и кэши. После первого запуска: `php artisan storage:link`.
+6. **Nginx и HTTPS.** Сайт указывает на `/var/www/restopwa/public`, блок `location /app` для Reverb — из раздела 2. Сертификат: `sudo certbot --nginx -d <домен>`. Без HTTPS не работают PWA и push.
+7. **Фоновые процессы.** `sudo cp deploy/supervisor/restopwa.conf /etc/supervisor/conf.d/`, затем `sudo supervisorctl reread && sudo supervisorctl update`. Планировщик: `sudo cp deploy/cron/restopwa /etc/cron.d/restopwa` (проверить путь и пользователя).
+8. **Права на перезапуск Reverb** для пользователя выкладки: строка в `sudo visudo -f /etc/sudoers.d/restopwa`: `deploy ALL=(root) NOPASSWD: /usr/bin/supervisorctl restart restopwa-reverb`.
+9. **Администратор:** `php artisan admin:create <email> <пароль> --name=<имя>`.
+10. **Проверка** по списку «После выкладки» из раздела 1. Демо-данные на проде не запускать.
+
+Файлы `deploy/supervisor/legacy-*.conf` относятся к старому серверу (`restopwa.tmtourism.com`); на новом сервере не нужны.
+
+### Обычная выкладка
+
+`./deploy/deploy.sh` вместо ручного списка из раздела 1. Откат: `SKIP_MIGRATE=1 ./deploy/deploy.sh <коммит>`.
+
+---
+
+## 5. Что ещё не решено
+
+- **Staging.** Отдельной тестовой среды нет. Выкладка идёт вручную скриптом `deploy/deploy.sh`.
 - **Пробное восстановление бэкапа** на сервере ещё не проводилось; результат записать в таблицу в `OPERATIONS_MONITORING_BACKUPS.md`.
