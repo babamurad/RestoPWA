@@ -19,6 +19,21 @@ const mapContainer = ref(null)
 let map = null
 let polygons = []
 let drawingManager = null
+let resizeObserver = null
+const DEFAULT_CENTER = [39.0886, 63.5593] // Туркменабат
+const DEFAULT_ZOOM = 12
+
+// Карта может быть создана на скрытой вкладке (размер 0) — после показа пересчитываем размер и вид
+function recenter() {
+  if (!map) return
+  map.container.fitToViewport()
+  const bounds = polygons.length > 0 ? map.geoObjects.getBounds() : null
+  if (bounds) {
+    map.setBounds(bounds, { checkZoomRange: true })
+  } else {
+    map.setCenter(DEFAULT_CENTER, DEFAULT_ZOOM)
+  }
+}
 
 onMounted(() => {
   if (typeof ymaps === 'undefined') {
@@ -32,20 +47,29 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  if (resizeObserver) resizeObserver.disconnect()
   if (map) map.destroy()
 })
 
 function initMap() {
   ymaps.ready(() => {
     map = new ymaps.Map(mapContainer.value, {
-      center: [39.0886, 63.5593],
-      zoom: 12,
+      center: DEFAULT_CENTER,
+      zoom: DEFAULT_ZOOM,
       controls: ['zoomControl', 'fullscreenControl']
     })
 
     if (props.initialValue) {
       loadFromState(props.initialValue)
     }
+
+    let wasHidden = mapContainer.value.offsetWidth === 0
+    resizeObserver = new ResizeObserver(() => {
+      const w = mapContainer.value.offsetWidth
+      if (w === 0) { wasHidden = true; return }
+      if (wasHidden) { wasHidden = false; recenter() } else { map.container.fitToViewport() }
+    })
+    resizeObserver.observe(mapContainer.value)
   })
 }
 
