@@ -1,7 +1,28 @@
 // Login and registration pages
 export default {
     invalid_credentials: 'Nädogry hasap maglumatlary',
+    network_error: 'Serwer bilen aragatnaşyk ýok. Internedi barlaň we gaýtadan synanyşyň.',
     or: 'ýa-da',
+    forgot: {
+        title: 'Paroly ýatdan çykardyňyzmy?',
+        subtitle: 'Email salgyňyzy giriziň — täze parol döretmek üçin salgy iberäris',
+        submit: 'Salgyny iber',
+        submitting: 'Iberilýär...',
+        sent_hint: 'Hat gijä galyp biler. «Spam» bukjasyny hem barlaň.',
+        back: 'Girişe dolan',
+        failed: 'Hat iberilmedi. Soňrak synanyşyň.',
+    },
+    reset: {
+        title: 'Täze parol',
+        subtitle: 'Girmek üçin täze parol oýlap tapyň',
+        password: 'Täze parol',
+        submit: 'Paroly sakla',
+        submitting: 'Saklanýar...',
+        invalid_link: 'Salgy doly däl. Paroly dikeltmegi täzeden soraň.',
+        request_new: 'Täze salgy sora',
+        failed: 'Paroly üýtgedip bolmady. Gaýtadan synanyşyň.',
+        done: 'Parol üýtgedildi. Indi girip bilersiňiz.',
+    },
     email: 'Email',
     password: 'Parol',
     // {terms}, {offer}, {privacy} are links rendered by <i18n-t>
@@ -17,6 +38,7 @@ export default {
         title: 'Hasaba giriş',
         subtitle: 'Sargytlaryňyzy yzarlamak we salgylaryňyzy ýatda saklamak üçin giriň',
         submit: 'Gir',
+        forgot: 'Paroly ýatdan çykardyňyzmy?',
         submitting: 'Girilýär...',
         google: 'Google arkaly gir',
         no_account: 'Heniz hasabyňyz ýokmy?',

@@ -45,6 +45,18 @@ const routes = [
         meta: { titleKey: 'app.titles.register', guestOnly: true }
     },
     {
+        path: '/forgot-password',
+        name: 'forgot-password',
+        component: () => import('../pages/ForgotPasswordPage.vue'),
+        meta: { titleKey: 'app.titles.forgot_password', guestOnly: true }
+    },
+    {
+        path: '/reset-password',
+        name: 'reset-password',
+        component: () => import('../pages/ResetPasswordPage.vue'),
+        meta: { titleKey: 'app.titles.reset_password', guestOnly: true }
+    },
+    {
         path: '/profile',
         name: 'profile',
         component: ProfilePage,

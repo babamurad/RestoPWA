@@ -86,6 +86,7 @@ class SetTenantContext
             $request->is('api/v1/login') ||
             $request->is('api/v1/register') ||
             $request->is('api/v1/logout') ||
+            $request->is('api/v1/password/*') ||
             $request->is('api/v1/user') ||
             $request->is('api/v1/mobile/*') ||
             $request->is('api/v1/config') ||

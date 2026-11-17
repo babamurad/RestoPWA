@@ -15,6 +15,10 @@
       </div>
 
       <form @submit.prevent="handleLogin" class="space-y-6 relative z-10">
+        <div v-if="route.query.reset" class="p-3.5 bg-emerald-500/10 border border-emerald-500/25 rounded-xl text-emerald-500 text-xs font-semibold" dusk="reset-done">
+          {{ t('auth.reset.done') }}
+        </div>
+
         <!-- Error Alert -->
         <div v-if="errorMsg" class="p-3.5 bg-rose-500/10 border border-rose-500/25 rounded-xl text-rose-400 text-xs font-semibold flex items-center gap-2">
           <span>⚠️</span>
@@ -45,6 +49,11 @@
             required
             placeholder="••••••••"
           />
+          <div class="text-right">
+            <router-link :to="{ name: 'forgot-password', query: { email: form.email || undefined } }" dusk="forgot-link" class="text-xs font-bold text-orange-400 hover:text-orange-300 transition-colors">
+              {{ t('auth.login.forgot') }}
+            </router-link>
+          </div>
         </div>
 
         <!-- Submit Button -->
@@ -130,7 +139,10 @@ const handleLogin = async () => {
     const redirectPath = route.query.redirect || (authStore.isCourier ? '/courier' : '/profile');
     router.push(redirectPath);
   } catch (err) {
-    errorMsg.value = err.message || t('auth.login.failed');
+    // Show the server's own wording ("wrong email or password"), never axios' technical text
+    const data = err.response?.data;
+    errorMsg.value = (data?.errors ? Object.values(data.errors).flat().join(' ') : data?.message)
+      || (err.response ? t('auth.login.failed') : t('auth.network_error'));
   }
 };
 </script>

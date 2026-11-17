@@ -11,6 +11,8 @@ export default {
         checkout: 'Sargydy resmileşdirmek',
         login: 'Giriş',
         register: 'Hasaba durmak',
+        forgot_password: 'Paroly dikeltmek',
+        reset_password: 'Täze parol',
         profile: 'Profil',
         addresses: 'Salgylarym',
         payments: 'Töleg usullary',

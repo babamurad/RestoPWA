@@ -12,6 +12,8 @@ Route::get('/login', fn () => view('app'))->name('login');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 Route::get('/register', fn () => view('app'))->name('register');
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
+Route::get('/forgot-password', fn () => view('app'))->name('password.request');
+Route::get('/reset-password', fn () => view('app'))->name('password.reset');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::prefix('auth/google')->name('auth.google.')->group(function () {

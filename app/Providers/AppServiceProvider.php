@@ -22,7 +22,9 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Queue\Events\QueueBusy;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
@@ -126,6 +128,24 @@ class AppServiceProvider extends ServiceProvider
         Review::observe(ReviewObserver::class);
 
         $this->configureRateLimiting();
+        $this->configurePasswordResetMail();
+    }
+
+    /** The link opens the Vue reset page; the email is written in the user's language. */
+    private function configurePasswordResetMail(): void
+    {
+        ResetPassword::toMailUsing(function ($user, string $token) {
+            $locale = in_array($user->locale, config('app.supported_locales'), true) ? $user->locale : app()->getLocale();
+            $url = url('/reset-password').'?'.http_build_query(['token' => $token, 'email' => $user->getEmailForPasswordReset()]);
+            $minutes = (int) config('auth.passwords.'.config('auth.defaults.passwords').'.expire');
+
+            return (new MailMessage)
+                ->subject(__('api.password.mail_subject', [], $locale))
+                ->line(__('api.password.mail_intro', [], $locale))
+                ->action(__('api.password.mail_action', [], $locale), $url)
+                ->line(__('api.password.mail_expire', ['count' => $minutes], $locale))
+                ->line(__('api.password.mail_ignore', [], $locale));
+        });
     }
 
     /**
@@ -149,6 +169,12 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('login', fn (Request $request) => [
             Limit::perMinute(5)->by('login:'.mb_strtolower((string) $request->input('email')).'|'.$request->ip())->response($tooMany),
             Limit::perMinute(20)->by('login-ip:'.$request->ip())->response($tooMany),
+        ]);
+
+        // Reset emails: no mail bombing of one address and no token guessing
+        RateLimiter::for('password', fn (Request $request) => [
+            Limit::perMinute(3)->by('password:'.mb_strtolower((string) $request->input('email')).'|'.$request->ip())->response($tooMany),
+            Limit::perMinute(10)->by('password-ip:'.$request->ip())->response($tooMany),
         ]);
 
         RateLimiter::for('register', fn (Request $request) => Limit::perMinute(5)->by('register:'.$request->ip())->response($tooMany));

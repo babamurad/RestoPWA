@@ -52,6 +52,8 @@ Route::middleware([SetTenantContext::class, 'throttle:api'])->prefix('v1')->wher
 
     Route::post('login', [AuthController::class, 'login'])->withoutMiddleware('throttle:api')->middleware('throttle:login')->name('api.login');
     Route::post('register', [AuthController::class, 'register'])->withoutMiddleware('throttle:api')->middleware('throttle:register')->name('api.register');
+    Route::post('password/forgot', [AuthController::class, 'forgotPassword'])->withoutMiddleware('throttle:api')->middleware('throttle:password')->name('api.password.forgot');
+    Route::post('password/reset', [AuthController::class, 'resetPassword'])->withoutMiddleware('throttle:api')->middleware('throttle:password')->name('api.password.reset');
     Route::post('logout', [AuthController::class, 'logout'])->name('api.logout');
     Route::get('user', [AuthController::class, 'user'])->name('api.user');
 

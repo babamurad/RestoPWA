@@ -11,6 +11,8 @@ export default {
         checkout: 'Оформление заказа',
         login: 'Вход',
         register: 'Регистрация',
+        forgot_password: 'Восстановление пароля',
+        reset_password: 'Новый пароль',
         profile: 'Профиль',
         addresses: 'Мои адреса',
         payments: 'Способы оплаты',

@@ -10,7 +10,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password as PasswordBroker;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
@@ -65,6 +68,54 @@ class AuthController extends Controller
         }
 
         return redirect(route('home'));
+    }
+
+    /**
+     * Sends a reset link. The answer is always the same, so the form cannot be used
+     * to find out which emails are registered.
+     */
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate(['email' => 'required|email']);
+
+        PasswordBroker::sendResetLink($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => __('api.password.link_sent'),
+        ]);
+    }
+
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'token' => 'required|string',
+            'email' => 'required|email',
+            'password' => ['required', 'confirmed', Password::min(8)],
+        ]);
+
+        $status = PasswordBroker::reset($validated, function (User $user, string $password) {
+            $user->forceFill([
+                'password' => Hash::make($password),
+                'remember_token' => Str::random(60),
+            ])->save();
+
+            // Other sessions and mobile tokens of this account stop working
+            $user->tokens()->delete();
+            event(new PasswordReset($user));
+        });
+
+        if ($status !== PasswordBroker::PASSWORD_RESET) {
+            return response()->json([
+                'success' => false,
+                'message' => __('api.password.invalid_token'),
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => __('api.password.reset_done'),
+        ]);
     }
 
     /** Mobile (Capacitor) login — issues a Sanctum Bearer token instead of a session cookie. */
