@@ -14,6 +14,7 @@
         <button
           v-if="store.hasLoaded"
           type="button"
+          dusk="courier-shift"
           @click="toggleShift"
           :disabled="store.busyId === 'shift'"
           class="px-4 py-2.5 rounded-xl text-sm font-bold transition-colors active:scale-95 disabled:opacity-50"
@@ -136,6 +137,7 @@
             <button
               v-if="order.status === 'delivering'"
               type="button"
+              dusk="courier-delivered"
               @click="deliver(order)"
               :disabled="!!store.busyId"
               class="py-3 rounded-xl text-sm font-bold bg-emerald-500 text-white hover:bg-emerald-600 active:scale-95 disabled:opacity-50"
@@ -169,6 +171,7 @@
           <OrderSummary :order="order" />
           <button
             type="button"
+            dusk="courier-take-order"
             @click="store.acceptOrder(order.id)"
             :disabled="!!store.busyId"
             class="mt-4 w-full py-3 rounded-xl text-sm font-bold bg-orange-500 text-white hover:bg-orange-600 active:scale-95 disabled:opacity-50"

@@ -33,6 +33,7 @@
       <div 
         v-for="order in ordersStore.orders" 
         :key="order.id"
+        :dusk="'order-' + order.id"
         class="dark:bg-slate-800/40 border dark:border-slate-800/80 rounded-2xl p-5 dark:hover:border-slate-700 transition-all duration-305 shadow-md hover:shadow-lg relative overflow-hidden group bg-white border-slate-200 hover:border-slate-300"
       >
         <!-- Card background subtle decoration -->
@@ -96,6 +97,7 @@
             </button>
             <button
               v-if="order.can_cancel"
+              dusk="cancel-order"
               @click="cancelOrder(order)"
               :disabled="cancellingId === order.id"
               class="px-3.5 py-1.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold rounded-lg border border-rose-500/30 hover:bg-rose-500/20 active:scale-95 transition-colors disabled:opacity-50"

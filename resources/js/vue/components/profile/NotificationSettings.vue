@@ -23,6 +23,7 @@
           <span class="text-xs font-semibold dark:text-slate-300 text-slate-700">{{ t(`profile.notifications.channel_${channel}`) }}</span>
           <button
             type="button"
+            :dusk="'marketing-' + channel"
             role="switch"
             :aria-checked="marketing[channel]"
             :aria-label="t(`profile.notifications.channel_${channel}`)"

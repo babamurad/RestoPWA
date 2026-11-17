@@ -90,6 +90,7 @@
           <div 
             v-for="item in cartStore.items" 
             :key="item.key" 
+            dusk="cart-line"
             class="dark:bg-slate-800/40 border dark:border-slate-800/50 rounded-2xl p-4 flex gap-4 items-center justify-between shadow-md dark:hover:border-slate-700/40 transition-all duration-300 animate-fade-in bg-white border-slate-200 hover:border-slate-300"
           >
             <div class="flex items-center gap-3 flex-1 min-w-0">
@@ -170,6 +171,7 @@
 
           <!-- Checkout CTA -->
           <button 
+            dusk="cart-checkout"
             @click="proceedToCheckout" 
             :disabled="!cartStore.isMinOrderMet"
             class="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:disabled:from-slate-800 dark:disabled:to-slate-800 dark:disabled:text-slate-500 disabled:cursor-not-allowed text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-500"

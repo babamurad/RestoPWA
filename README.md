@@ -48,6 +48,8 @@ npm test
 
 `composer check` запускает Laravel Pint и PHPUnit, `npm test` — Vitest. То же самое выполняет CI на каждый pull request.
 
+Сквозные тесты в браузере (Laravel Dusk) идут отдельно: им нужны Chrome, собранный фронтенд и запущенное приложение — пошаговая инструкция в [docs/testing-e2e.md](docs/testing-e2e.md). В CI они выполняются заданием «E2E (Dusk)».
+
 > [!IMPORTANT]
 > Любое изменение в оформлении заказа, статусах и деньгах (`Order`, `Payment`, комиссии, выплаты) сопровождается автотестом. См. [матрицу критических тестов](docs/00_Active/checkout_test_matrix.md).
 

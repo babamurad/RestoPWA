@@ -8,6 +8,7 @@ use App\Domains\Vendor\Models\Restaurant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /** Public restaurant catalog of the customer app. */
 class RestaurantController
@@ -32,6 +33,8 @@ class RestaurantController
 
         $search = trim((string) ($validated['search'] ?? ''));
         if ($search !== '') {
+            self::teachSqliteUnicodeLower();
+
             // LOWER + LIKE works the same on PostgreSQL and SQLite; mb_strtolower handles Cyrillic,
             // which SQLite's own LOWER() does not, hence both spellings are compared
             $needles = array_unique(['%'.self::escapeLike(mb_strtolower($search)).'%', '%'.self::escapeLike($search).'%']);
@@ -66,6 +69,20 @@ class RestaurantController
         $vendor->setAppends(['is_open_now', 'delivery_fee_from']);
 
         return response()->json($vendor);
+    }
+
+    /**
+     * SQLite's LOWER() only knows ASCII, so "плов" would never find "Плов" there (PostgreSQL, which
+     * production runs on, has no such limit). Give SQLite a Unicode-aware one so that local runs
+     * and tests behave like production.
+     */
+    private static function teachSqliteUnicodeLower(): void
+    {
+        $connection = DB::connection();
+
+        if ($connection->getDriverName() === 'sqlite') {
+            $connection->getPdo()->sqliteCreateFunction('lower', static fn (?string $value) => $value === null ? null : mb_strtolower($value), 1);
+        }
     }
 
     /** "!" is the LIKE escape character: a backslash inside SQL text trips up PDO's parser on PostgreSQL */

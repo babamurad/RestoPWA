@@ -21,7 +21,9 @@ class MenuController
             'category_id' => 'nullable|integer',
         ]);
 
-        $vendorId = $vendor->vendor_id ?? $vendor->id;
+        // Dishes and categories belong to the restaurant's id. (restaurants.vendor_id is a legacy column
+        // that is empty or holds something else, e.g. the owner's id: using it gave an empty menu)
+        $vendorId = $vendor->id;
         $categoryId = $request->category_id;
         $cacheTags = ['menu', "vendor:{$vendorId}"];
         $cacheKey = "menu.{$vendorId}.category.".($categoryId ?? 'all');

@@ -12,6 +12,7 @@
         {{ t('checkout.address.delivery') }}
       </button>
       <button 
+        dusk="delivery-pickup"
         @click="updateType('pickup')"
         class="flex-1 py-2 text-xs font-bold rounded-lg transition-all"
         :class="localData.delivery_type === 'pickup' ? 'dark:bg-slate-800 text-orange-400 shadow-sm bg-white' : 'dark:text-slate-500 dark:hover:text-slate-300 text-slate-500 hover:text-slate-700'"
@@ -231,6 +232,7 @@
       <label class="block text-[10px] font-black uppercase tracking-wider dark:text-slate-400 mb-1.5 ml-1 text-slate-600">{{ t('checkout.address.phone_label') }}</label>
       <input 
         v-model="localData.phone" 
+        dusk="checkout-phone"
         type="tel" 
         placeholder="+993 6X XXXXXX"
         class="w-full dark:bg-slate-900 border focus:border-orange-500/50 rounded-xl px-4 py-3 text-sm dark:text-slate-200 outline-none transition-all placeholder:text-slate-400 dark:text-slate-600 font-medium tracking-wide bg-slate-50 text-slate-800 text-slate-400"
@@ -242,6 +244,7 @@
     </div>
 
     <button 
+      dusk="checkout-address-next"
       @click="handleNext"
       :disabled="!isValid"
       class="w-full mt-6 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:disabled:from-slate-800 dark:disabled:to-slate-800 dark:disabled:text-slate-500 disabled:cursor-not-allowed text-white font-extrabold text-sm rounded-xl shadow-lg transition-all active:scale-[0.98] disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-500"

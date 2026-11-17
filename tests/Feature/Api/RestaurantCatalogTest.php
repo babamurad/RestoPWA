@@ -55,6 +55,26 @@ class RestaurantCatalogTest extends TestCase
         $this->assertSame([], $this->ids('?search=lagman'));
     }
 
+    public function test_menu_belongs_to_the_restaurant_whatever_its_legacy_vendor_id_says(): void
+    {
+        $restaurant = Restaurant::factory()->create(['is_active' => true, 'vendor_id' => fake()->uuid()]);
+        $dish = Product::factory()->create(['vendor_id' => $restaurant->id, 'name' => 'Плов', 'is_available' => true]);
+
+        $this->getJson('/api/v1/menu/'.$restaurant->slug)
+            ->assertOk()
+            ->assertJsonPath('products.data.0.id', $dish->id);
+    }
+
+    public function test_search_ignores_case_in_cyrillic_too(): void
+    {
+        $plov = Restaurant::factory()->create(['name' => 'Алтын Гриль', 'description' => 'Шашлык', 'is_active' => true]);
+        Product::factory()->create(['vendor_id' => $plov->id, 'name' => 'Плов по-туркменски', 'is_available' => true]);
+
+        $this->assertSame([$plov->id], $this->ids('?search='.urlencode('плов')));
+        $this->assertSame([$plov->id], $this->ids('?search='.urlencode('АЛТЫН')));
+        $this->assertSame([$plov->id], $this->ids('?search='.urlencode('шашлык')));
+    }
+
     public function test_search_ignores_unavailable_dishes_and_treats_wildcards_as_text(): void
     {
         $this->assertSame([], $this->ids('?search=secret'));

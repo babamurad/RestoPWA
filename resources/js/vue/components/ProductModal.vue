@@ -78,7 +78,7 @@
                             :aria-label="t('menu.modal.fewer', { name: option.name })"
                             class="w-7 h-7 rounded-lg dark:bg-slate-800 bg-white border dark:border-slate-700 border-slate-300 font-black disabled:opacity-40 active:scale-90">-</button>
                     <span class="w-6 text-center font-black dark:text-slate-200 text-slate-800">{{ portions(group, option) }}</span>
-                    <button type="button" @click="setPortions(group, option, portions(group, option) + 1)" :disabled="!canAddPortion(group)"
+                    <button type="button" :dusk="'more-' + option.id" @click="setPortions(group, option, portions(group, option) + 1)" :disabled="!canAddPortion(group)"
                             :aria-label="t('menu.modal.more', { name: option.name })"
                             class="w-7 h-7 rounded-lg dark:bg-slate-800 bg-white border dark:border-slate-700 border-slate-300 font-black disabled:opacity-40 active:scale-90">+</button>
                   </div>
@@ -91,6 +91,7 @@
                     <input
                       :type="group.type === 'radio' ? 'radio' : 'checkbox'"
                       :name="'mod-' + group.id"
+                      :dusk="'option-' + option.id"
                       :checked="portions(group, option) > 0"
                       :disabled="isDisabled(group, option)"
                       @change="toggle(group, option)"
@@ -117,6 +118,7 @@
             </button>
             <span class="w-10 text-center text-sm font-black dark:text-slate-200 text-slate-800">{{ quantity }}</span>
             <button 
+              dusk="qty-plus"
               @click="increaseQty" 
               class="w-9 h-9 rounded-xl dark:bg-slate-900 dark:hover:bg-slate-800 hover:text-orange-400 dark:text-slate-300 font-black text-sm active:scale-90 transition-all bg-slate-50 hover:bg-white text-slate-700"
             >
@@ -126,6 +128,7 @@
 
           <!-- Add to Cart CTA -->
           <button 
+            dusk="add-to-cart"
             @click="addToCart"
             :disabled="!product.is_available || !isValid"
             class="flex-1 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:disabled:from-slate-800 dark:disabled:to-slate-800 dark:disabled:text-slate-500 disabled:cursor-not-allowed text-white font-extrabold text-xs rounded-2xl shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20 active:scale-[0.97] transition-all flex items-center justify-center gap-1.5 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-500"
