@@ -30,6 +30,14 @@ class RestaurantResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Рестораны';
 
+    /** @return array<string, string> plan key => "Малый — до 300 заказов в месяц, 300 TMT/мес" */
+    public static function planOptions(): array
+    {
+        return collect(config('billing.plans'))
+            ->map(fn (array $p) => "{$p['label']} — {$p['orders']}, {$p['price']} TMT/мес")
+            ->all();
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -118,14 +126,29 @@ class RestaurantResource extends Resource
                             ->label('Комиссия маркетплейса')
                             ->numeric()
                             ->suffix('%')
-                            ->default(0),
+                            ->default(0)
+                            ->visible(fn () => config('billing.mode') === 'commission'),
                         Forms\Components\TextInput::make('pickup_commission_percent')
                             ->label('Комиссия за самовывоз')
                             ->helperText('Оставьте пустым, чтобы брать ту же комиссию, что и с доставки.')
                             ->numeric()
                             ->minValue(0)
                             ->maxValue(100)
-                            ->suffix('%'),
+                            ->suffix('%')
+                            ->visible(fn () => config('billing.mode') === 'commission'),
+                    ])->columns(2),
+                Section::make('Подписка')
+                    ->description('Ресторан платит фиксированную сумму в месяц, комиссия с заказов не берётся. Тариф выбирается по числу заказов.')
+                    ->visible(fn () => config('billing.mode') === 'subscription')
+                    ->schema([
+                        Forms\Components\Select::make('subscription_plan')
+                            ->label('Тариф')
+                            ->options(self::planOptions())
+                            ->placeholder('Не выбран'),
+                        Forms\Components\DatePicker::make('subscription_paid_until')
+                            ->label('Оплачено до')
+                            ->native(false)
+                            ->displayFormat('d.m.Y'),
                     ])->columns(2),
                 Section::make('Зона доставки')
                     ->description('Нарисуйте область доставки на карте. Координаты будут сохранены автоматически.')
@@ -309,6 +332,18 @@ class RestaurantResource extends Resource
                     ->label('Товаров')
                     ->counts('products')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('subscription_plan')
+                    ->label('Тариф')
+                    ->formatStateUsing(fn (?string $state) => self::planOptions()[$state] ?? '—')
+                    ->visible(fn () => config('billing.mode') === 'subscription'),
+                Tables\Columns\TextColumn::make('subscription_paid_until')
+                    ->label('Оплачено до')
+                    ->date('d.m.Y')
+                    ->placeholder('Не оплачено')
+                    ->badge()
+                    ->color(fn (Restaurant $record) => $record->hasActiveSubscription() ? 'success' : 'danger')
+                    ->sortable()
+                    ->visible(fn () => config('billing.mode') === 'subscription'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Создан')
                     ->dateTime('d.m.Y')
@@ -324,6 +359,20 @@ class RestaurantResource extends Resource
                     ]),
             ])
             ->actions([
+                Actions\Action::make('extendSubscription')
+                    ->label('Оплачено: +1 месяц')
+                    ->icon('heroicon-o-banknotes')
+                    ->color('success')
+                    ->visible(fn () => config('billing.mode') === 'subscription')
+                    ->requiresConfirmation()
+                    ->modalDescription(fn (Restaurant $record) => $record->subscription_plan
+                        ? 'Тариф «'.self::planOptions()[$record->subscription_plan].'». Срок продлится на месяц.'
+                        : 'Тариф не выбран: сначала выберите его в карточке ресторана.')
+                    ->action(function (Restaurant $record) {
+                        // From the end of the paid period, or from today when it already lapsed
+                        $from = $record->hasActiveSubscription() ? $record->subscription_paid_until : today();
+                        $record->update(['subscription_paid_until' => $from->copy()->addMonthNoOverflow()]);
+                    }),
                 Actions\EditAction::make(),
                 Actions\DeleteAction::make(),
             ])

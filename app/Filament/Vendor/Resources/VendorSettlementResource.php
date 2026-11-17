@@ -24,6 +24,12 @@ class VendorSettlementResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Счета платформы';
 
+    // Subscription mode: no commission, so no payouts to show in the menu (old ones stay reachable by URL)
+    public static function shouldRegisterNavigation(): bool
+    {
+        return config('billing.mode') === 'commission';
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->schema([]);

@@ -124,7 +124,23 @@ class Restaurant extends Model
         'courier_percent_fee',
         'timezone',
         'tags',
+        'subscription_plan',
+        'subscription_paid_until',
     ];
+
+    /** Monthly price of the restaurant's plan (TMT), null when no plan is picked */
+    public function subscriptionPrice(): ?float
+    {
+        $plan = config('billing.plans.'.$this->subscription_plan);
+
+        return $plan ? (float) $plan['price'] : null;
+    }
+
+    /** Is the subscription paid for today? */
+    public function hasActiveSubscription(): bool
+    {
+        return $this->subscription_paid_until !== null && $this->subscription_paid_until->gte(today());
+    }
 
     /**
      * @return array<string, string>
@@ -141,6 +157,7 @@ class Restaurant extends Model
             'courier_fixed_fee' => 'decimal:2',
             'settings' => 'array',
             'tags' => 'array',
+            'subscription_paid_until' => 'date',
             'is_active' => 'boolean',
             'is_paused' => 'boolean',
             'courier_percent_fee' => 'float',

@@ -17,6 +17,13 @@ class GenerateSettlements extends Command
 
     public function handle()
     {
+        // Subscription mode: no commission, nothing to pay out (BILLING_MODE=commission brings it back)
+        if (config('billing.mode') !== 'commission') {
+            $this->info('Billing mode is "'.config('billing.mode').'": payouts are not generated.');
+
+            return self::SUCCESS;
+        }
+
         $vendorId = $this->option('vendor');
 
         // By default generate for last week

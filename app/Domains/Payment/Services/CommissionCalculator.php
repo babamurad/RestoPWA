@@ -15,6 +15,11 @@ class CommissionCalculator
 {
     public function amount(Order $order): float
     {
+        // Subscription mode: restaurants pay a monthly fee, orders carry no commission
+        if (config('billing.mode') !== 'commission') {
+            return 0.0;
+        }
+
         $restaurant = $order->restaurant;
 
         // Pickup may have its own rate (the platform does less for such an order);
