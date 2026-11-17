@@ -19,7 +19,7 @@
 ### Выкладка
 
 ```bash
-cd /var/www/restopwa
+cd /var/www/restopwa.tmtourism.com
 ```
 
 ```bash

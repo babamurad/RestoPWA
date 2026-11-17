@@ -39,16 +39,12 @@
         <!-- Password Field -->
         <div class="space-y-2">
           <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">{{ t('auth.password') }}</label>
-          <div class="relative">
-            <input 
-              v-model="form.password" 
-              dusk="login-password"
-              type="password" 
-              required
-              placeholder="••••••••"
-              class="w-full dark:bg-slate-950/50 border dark:border-slate-700/50 rounded-xl px-4 py-3 text-sm dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold bg-slate-50 border-slate-300 text-slate-900"
-            />
-          </div>
+          <PasswordInput
+            v-model="form.password"
+            dusk="login-password"
+            required
+            placeholder="••••••••"
+          />
         </div>
 
         <!-- Submit Button -->
@@ -108,6 +104,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
 import LanguageSwitcher from '../components/LanguageSwitcher.vue';
+import PasswordInput from '../components/PasswordInput.vue';
 
 const router = useRouter();
 const route = useRoute();

@@ -65,24 +65,20 @@
         <!-- Password Field -->
         <div class="space-y-1">
           <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">{{ t('auth.password') }}</label>
-          <input 
-            v-model="form.password" 
-            type="password" 
+          <PasswordInput
+            v-model="form.password"
             required
             :placeholder="t('auth.register.password_placeholder')"
-            class="w-full dark:bg-slate-950/50 border dark:border-slate-700/50 rounded-xl px-4 py-3 text-sm dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold bg-slate-50 border-slate-300 text-slate-900"
           />
         </div>
 
         <!-- Password Confirmation Field -->
         <div class="space-y-1">
           <label class="block text-xs font-bold dark:text-slate-300 uppercase tracking-wider text-slate-700">{{ t('auth.register.password_confirmation') }}</label>
-          <input 
-            v-model="form.password_confirmation" 
-            type="password" 
+          <PasswordInput
+            v-model="form.password_confirmation"
             required
             :placeholder="t('auth.register.password_confirmation_placeholder')"
-            class="w-full dark:bg-slate-950/50 border dark:border-slate-700/50 rounded-xl px-4 py-3 text-sm dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500/80 focus:ring-1 focus:ring-orange-500/50 transition-all font-semibold bg-slate-50 border-slate-300 text-slate-900"
           />
         </div>
 
@@ -159,6 +155,7 @@ import { useAuthStore } from '../stores/auth';
 import apiClient, { isNativeApp, MOBILE_AUTH_TOKEN_KEY } from '../api/client';
 import { currentLocale } from '../i18n';
 import LanguageSwitcher from '../components/LanguageSwitcher.vue';
+import PasswordInput from '../components/PasswordInput.vue';
 
 const router = useRouter();
 const route = useRoute();

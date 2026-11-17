@@ -55,6 +55,11 @@ class RestaurantSeeder extends Seeder
 
             $existing = Restaurant::withoutGlobalScopes()->where('slug', $restaurantData['slug'])->first();
             if ($existing) {
+                // Backfill cuisine tags for restaurants seeded before tags existed
+                if (empty($existing->tags) && ! empty($restaurantData['tags'])) {
+                    $existing->forceFill(['tags' => $restaurantData['tags']])->saveQuietly();
+                }
+
                 continue;
             }
 
@@ -76,6 +81,7 @@ class RestaurantSeeder extends Seeder
         return [
             [
                 'name' => 'Pepperoni Pizza',
+                'tags' => ['pizza', 'national'],
                 'description' => 'Аутентичная итальянская пицца из дровяной печи. Тонкое тесто, свежие ингредиенты.',
                 'image' => 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&h=300&fit=crop',
                 'cover_image' => 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&h=400&fit=crop',
@@ -95,6 +101,7 @@ class RestaurantSeeder extends Seeder
             ],
             [
                 'name' => 'Burger House',
+                'tags' => ['burgers'],
                 'description' => 'Сочные бургеры из мраморной говядины. Ручная работа, свежие булочки.',
                 'image' => 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=300&fit=crop',
                 'cover_image' => 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&h=400&fit=crop',
@@ -113,6 +120,7 @@ class RestaurantSeeder extends Seeder
             ],
             [
                 'name' => 'Sakura Sushi',
+                'tags' => ['sushi'],
                 'description' => 'Аутентичная японская кухня. Свежайшая рыба, мастера-сушисты.',
                 'image' => 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&h=300&fit=crop',
                 'cover_image' => 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=800&h=400&fit=crop',
@@ -131,6 +139,7 @@ class RestaurantSeeder extends Seeder
             ],
             [
                 'name' => 'Green Salad',
+                'tags' => ['national'],
                 'description' => 'Полезные и вкусные салаты. Свежие овощи, качественные ингредиенты.',
                 'image' => 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop',
                 'cover_image' => 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&h=400&fit=crop',
@@ -148,6 +157,7 @@ class RestaurantSeeder extends Seeder
             ],
             [
                 'name' => 'Sweet Dreams',
+                'tags' => ['desserts'],
                 'description' => 'Десерты ручной работы. Торты, пирожные, мороженое.',
                 'image' => 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=400&h=300&fit=crop',
                 'cover_image' => 'https://images.unsplash.com/photo-1558301211-0d8c8ddee6ec?w=800&h=400&fit=crop',
@@ -165,6 +175,7 @@ class RestaurantSeeder extends Seeder
             ],
             [
                 'name' => 'Coffee Time',
+                'tags' => ['drinks', 'desserts'],
                 'description' => 'Специалитет кофе и свежая выпечка. Идеальное место для завтрака.',
                 'image' => 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop',
                 'cover_image' => 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&h=400&fit=crop',
