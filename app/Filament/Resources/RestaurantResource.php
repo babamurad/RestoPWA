@@ -12,6 +12,8 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables;
@@ -42,256 +44,278 @@ class RestaurantResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('Основная информация')
-                    ->schema([
-                        Forms\Components\TextInput::make('name')
-                            ->label('Название')
-                            ->required()
-                            ->maxLength(255)
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(function (string $operation, $state, Set $set) {
-                                if ($operation !== 'create') {
-                                    return;
-                                }
-                                $set('slug', Str::slug($state));
-                            }),
-                        Forms\Components\TextInput::make('slug')
-                            ->label('Slug (URL)')
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(255)
-                            ->readOnly()
-                            ->dehydrated()
-                            ->helperText('Генерируется автоматически'),
-                        Forms\Components\FileUpload::make('image')
-                            ->label('Изображение (Логотип)')
-                            ->image()
-                            ->disk('public')
-                            ->directory('restaurants/images')
-                            ->columnSpanFull(),
-                        Forms\Components\FileUpload::make('cover_image')
-                            ->label('Обложка')
-                            ->image()
-                            ->disk('public')
-                            ->directory('restaurants/covers')
-                            ->columnSpanFull(),
-                        Forms\Components\Textarea::make('description')
-                            ->label('Описание')
-                            ->maxLength(65535)
-                            ->columnSpanFull(),
-                        Forms\Components\CheckboxList::make('tags')
-                            ->label('Кухня')
-                            ->helperText('По этим меткам клиенты фильтруют рестораны в каталоге.')
-                            ->options(Restaurant::CUISINES)
-                            ->columns(3)
-                            ->columnSpanFull(),
-                    ])->columns(2),
-                Section::make('Настройки')
-                    ->schema([
-                        Forms\Components\Select::make('owner_id')
-                            ->label('Владелец (Пользователь)')
-                            ->relationship('owner', 'name', function ($query) {
-                                return $query->where('role', 'restaurateur')->orWhere('role', 'admin');
-                            })
-                            ->searchable()
-                            ->preload()
-                            ->nullable()
-                            ->columnSpanFull(),
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Активен')
-                            ->default(true),
-                        Forms\Components\Toggle::make('is_paused')
-                            ->label('Временно не принимает заказы')
-                            ->default(false),
-                        Forms\Components\TextInput::make('pause_reason')
-                            ->label('Причина паузы')
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('timezone')
-                            ->label('Часовой пояс')
-                            ->default('Asia/Ashgabat')
-                            ->required(),
-                        Forms\Components\TextInput::make('delivery_time')
-                            ->label('Среднее время доставки (мин)')
-                            ->helperText('Только числа, например 25-35: слово «мин» приложение добавляет само.')
-                            ->placeholder('25-35'),
-                        Forms\Components\TextInput::make('delivery_fee')
-                            ->label('Стоимость доставки')
-                            ->numeric()
-                            ->suffix('TMT'),
-                        Forms\Components\TextInput::make('min_order')
-                            ->label('Минимальный заказ')
-                            ->numeric()
-                            ->suffix('TMT'),
-                        Forms\Components\TextInput::make('commission_percent')
-                            ->label('Комиссия маркетплейса')
-                            ->numeric()
-                            ->suffix('%')
-                            ->default(0)
-                            ->visible(fn () => config('billing.mode') === 'commission'),
-                        Forms\Components\TextInput::make('pickup_commission_percent')
-                            ->label('Комиссия за самовывоз')
-                            ->helperText('Оставьте пустым, чтобы брать ту же комиссию, что и с доставки.')
-                            ->numeric()
-                            ->minValue(0)
-                            ->maxValue(100)
-                            ->suffix('%')
-                            ->visible(fn () => config('billing.mode') === 'commission'),
-                    ])->columns(2),
-                Section::make('Подписка')
-                    ->description('Ресторан платит фиксированную сумму в месяц, комиссия с заказов не берётся. Тариф выбирается по числу заказов.')
-                    ->visible(fn () => config('billing.mode') === 'subscription')
-                    ->schema([
-                        Forms\Components\Select::make('subscription_plan')
-                            ->label('Тариф')
-                            ->options(self::planOptions())
-                            ->placeholder('Не выбран'),
-                        Forms\Components\DatePicker::make('subscription_paid_until')
-                            ->label('Оплачено до')
-                            ->native(false)
-                            ->displayFormat('d.m.Y'),
-                    ])->columns(2),
-                Section::make('Зона доставки')
-                    ->description('Нарисуйте область доставки на карте. Координаты будут сохранены автоматически.')
-                    ->schema([
-                        Forms\Components\ViewField::make('delivery_zones')
-                            ->label('Карта зоны доставки')
-                            ->view('filament.forms.components.delivery-zone-map')
-                            ->columnSpanFull(),
-
-                        Section::make('Просмотр координат (GeoJSON)')
-                            ->collapsed()
-                            ->compact()
-                            ->schema([
-                                Forms\Components\Placeholder::make('delivery_zones_json')
-                                    ->label('Текущий GeoJSON')
-                                    ->content(function ($record) {
-                                        if (! $record || ! $record->delivery_zones) {
-                                            return 'Пусто';
-                                        }
-
-                                        return json_encode($record->delivery_zones, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-                                    }),
-                            ]),
-
-                        Forms\Components\Placeholder::make('delivery_zone_status')
-                            ->label('Статус зоны доставки')
-                            ->content(function ($record) {
-                                if (! $record) {
-                                    return 'Сохраните ресторан, чтобы проверить зону доставки.';
-                                }
-                                $zones = $record->delivery_zones;
-                                if (empty($zones)) {
-                                    return '⚠️ Зона доставки не настроена. Все точки будут считаться вне зоны.';
-                                }
-
-                                return '✅ Зона доставки настроена.';
-                            }),
-
-                        Fieldset::make('check_point_fieldset')
-                            ->label('Проверить точку на карте')
-                            ->columns(2)
-                            ->schema([
-                                Forms\Components\TextInput::make('check_lat')
-                                    ->label('Широта')
-                                    ->numeric()
-                                    ->placeholder('39.0886'),
-                                Forms\Components\TextInput::make('check_lon')
-                                    ->label('Долгота')
-                                    ->numeric()
-                                    ->placeholder('63.5593'),
-                                \Filament\Schemas\Components\Actions::make([
-                                    Actions\Action::make('check_point')
-                                        ->label('Проверить')
-                                        ->button()
-                                        ->color('warning')
-                                        ->extraAttributes(['class' => 'mt-8'])
-                                        ->action(function ($get, ?Restaurant $record) {
-                                            $lat = $get('check_lat');
-                                            $lon = $get('check_lon');
-                                            if (! $lat || ! $lon) {
-                                                Notification::make()
-                                                    ->title('Ошибка')
-                                                    ->body('Пожалуйста, введите широту и долготу.')
-                                                    ->danger()
-                                                    ->send();
-
+                Tabs::make('restaurant')
+                    ->columnSpanFull()
+                    ->persistTabInQueryString()
+                    ->tabs([
+                        Tab::make('Основное')->icon('heroicon-o-information-circle')->schema([
+                            Section::make('Основная информация')
+                                ->schema([
+                                    Forms\Components\TextInput::make('name')
+                                        ->label('Название')
+                                        ->required()
+                                        ->maxLength(255)
+                                        ->live(onBlur: true)
+                                        ->afterStateUpdated(function (string $operation, $state, Set $set) {
+                                            if ($operation !== 'create') {
                                                 return;
                                             }
-                                            if (! $record) {
-                                                Notification::make()
-                                                    ->title('Ошибка')
-                                                    ->body('Пожалуйста, сохраните ресторан перед проверкой точки.')
-                                                    ->danger()
-                                                    ->send();
-
-                                                return;
-                                            }
-
-                                            $geoService = app(GeoService::class);
-                                            $result = $geoService->checkDeliveryZone((float) $lat, (float) $lon, $record->id);
-
-                                            $color = $result->isAllowed() ? 'success' : 'danger';
-                                            $statusLabel = match ($result->status) {
-                                                'inside' => 'Внутри зоны доставки',
-                                                'outside' => 'Вне зоны доставки',
-                                                'zone_missing' => 'Зона доставки не настроена',
-                                                'invalid_geometry' => 'Некорректная геометрия зоны',
-                                                'postgis_error' => 'Ошибка PostGIS',
-                                                default => $result->status,
-                                            };
-
-                                            Notification::make()
-                                                ->title('Результат проверки')
-                                                ->body("Статус: **{$statusLabel}**\n\nСообщение: {$result->messageForUser()}")
-                                                ->color($color)
-                                                ->persistent()
-                                                ->send();
+                                            $set('slug', Str::slug($state));
                                         }),
-                                ])->columnSpanFull(),
-                            ]),
-                    ])->columnSpanFull(),
-                Section::make('Расписание работы')
-                    ->schema([
-                        Forms\Components\Repeater::make('schedules')
-                            ->relationship()
-                            ->label('График по дням')
+                                    Forms\Components\TextInput::make('slug')
+                                        ->label('Slug (URL)')
+                                        ->required()
+                                        ->unique(ignoreRecord: true)
+                                        ->maxLength(255)
+                                        ->readOnly()
+                                        ->dehydrated()
+                                        ->helperText('Генерируется автоматически'),
+                                    Forms\Components\FileUpload::make('image')
+                                        ->label('Изображение (Логотип)')
+                                        ->image()
+                                        ->disk('public')
+                                        ->directory('restaurants/images')
+                                        ->columnSpanFull(),
+                                    Forms\Components\FileUpload::make('cover_image')
+                                        ->label('Обложка')
+                                        ->image()
+                                        ->disk('public')
+                                        ->directory('restaurants/covers')
+                                        ->columnSpanFull(),
+                                    Forms\Components\Textarea::make('description')
+                                        ->label('Описание')
+                                        ->maxLength(65535)
+                                        ->columnSpanFull(),
+                                    Forms\Components\CheckboxList::make('tags')
+                                        ->label('Кухня')
+                                        ->helperText('По этим меткам клиенты фильтруют рестораны в каталоге.')
+                                        ->options(Restaurant::CUISINES)
+                                        ->columns(3)
+                                        ->columnSpanFull(),
+                                ])->columns(2),
+                        ]),
+                        Tab::make('Настройки')->icon('heroicon-o-cog-6-tooth')->schema([
+                            Section::make('Настройки')
+                                ->schema([
+                                    Forms\Components\Select::make('owner_id')
+                                        ->label('Владелец (Пользователь)')
+                                        ->relationship('owner', 'name', function ($query) {
+                                            return $query->where('role', 'restaurateur')->orWhere('role', 'admin');
+                                        })
+                                        ->searchable()
+                                        ->preload()
+                                        ->nullable()
+                                        ->columnSpanFull(),
+                                    Forms\Components\Toggle::make('is_active')
+                                        ->label('Активен')
+                                        ->default(true),
+                                    Forms\Components\Toggle::make('is_paused')
+                                        ->label('Временно не принимает заказы')
+                                        ->default(false),
+                                    Forms\Components\TextInput::make('pause_reason')
+                                        ->label('Причина паузы')
+                                        ->maxLength(255),
+                                    Forms\Components\TextInput::make('timezone')
+                                        ->label('Часовой пояс')
+                                        ->default('Asia/Ashgabat')
+                                        ->required(),
+                                    Forms\Components\TextInput::make('delivery_time')
+                                        ->label('Среднее время доставки (мин)')
+                                        ->helperText('Только числа, например 25-35: слово «мин» приложение добавляет само.')
+                                        ->placeholder('25-35'),
+                                    Forms\Components\TextInput::make('delivery_fee')
+                                        ->label('Стоимость доставки')
+                                        ->numeric()
+                                        ->suffix('TMT'),
+                                    Forms\Components\TextInput::make('min_order')
+                                        ->label('Минимальный заказ')
+                                        ->numeric()
+                                        ->suffix('TMT'),
+                                    Forms\Components\TextInput::make('commission_percent')
+                                        ->label('Комиссия маркетплейса')
+                                        ->numeric()
+                                        ->suffix('%')
+                                        ->default(0)
+                                        ->visible(fn () => config('billing.mode') === 'commission'),
+                                    Forms\Components\TextInput::make('pickup_commission_percent')
+                                        ->label('Комиссия за самовывоз')
+                                        ->helperText('Оставьте пустым, чтобы брать ту же комиссию, что и с доставки.')
+                                        ->numeric()
+                                        ->minValue(0)
+                                        ->maxValue(100)
+                                        ->suffix('%')
+                                        ->visible(fn () => config('billing.mode') === 'commission'),
+                                ])->columns(2),
+                        ]),
+                        Tab::make('Подписка')
+                            ->icon('heroicon-o-banknotes')
+                            ->visible(fn () => config('billing.mode') === 'subscription')
                             ->schema([
-                                Forms\Components\Select::make('weekday')
-                                    ->label('День недели')
-                                    ->options([
-                                        0 => 'Понедельник',
-                                        1 => 'Вторник',
-                                        2 => 'Среда',
-                                        3 => 'Четверг',
-                                        4 => 'Пятница',
-                                        5 => 'Суббота',
-                                        6 => 'Воскресенье',
-                                    ])
-                                    ->required(),
-                                Forms\Components\TimePicker::make('opens_at')
-                                    ->label('Открытие')
-                                    ->seconds(false),
-                                Forms\Components\TimePicker::make('closes_at')
-                                    ->label('Закрытие')
-                                    ->seconds(false),
-                                Forms\Components\Toggle::make('is_closed')
-                                    ->label('Выходной')
-                                    ->default(false),
-                            ])
-                            ->columns(4)
-                            ->itemLabel(fn (array $state): ?string => match ((string) ($state['weekday'] ?? '')) {
-                                '0' => 'Понедельник',
-                                '1' => 'Вторник',
-                                '2' => 'Среда',
-                                '3' => 'Четверг',
-                                '4' => 'Пятница',
-                                '5' => 'Суббота',
-                                '6' => 'Воскресенье',
-                                default => null,
-                            })
-                            ->defaultItems(0)
-                            ->collapsible(),
-                    ])->columnSpanFull(),
+                                Section::make('Подписка')
+                                    ->description('Ресторан платит фиксированную сумму в месяц, комиссия с заказов не берётся. Тариф выбирается по числу заказов.')
+                                    ->visible(fn () => config('billing.mode') === 'subscription')
+                                    ->schema([
+                                        Forms\Components\Select::make('subscription_plan')
+                                            ->label('Тариф')
+                                            ->options(self::planOptions())
+                                            ->placeholder('Не выбран'),
+                                        Forms\Components\DatePicker::make('subscription_paid_until')
+                                            ->label('Оплачено до')
+                                            ->native(false)
+                                            ->displayFormat('d.m.Y'),
+                                    ])->columns(2),
+                            ]),
+                        Tab::make('Зона на карте')
+                            ->icon('heroicon-o-map')
+                            ->badge(fn (?Restaurant $record) => $record && empty($record->getZonesArray()) ? '!' : null)
+                            ->badgeColor('danger')
+                            ->schema([
+                                Section::make('Зона доставки')
+                                    ->description('Нарисуйте область доставки на карте. Координаты будут сохранены автоматически.')
+                                    ->schema([
+                                        Forms\Components\ViewField::make('delivery_zones')
+                                            ->label('Карта зоны доставки')
+                                            ->view('filament.forms.components.delivery-zone-map')
+                                            ->columnSpanFull(),
+
+                                        Section::make('Просмотр координат (GeoJSON)')
+                                            ->collapsed()
+                                            ->compact()
+                                            ->schema([
+                                                Forms\Components\Placeholder::make('delivery_zones_json')
+                                                    ->label('Текущий GeoJSON')
+                                                    ->content(function ($record) {
+                                                        if (! $record || ! $record->delivery_zones) {
+                                                            return 'Пусто';
+                                                        }
+
+                                                        return json_encode($record->delivery_zones, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                                                    }),
+                                            ]),
+
+                                        Forms\Components\Placeholder::make('delivery_zone_status')
+                                            ->label('Статус зоны доставки')
+                                            ->content(function ($record) {
+                                                if (! $record) {
+                                                    return 'Сохраните ресторан, чтобы проверить зону доставки.';
+                                                }
+                                                $zones = $record->delivery_zones;
+                                                if (empty($zones)) {
+                                                    return '⚠️ Зона доставки не настроена. Все точки будут считаться вне зоны.';
+                                                }
+
+                                                return '✅ Зона доставки настроена.';
+                                            }),
+
+                                        Fieldset::make('check_point_fieldset')
+                                            ->label('Проверить точку на карте')
+                                            ->columns(2)
+                                            ->schema([
+                                                Forms\Components\TextInput::make('check_lat')
+                                                    ->label('Широта')
+                                                    ->numeric()
+                                                    ->placeholder('39.0886'),
+                                                Forms\Components\TextInput::make('check_lon')
+                                                    ->label('Долгота')
+                                                    ->numeric()
+                                                    ->placeholder('63.5593'),
+                                                \Filament\Schemas\Components\Actions::make([
+                                                    Actions\Action::make('check_point')
+                                                        ->label('Проверить')
+                                                        ->button()
+                                                        ->color('warning')
+                                                        ->extraAttributes(['class' => 'mt-8'])
+                                                        ->action(function ($get, ?Restaurant $record) {
+                                                            $lat = $get('check_lat');
+                                                            $lon = $get('check_lon');
+                                                            if (! $lat || ! $lon) {
+                                                                Notification::make()
+                                                                    ->title('Ошибка')
+                                                                    ->body('Пожалуйста, введите широту и долготу.')
+                                                                    ->danger()
+                                                                    ->send();
+
+                                                                return;
+                                                            }
+                                                            if (! $record) {
+                                                                Notification::make()
+                                                                    ->title('Ошибка')
+                                                                    ->body('Пожалуйста, сохраните ресторан перед проверкой точки.')
+                                                                    ->danger()
+                                                                    ->send();
+
+                                                                return;
+                                                            }
+
+                                                            $geoService = app(GeoService::class);
+                                                            $result = $geoService->checkDeliveryZone((float) $lat, (float) $lon, $record->id);
+
+                                                            $color = $result->isAllowed() ? 'success' : 'danger';
+                                                            $statusLabel = match ($result->status) {
+                                                                'inside' => 'Внутри зоны доставки',
+                                                                'outside' => 'Вне зоны доставки',
+                                                                'zone_missing' => 'Зона доставки не настроена',
+                                                                'invalid_geometry' => 'Некорректная геометрия зоны',
+                                                                'postgis_error' => 'Ошибка PostGIS',
+                                                                default => $result->status,
+                                                            };
+
+                                                            Notification::make()
+                                                                ->title('Результат проверки')
+                                                                ->body("Статус: **{$statusLabel}**\n\nСообщение: {$result->messageForUser()}")
+                                                                ->color($color)
+                                                                ->persistent()
+                                                                ->send();
+                                                        }),
+                                                ])->columnSpanFull(),
+                                            ]),
+                                    ])->columnSpanFull(),
+                            ]),
+                        Tab::make('Расписание')->icon('heroicon-o-clock')->schema([
+                            Section::make('Расписание работы')
+                                ->schema([
+                                    Forms\Components\Repeater::make('schedules')
+                                        ->relationship()
+                                        ->label('График по дням')
+                                        ->schema([
+                                            Forms\Components\Select::make('weekday')
+                                                ->label('День недели')
+                                                ->options([
+                                                    0 => 'Понедельник',
+                                                    1 => 'Вторник',
+                                                    2 => 'Среда',
+                                                    3 => 'Четверг',
+                                                    4 => 'Пятница',
+                                                    5 => 'Суббота',
+                                                    6 => 'Воскресенье',
+                                                ])
+                                                ->required(),
+                                            Forms\Components\TimePicker::make('opens_at')
+                                                ->label('Открытие')
+                                                ->seconds(false),
+                                            Forms\Components\TimePicker::make('closes_at')
+                                                ->label('Закрытие')
+                                                ->seconds(false),
+                                            Forms\Components\Toggle::make('is_closed')
+                                                ->label('Выходной')
+                                                ->default(false),
+                                        ])
+                                        ->columns(4)
+                                        ->itemLabel(fn (array $state): ?string => match ((string) ($state['weekday'] ?? '')) {
+                                            '0' => 'Понедельник',
+                                            '1' => 'Вторник',
+                                            '2' => 'Среда',
+                                            '3' => 'Четверг',
+                                            '4' => 'Пятница',
+                                            '5' => 'Суббота',
+                                            '6' => 'Воскресенье',
+                                            default => null,
+                                        })
+                                        ->defaultItems(0)
+                                        ->collapsible(),
+                                ])->columnSpanFull(),
+                        ]),
+                    ]),
             ]);
     }
 
